@@ -1,0 +1,1603 @@
+{
+  "course": "AY27 8670 Prerequisite",
+  "schema_version": "1.0",
+  "rubric_validation_status": "DRAFT_PENDING_HUMAN_VALIDATION",
+  "generation_status": "complete",
+  "generation_date": "2026-09-17",
+  "source_rubric_generation_timestamp": "2026-09-16T11:09:00-04:00",
+  "questions": [
+    {
+      "lesson_id": "L01",
+      "lesson_number": 1,
+      "question_id": "L01-Q01",
+      "lesson_title": "MCDP 7 – Learning",
+      "estimated_response_minutes": 3,
+      "question_text": "A unit completes every scheduled class and performs familiar drills well, yet struggles when an exercise changes unexpectedly. Its proposed remedy is to repeat the same schedule more often. Using MCDP 7, explain the learning approach you would recommend, including the contributions expected from the individual Marine, the instructor, and the unit leader.",
+      "target_mastery_dimensions": [
+        "L01-MD01",
+        "L01-MD03"
+      ],
+      "target_educational_objectives": [
+        "L01-EO01",
+        "L01-EO02",
+        "L01-EO04"
+      ],
+      "selection_rationale": "Connects the lesson’s warfighting purpose to complementary education/training and the three responsibilities named in EO04. Two dimensions allow a coherent brief response; this is not exhaustive lesson coverage.",
+      "follow_up_probes": [
+        "What would help a Marine cope with a problem that the familiar drill did not anticipate?",
+        "How would the leader’s own behavior affect whether Marines improve?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Explains how continuous learning develops judgment for unfamiliar warfighting conditions.",
+          "Distinguishes education through intellectual development from training through practice as complementary routes to competence.",
+          "Assigns the individual Marine ownership of continued self-development.",
+          "Describes the instructor as a facilitator who develops learners through constructive feedback.",
+          "Explains how leaders create learning conditions through their own example."
+        ],
+        "partial_evidence": [
+          "Recognizes that education and training both matter but weakly explains their different contributions.",
+          "Assigns reasonable responsibilities to the three roles without explaining how they support learning."
+        ],
+        "misconceptions_or_red_flags": [
+          "Equates learning with attendance or repetition alone.",
+          "Claims that either education or training can fully replace the other.",
+          "Assigns all responsibility for learning to the instructor."
+        ],
+        "insufficient_evidence_conditions": [
+          "The reply is nonresponsive or too fragmentary to establish the requested reasoning.",
+          "The reply supplies labels without an explanation connecting them to the situation.",
+          "A necessary assigned reading was not provided to the learner; missing access is not evidence of a misconception."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "L01-S02",
+          "title": "MCDP 7, Learning",
+          "edition_or_date": "20 Feb 2020; 81 pages",
+          "coursebook_page_or_section": "Coursebook PDF p. 2, section 4.a; MCDP 7 physical PDF pp. 9-11, 37-39 and 69-74 (printed sections 1-3 to 1-5, 2-9 to 2-11, and 4-7 to 4-12).",
+          "url": "https://www.tecom.marines.mil/Portals/90/MCDP%207_1.pdf",
+          "verification_status": "verified_exact"
+        }
+      ],
+      "validation_notes": [
+        "Draft assessment judgments pending human SME validation.",
+        "Instructor/evaluator answer key: do not expose the evidence guide or probes to learners outside the authorized assessment conversation.",
+        "Official TECOM copy verified as MCDP 7, Learning, dated 20 February 2020, 81 physical PDF pages; original rubric URL returned a fetch error.",
+        "The institutional role remains an open rubric SME issue; it is not required evidence because EO04 names individuals, instructors and leaders.",
+        "L01-MD02 and L01-MD04 are outside this question’s selected assessment scope."
+      ]
+    },
+    {
+      "lesson_id": "L02",
+      "lesson_number": 2,
+      "question_id": "L02-Q01",
+      "lesson_title": "Fundamentals of National Defense",
+      "estimated_response_minutes": 3,
+      "question_text": "In a hypothetical campaign review, a staff member argues that winning each engagement proves the national goal is being achieved and that decisions made by small units cannot change the wider outcome. Using the assigned reading, explain how you would evaluate that claim through the levels of war and their relationship to one another.",
+      "target_mastery_dimensions": [
+        "L02-MD04"
+      ],
+      "target_educational_objectives": [
+        "L02-EO09"
+      ],
+      "selection_rationale": "Tests the strategic-operational-tactical relationship central to understanding how Marines execute national direction. Concentrates on one integrative dimension with several causal distinctions, rather than attempting all fourteen lesson objectives in three minutes.",
+      "follow_up_probes": [
+        "What would connect a series of successful engagements to the national goal?",
+        "What might a campaign result require higher leadership to reconsider?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Distinguishes tactical battles and engagements from strategic pursuit of policy objectives.",
+          "Explains how the operational level connects tactical results to strategic aims through campaigns.",
+          "Explains a plausible way a tactical action can undermine the desired political outcome.",
+          "Explains why strategic guidance may need revision in response to operational results.",
+          "Classifies levels by an action’s effects or purpose rather than unit size."
+        ],
+        "partial_evidence": [
+          "Names the three levels accurately but leaves the campaign connection unexplained.",
+          "Recognizes that a battlefield victory may be insufficient but gives no causal explanation of its wider effects."
+        ],
+        "misconceptions_or_red_flags": [
+          "Assumes tactical victories automatically achieve national objectives.",
+          "Assigns levels of war solely by rank or formation size.",
+          "Claims that influence runs only downward from strategy to tactics."
+        ],
+        "insufficient_evidence_conditions": [
+          "The reply is nonresponsive or too fragmentary to establish the requested reasoning.",
+          "The reply supplies labels without an explanation connecting them to the situation.",
+          "A necessary assigned reading was not provided to the learner; missing access is not evidence of a misconception."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "L02-S02",
+          "title": "Fundamentals of National Defense",
+          "edition_or_date": "Listed as 31 pages; embedded reading spans coursebook PDF pp. 4-23",
+          "coursebook_page_or_section": "Coursebook PDF pp. 17-20, Lesson 2 Reading, section 4.d, Levels of War.",
+          "url": "",
+          "verification_status": "embedded"
+        }
+      ],
+      "validation_notes": [
+        "Draft assessment judgments pending human SME validation.",
+        "Instructor/evaluator answer key: do not expose the evidence guide or probes to learners outside the authorized assessment conversation.",
+        "Grounded entirely in the embedded reading; no current strategy priorities, force inventories or supplemental references are required.",
+        "The rubric flags the required NSS date mismatch (coursebook 4 December 2025 versus official document November 2025); official 33-page file was located, but its policy content is not assessed here.",
+        "The optional CJCSM 3105.01B date conflict is retained for SME review and does not affect this question.",
+        "L02-MD01, L02-MD02, L02-MD03 and L02-MD05 are outside the selected scope; coverage of L02 does not imply mastery of every objective."
+      ]
+    },
+    {
+      "lesson_id": "L03",
+      "lesson_number": 3,
+      "question_id": "L03-Q01",
+      "lesson_title": "National Defense Strategy",
+      "estimated_response_minutes": 3,
+      "question_text": "For a classroom exercise using the assigned 2022 National Defense Strategy, a hypothetical competitor pressures a partner through recurring coercive actions short of open warfare. A staff proposes one conspicuous military demonstration as the entire response. Explain how you would assess and improve that proposal using the assigned strategy’s approach to competitor behavior.",
+      "target_mastery_dimensions": [
+        "L03-MD03"
+      ],
+      "target_educational_objectives": [
+        "L03-EO05"
+      ],
+      "selection_rationale": "Selects the central response framework in L03-MD03/EO05, supported by the assigned 2022 text independently of the missing six-slide interim guidance. It permits explanation and application without requiring a current-policy claim.",
+      "follow_up_probes": [
+        "How would you judge whether the proposed action changes the competitor’s choices?",
+        "What makes several activities a campaign rather than a collection of unrelated events?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Explains integrated deterrence as coordination across military and nonmilitary instruments with allies and partners.",
+          "Connects a tailored response to the competitor’s perceived benefits and costs of aggression.",
+          "Distinguishes denial, resilience and cost imposition as different deterrent mechanisms.",
+          "Explains campaigning as a sequence of linked activities that advances strategic objectives over time.",
+          "Justifies a nonmilitary response where a military tool is poorly suited to the coercive behavior."
+        ],
+        "partial_evidence": [
+          "Advocates coordination but does not explain its effect on competitor choices.",
+          "Suggests repeated activity without explaining how the activities form a strategy-directed sequence."
+        ],
+        "misconceptions_or_red_flags": [
+          "Reduces deterrence to a threat of military punishment alone.",
+          "Treats campaigning as possible only after armed conflict begins.",
+          "Assumes every coercive act calls for a military response."
+        ],
+        "insufficient_evidence_conditions": [
+          "The reply is nonresponsive or too fragmentary to establish the requested reasoning.",
+          "The reply supplies labels without an explanation connecting them to the situation.",
+          "A necessary assigned reading was not provided to the learner; missing access is not evidence of a misconception."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "L03-S02",
+          "title": "2022 National Defense Strategy of the United States of America",
+          "edition_or_date": "27 Oct 2022; coursebook assigns NDS portion, 31 pages",
+          "coursebook_page_or_section": "Coursebook PDF pp. 23-24; official combined 2022 NDS/NPR/MDR physical PDF pp. 16-21, NDS printed pp. 8-13, sections IV-V.",
+          "url": "https://media.defense.gov/2022/Oct/27/2003103845/-1/-1/1/2022-NUCLEAR-POSTURE-REVIEW.PDF",
+          "verification_status": "verified_exact"
+        }
+      ],
+      "validation_notes": [
+        "Draft assessment judgments pending human SME validation.",
+        "Instructor/evaluator answer key: do not expose the evidence guide or probes to learners outside the authorized assessment conversation.",
+        "The accessible official file has a Nuclear Posture Review filename but is the full 80-page combined 2022 NDS/NPR/MDR volume; its table of contents and NDS sections IV-V were checked. Only the required NDS portion supports this question.",
+        "The rubric reports the 2022 strategy has been superseded; this is explicitly an assessment of the course-assigned historical framework, not a statement of current policy. SME must confirm the intended AY27 strategy baseline.",
+        "The exact six-slide 2025 Interim National Defense Guidance remains unavailable; its content is excluded. The one-page May 2025 memorandum and budget summaries do not substitute for those slides.",
+        "No evidence requires the optional Nuclear Posture Review or Missile Defense Review.",
+        "L03-MD01, L03-MD02 and L03-MD04 are outside the selected scope."
+      ]
+    },
+    {
+      "lesson_id": "L04",
+      "lesson_number": 4,
+      "question_id": "L04-Q01",
+      "lesson_title": "Department of War",
+      "estimated_response_minutes": 3,
+      "question_text": "A hypothetical planning team is preparing a response that may require Army forces overseas. Its draft treats the defense enterprise, the Secretary of Defense, and the Military Departments as interchangeable decision makers, then recommends the heaviest brigade for every possible mission. Using the assigned reading, explain how you would revise the team’s reasoning about institutional responsibilities and the choice among armored, Stryker, and infantry brigade combat teams.",
+      "target_mastery_dimensions": [
+        "L04-MD01",
+        "L04-MD02"
+      ],
+      "target_educational_objectives": [
+        "L04-EO01",
+        "L04-EO02",
+        "L04-EO03",
+        "L04-EO05",
+        "L04-EO06"
+      ],
+      "selection_rationale": "Connects governance and force provision to mission-sensitive capability judgments, rather than testing organizational lists. Samples the Army dimension through its land-force purpose and BCT tradeoffs.",
+      "follow_up_probes": [
+        "What tradeoff could make a lighter brigade more suitable for a particular mission?",
+        "How does the Secretary of Defense’s role differ from the responsibilities of a Military Department?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Explains the defense enterprise’s purpose of integrating Service contributions into effective joint action for national objectives.",
+          "Locates civilian authority, strategic policy, and resource guidance in the Secretary of Defense’s direction of the department.",
+          "Distinguishes Military Department force preparation and sustainment responsibilities from combatant commanders’ operational employment.",
+          "Connects the Army’s contribution to prompt and sustained combined-arms operations on land.",
+          "Justifies a mission-dependent BCT choice through the relative protection, mobility, firepower, and deployability of armored, Stryker, and infantry formations."
+        ],
+        "partial_evidence": [
+          "Distinguishes the major institutional roles but leaves the relationship between guidance and force provision unclear.",
+          "Recognizes differences among the BCTs but does not explain how the mission changes their relative suitability."
+        ],
+        "misconceptions_or_red_flags": [
+          "Assigns combatant commanders’ operational responsibilities to Military Departments merely because they provide the forces.",
+          "Omits or denies civilian direction of the defense enterprise.",
+          "Treats the heaviest BCT as universally superior regardless of terrain, mission, or deployment demands."
+        ],
+        "insufficient_evidence_conditions": [
+          "The response is nonresponsive, fragmentary, or too ambiguous to establish the targeted reasoning.",
+          "The response repeats organizational labels without explaining their significance in the scenario.",
+          "A fair judgment would require unavailable material beyond the assigned embedded reading; do not infer lack of understanding from that absence."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "L04-S02",
+          "title": "Department of War",
+          "edition_or_date": "Listed as 57 pages; embedded reading spans coursebook PDF pp. 26-67",
+          "coursebook_page_or_section": "Coursebook PDF pp. 27-31, sections 1-7.a; pp. 34-38, section 7.d(4).",
+          "url": "",
+          "verification_status": "embedded"
+        }
+      ],
+      "validation_notes": [
+        "Mastery dimensions and performance distinctions are draft agent judgments pending human SME validation.",
+        "For authorised evaluators and instructors only; do not expose the evidence guide as a student answer key.",
+        "The rubric marks L04 ready_for_review. ISS-L04-01 remains open: preserve the exact lesson title Department of War; p. 27 explicitly explains the continued statutory Department of Defense terminology. The question tests the assigned account, not a current legal naming claim.",
+        "ISS-L04-02 concerns the reading continuing onto p. 67; that page was checked, but Coast Guard objectives are outside this question’s selected scope.",
+        "Army component hierarchy, Air Force/Space Force, USSOCOM, and Coast Guard detail are not assessed by this short prompt; full-lesson mastery must not be inferred. No current unit counts or platform inventory recall is required."
+      ]
+    },
+    {
+      "lesson_id": "L05",
+      "lesson_number": 5,
+      "question_id": "L05-Q01",
+      "lesson_title": "Department of the Navy",
+      "estimated_response_minutes": 3,
+      "question_text": "In a hypothetical coastal crisis, a staff proposes sending an amphibious ready group with an embarked Marine expeditionary unit. One planner describes the package simply as ships carrying infantry and assumes that increasing the number of ships would solve any increase in mission complexity. Using the assigned reading, explain how you would assess and revise that description of the force and its ability to meet changing demands.",
+      "target_mastery_dimensions": [
+        "L05-MD04",
+        "L05-MD05"
+      ],
+      "target_educational_objectives": [
+        "L05-EO10",
+        "L05-EO11",
+        "L05-EO12",
+        "L05-EO17",
+        "L05-EO18"
+      ],
+      "selection_rationale": "Uses the Navy–Marine Corps amphibious relationship to reveal understanding of complementary naval and MAGTF capabilities, task organization, and limitations. Focuses the Marine operating-organization dimension on MAGTF structure and scaling.",
+      "follow_up_probes": [
+        "What would an expeditionary strike group add beyond an amphibious ready group?",
+        "How would the embarked Marine force’s organization support a mission that grows in scope?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Explains how an ARG combines amphibious assault, transport-dock, and dock-landing ship roles to deliver an embarked force by air or surface means.",
+          "Identifies a meaningful constraint on amphibious employment, such as lift capacity, deployment availability, or exposure of concentrated forces to threats.",
+          "Explains an ESG’s added command-and-staff capacity and naval combat power as a mission-dependent augmentation of an ARG.",
+          "Explains the MAGTF as an integrated formation with command, ground combat, aviation combat, and logistics combat elements.",
+          "Explains how task organization allows a Marine force to expand or tailor capabilities as mission demands change rather than treating the MEU as a fixed solution for every task."
+        ],
+        "partial_evidence": [
+          "Describes amphibious transport and generally distinguishes ARG from ESG but leaves the purpose of augmentation unclear.",
+          "Recognizes the MAGTF’s combined-arms character but incompletely explains its organizational elements or ability to adapt."
+        ],
+        "misconceptions_or_red_flags": [
+          "Equates an ARG and an ESG as identical organizations.",
+          "Treats amphibious ships themselves as the landing force.",
+          "Describes the MAGTF as infantry alone or omits its aviation, logistics, or command contribution.",
+          "Assumes additional hulls alone eliminate operational limitations or command demands."
+        ],
+        "insufficient_evidence_conditions": [
+          "The response is nonresponsive, fragmentary, or too ambiguous to establish the targeted reasoning.",
+          "The response repeats organizational labels without explaining their significance in the scenario.",
+          "A fair judgment would require unavailable material beyond the assigned embedded reading; do not infer lack of understanding from that absence."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "L05-S02",
+          "title": "Department of the Navy (64 pages)",
+          "edition_or_date": "AY27 embedded lesson reading",
+          "coursebook_page_or_section": "Coursebook PDF pp. 90-94, section 3.e(5); pp. 99-100, ARG and ESG; pp. 106-111, MAGTF elements and types.",
+          "url": "",
+          "verification_status": "embedded"
+        }
+      ],
+      "validation_notes": [
+        "Mastery dimensions and performance distinctions are draft agent judgments pending human SME validation.",
+        "For authorised evaluators and instructors only; do not expose the evidence guide as a student answer key.",
+        "The rubric marks L05 ready_for_review with sufficient embedded required evidence. ISS-L05-01 identifies conflicting 38th/39th Commandant attribution on p. 69; no attribution recall is assessed.",
+        "ISS-L05-02 flags time-sensitive inventories, fleet assignments, deployment cycles, and group compositions. Assess organizational relationships within the assigned reading; do not require current platform counts, exact deployment durations, or a rigid ESG ship list.",
+        "The source’s ARG ship pattern is a course-designated example, not a claim about every current formation. The question samples L05-MD05 through MAGTF elements and mission-driven tailoring; statutory mandate attribution and exhaustive MEF/MEB/MEU/SPMAGTF recall are outside scope."
+      ]
+    },
+    {
+      "lesson_id": "L06",
+      "lesson_number": 6,
+      "question_id": "L06-Q01",
+      "lesson_title": "Fundamentals of Joint Operations",
+      "estimated_response_minutes": 3,
+      "question_text": "A hypothetical joint force headquarters must coordinate land operations by units from two Military Departments. Its staff proposes placing the relevant forces under a land component commander, but assumes that this arrangement automatically gives that commander every authority over those units. Using the assigned reading, explain how you would make the proposed arrangement workable and clarify the powers that would have to be specified.",
+      "target_mastery_dimensions": [
+        "L06-MD02",
+        "L06-MD04"
+      ],
+      "target_educational_objectives": [
+        "L06-EO04",
+        "L06-EO06",
+        "L06-EO09",
+        "L06-EO10"
+      ],
+      "selection_rationale": "Connects functional organization with command-authority limits, exposing whether the learner can reason about unity of effort without confusing operational tasking with ownership of Service forces.",
+      "follow_up_probes": [
+        "What changes if the land component commander receives TACON rather than OPCON?",
+        "What responsibilities remain with the Service components after forces are made available to a functional commander?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Justifies a joint force land component command as a way to integrate land capabilities from multiple Services toward the joint mission.",
+          "Explains that the JFC must specify the forces made available and the functional commander’s assigned authority rather than relying on the command’s title.",
+          "Recognizes that COCOM remains with the combatant commander and cannot be delegated to the component commander.",
+          "Distinguishes OPCON’s broader mission organization and employment authority from TACON’s limited direction of movements or maneuvers for assigned tasks.",
+          "Explains that functional tasking does not by itself displace Service component administrative and logistic responsibilities."
+        ],
+        "partial_evidence": [
+          "Supports functional coordination but leaves the forces or authorities to be assigned unspecified.",
+          "Recognizes that command relationships differ but does not clearly explain the practical limits of OPCON or TACON."
+        ],
+        "misconceptions_or_red_flags": [
+          "Claims that COCOM can be delegated to the functional component commander.",
+          "Treats OPCON and TACON as interchangeable authorities.",
+          "Assumes a functional component automatically acquires all administrative, disciplinary, and logistic powers over participating units.",
+          "Treats functional commands as permanent Services rather than mission-related command arrangements."
+        ],
+        "insufficient_evidence_conditions": [
+          "The response is nonresponsive, fragmentary, or too ambiguous to establish the targeted reasoning.",
+          "The response repeats organizational labels without explaining their significance in the scenario.",
+          "A fair judgment would require unavailable material beyond the assigned embedded reading; do not infer lack of understanding from that absence."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "L06-S02",
+          "title": "Fundamentals of Joint Operations (24 pages)",
+          "edition_or_date": "AY27 embedded lesson reading",
+          "coursebook_page_or_section": "Coursebook PDF pp. 118-121, section 6 and command authorities; pp. 123-125, functional components, combined organization, and JFLCC designation.",
+          "url": "",
+          "verification_status": "embedded"
+        }
+      ],
+      "validation_notes": [
+        "Mastery dimensions and performance distinctions are draft agent judgments pending human SME validation.",
+        "For authorised evaluators and instructors only; do not expose the evidence guide as a student answer key.",
+        "The rubric marks L06 ready_for_review with sufficient embedded required evidence. ISS-L06-01 calls for SME confirmation of the 2018 joint publications/MCWP and 2019 guidance cited in the assigned reading; this question does not modernize those editions.",
+        "The prompt samples L06-MD02 through organization and authority rather than requiring a catalog of JTF types, and samples L06-MD04 through land componency rather than all component titles.",
+        "L06-MD02 includes support among its listed relationships, while the extracted assigned command-authority discussion on pp. 120-121 explicitly develops COCOM, OPCON, TACON, and ADCON. No separate support-relationship doctrine is required as evidence here."
+      ]
+    },
+    {
+      "lesson_id": "L07",
+      "lesson_number": 7,
+      "question_id": "L07-Q01",
+      "lesson_title": "Future Operating Environment - Russia",
+      "estimated_response_minutes": 3,
+      "question_text": "In a hypothetical seminar case, Russia fights a neighboring state while pressuring another state through propaganda and economic measures without direct hostilities between those two states. A third state works with Russia on an agreed humanitarian effort. Using the assigned Russia reading, explain how you would interpret these relationships and the purposes Russian leaders might see in this combination of actions.",
+      "target_mastery_dimensions": [
+        "L07-MD02",
+        "L07-MD03"
+      ],
+      "target_educational_objectives": [
+        "L07-EO03",
+        "L07-EO04",
+        "L07-EO05"
+      ],
+      "selection_rationale": "Connects the conditions-based model to source-attributed Russian ends and means; omits dated inventories and force structures that the rubric flags as unresolved.",
+      "follow_up_probes": [
+        "What determines the relationship condition between a particular pair of actors?",
+        "How does the reading connect Russian strategic deterrence to strategic stability?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Distinguishes cooperation, competition below armed conflict and armed conflict through the interests and coercive activity of the relevant actor pair.",
+          "Explains why the Russia-neighbor armed conflict does not automatically make Russia’s relationships with every other state armed conflict.",
+          "Links Russian actions to goals attributed by the reading, such as regime security, great-power status or influence over neighboring states.",
+          "Explains Russian strategic deterrence as an active use of coordinated instruments of state power across the conflict spectrum.",
+          "Explains strategic stability as the balanced condition that Russian strategic deterrence is intended to maintain."
+        ],
+        "partial_evidence": [
+          "Names the three relationship conditions correctly but applies them without identifying the relevant actor pair.",
+          "Identifies plausible Russian goals but weakly connects those goals to the actions described.",
+          "Recognizes deterrence but gives an incomplete explanation of its relationship to strategic stability."
+        ],
+        "misconceptions_or_red_flags": [
+          "Treats every competitive action as armed conflict.",
+          "Assumes cooperation by one state determines Russia’s condition with all other states.",
+          "Reduces Russian strategic deterrence to nuclear retaliation alone.",
+          "Presents attributed Russian threat perceptions as independently established facts."
+        ],
+        "insufficient_evidence_conditions": [
+          "The response is nonresponsive, fragmentary or too ambiguous to establish the targeted reasoning.",
+          "The response gives labels without explaining their relevance to the scenario.",
+          "A fair judgment would require a missing or unassigned source that this question does not require."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "L07-S02",
+          "title": "Future Operating Environment - Russia (47 pages)",
+          "edition_or_date": "AY27 embedded lesson reading; compiled from sources of different dates",
+          "coursebook_page_or_section": "Coursebook PDF pp. 132-136, sections 3-5; assigned reading spans PDF pp. 127-157",
+          "url": "",
+          "verification_status": "embedded"
+        }
+      ],
+      "validation_notes": [
+        "Mastery-dimension groupings, misconceptions and performance distinctions are draft judgments pending human SME validation.",
+        "Use only in an authorized evaluator context; do not expose the evidence guide as a student answer key.",
+        "L07 remains needs_sme_resolution: the reading mixes older projections and force descriptions with a 2025 threat-assessment passage. This question assesses the assigned conceptual account, not current inventories, force organization or battlefield forecasts; L07-MD04 and L07-MD05 are excluded.",
+        "The embedded synthesis lacks paragraph-level source attribution; coursebook section citations are retained pending the SME/editor citation map.",
+        "The rubric suggests issue-specific simultaneous relationship conditions, whereas coursebook p. 132 states that the highest coercive activity identifies the condition between two actors. The question uses different actor pairs and does not require contradictory classifications of the same pair."
+      ]
+    },
+    {
+      "lesson_id": "L08",
+      "lesson_number": 8,
+      "question_id": "L08-Q01",
+      "lesson_title": "Future Operating Environment - China",
+      "estimated_response_minutes": 3,
+      "question_text": "A hypothetical briefing describes the PLA’s modernization as a collection of new ships and missiles, with its announced dates treated as proof that particular wartime outcomes are inevitable. You are asked to improve that briefing using the assigned 2024 Defense Department report. Explain a more convincing connection between Beijing’s aims, its military approach and what its developing forces can actually accomplish.",
+      "target_mastery_dimensions": [
+        "L08-MD01",
+        "L08-MD02"
+      ],
+      "target_educational_objectives": [
+        "L08-EO01",
+        "L08-EO02",
+        "L08-EO03"
+      ],
+      "selection_rationale": "Integrates national aims and military strategy with capability effects and evidentiary limits using the required close reading and selected assigned review sections.",
+      "follow_up_probes": [
+        "What does a modernization deadline establish about actual combat effectiveness?",
+        "Which supporting capability changes what the ships or missiles can accomplish?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Connects the report’s assessment of national rejuvenation to PRC sovereignty, security and development interests.",
+          "Explains how military coercion or counter-intervention capabilities support those national aims.",
+          "Distinguishes the modernization milestones from guaranteed operational outcomes.",
+          "Connects capabilities from multiple services or domains to a joint operational effect described in the report.",
+          "Explains how an enabling capability, such as logistics, space support or information operations, affects the usefulness of combat platforms."
+        ],
+        "partial_evidence": [
+          "Identifies national rejuvenation but gives a weak connection to military strategy.",
+          "Lists several capabilities without explaining their joint effects.",
+          "Recognizes future goals but leaves the distinction between assessed capability and aspiration unclear."
+        ],
+        "misconceptions_or_red_flags": [
+          "Treats modernization targets as guaranteed dates for a particular conflict or victory.",
+          "Reduces PRC national strategy to Taiwan alone.",
+          "Treats inventory size as proof of operational effectiveness.",
+          "Uses figures from another annual report as if they came from the assigned 2024 edition."
+        ],
+        "insufficient_evidence_conditions": [
+          "The response is nonresponsive, fragmentary or too ambiguous to establish the targeted reasoning.",
+          "The response gives labels without explaining their relevance to the scenario.",
+          "A fair judgment would require a missing or unassigned source that this question does not require."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "L08-S02",
+          "title": "Military and Security Developments Involving the People’s Republic of China 2024",
+          "edition_or_date": "18 Dec 2024; 182 PDF pages",
+          "coursebook_page_or_section": "Coursebook PDF pp. 157-158 assign Preface and Executive Summary (report pp. V-XII) and review of Chapters 1-6, Special Topics and Appendix I; evidence: report pp. V-IX and 34",
+          "url": "https://media.defense.gov/2024/Dec/18/2003615520/-1/-1/0/MILITARY-AND-SECURITYDEVELOPMENTS-INVOLVING-THE-PEOPLES-REPUBLICOF-CHINA-2024.PDF",
+          "verification_status": "verified_exact"
+        }
+      ],
+      "validation_notes": [
+        "Mastery-dimension groupings, misconceptions and performance distinctions are draft judgments pending human SME validation.",
+        "Use only in an authorized evaluator context; do not expose the evidence guide as a student answer key.",
+        "The exact assigned 2024 edition was retrieved from the official DoD media document ID 2003615520 using an alternate filename; its 182-page extent, Preface and Executive Summary were verified. A newer annual report was not substituted.",
+        "The coursebook key-term list retains PLASSF while the report records its April 2024 dissolution and successor forces. L08-MD03 is not targeted; accept source-accurate reform descriptions if volunteered and seek SME clarification of the key terms.",
+        "The report is also duplicated in optional references; sections 4.a-4.b make it required. Assess the 2024 source account rather than present-day capability claims."
+      ]
+    },
+    {
+      "lesson_id": "L09",
+      "lesson_number": 9,
+      "question_id": "L09-Q01",
+      "lesson_title": "Operational Terms and Graphics",
+      "estimated_response_minutes": 3,
+      "question_text": "During a hypothetical map rehearsal, a draft overlay uses the same solid line for a proposed maneuver boundary and an established fire support coordination line. A briefer says both lines divide responsibility in the same way and that anything beyond the fire support coordination line needs no further attention. Explain the corrections needed for the overlay and its interpretation to communicate the commander’s plan reliably.",
+      "target_mastery_dimensions": [
+        "L09-MD02",
+        "L09-MD03"
+      ],
+      "target_educational_objectives": [
+        "L09-EO03",
+        "L09-EO04",
+        "L09-EO05",
+        "L09-EO06",
+        "L09-EO07"
+      ],
+      "selection_rationale": "Uses a single overlay-review problem to elicit control-measure purpose, status conventions and fire-support coordination reasoning without requiring inaccessible reference-sheet details.",
+      "follow_up_probes": [
+        "What information must distinguish a measure that is only planned from one already in effect?",
+        "How would a restrictive measure change the freedom to deliver fires?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Explains that control-measure graphics regulate operations by conveying the particular measure’s function and location.",
+          "Explains the general convention of dashed linear control measures for planned status and solid lines for present status.",
+          "Distinguishes a boundary’s allocation of geographic tactical responsibility from an FSCL’s delineation of coordination requirements.",
+          "Explains that attacks beyond an FSCL require timely notification of affected commanders to avoid fratricide.",
+          "Distinguishes permissive measures that expedite fires from restrictive measures that limit fires or require coordination."
+        ],
+        "partial_evidence": [
+          "Recognizes an error in the overlay but incompletely explains the status convention.",
+          "Identifies the FSCL as permissive but leaves its remaining coordination safeguards unclear.",
+          "Names permissive and restrictive measures without explaining their different effects."
+        ],
+        "misconceptions_or_red_flags": [
+          "Describes the FSCL as a boundary dividing the area of operations.",
+          "Claims that targets beyond an FSCL require no coordination or friendly-force safeguards.",
+          "Reverses permissive and restrictive fire-support effects.",
+          "Treats planned and present control-measure status as interchangeable."
+        ],
+        "insufficient_evidence_conditions": [
+          "The response is nonresponsive, fragmentary or too ambiguous to establish the targeted reasoning.",
+          "The response gives labels without explaining their relevance to the scenario.",
+          "A fair judgment would require a missing or unassigned source that this question does not require."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "L09-S01",
+          "title": "Operational Terms and Graphics",
+          "edition_or_date": "Edition not stated; assigned length 27 pages",
+          "coursebook_page_or_section": "Coursebook PDF pp. 164-171, sections 2-3; general status convention at p. 165 and FSCL at p. 168",
+          "url": "",
+          "verification_status": "embedded"
+        }
+      ],
+      "validation_notes": [
+        "Mastery-dimension groupings, misconceptions and performance distinctions are draft judgments pending human SME validation.",
+        "Use only in an authorized evaluator context; do not expose the evidence guide as a student answer key.",
+        "The separately assigned four-page Operational Terms and Graphics Reference Sheet (L09-S02) is not separately labeled in the captured PDF; its boundary and version require SME confirmation. This question relies only on the clearly embedded main reading.",
+        "The main reading cites publications of different dates and lacks its own edition statement. The embedded reading controls; no later symbology standard was substituted.",
+        "This text discussion samples conceptual use of graphics; it does not establish independent proficiency in drawing or visually recognizing every military symbol. The dashed/solid rule is assessed as a general convention, not an exception-free rule."
+      ]
+    },
+    {
+      "lesson_id": "L10",
+      "lesson_number": 10,
+      "question_id": "L10-Q01",
+      "lesson_title": "Cognitive Bias",
+      "estimated_response_minutes": 3,
+      "question_text": "A planning team has little time to review a large packet of reports. The first estimate offered becomes the benchmark for the discussion, and members set aside reports that challenge their preferred explanation. A colleague argues that experienced people should simply trust their first impressions. Diagnose the team’s reasoning using the lesson’s account of how people process information.",
+      "target_mastery_dimensions": [
+        "L10-MD02",
+        "L10-MD03"
+      ],
+      "target_educational_objectives": [
+        "L10-EO02",
+        "L10-EO03",
+        "L10-EO04"
+      ],
+      "selection_rationale": "Uses a bounded planning diagnosis to connect the two cognitive systems with representative bias mechanisms; it samples bias recognition rather than requiring an exhaustive catalogue.",
+      "follow_up_probes": [
+        "How could careful conscious reasoning still produce a poor conclusion here?",
+        "What makes the treatment of the first estimate different from the treatment of contradictory reports?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Contrasts fast, automatic System 1 judgments with slow, effortful System 2 reasoning in the team’s review.",
+          "Explains that deliberate monitoring can catch faulty intuitions but conscious reasoning can also fail.",
+          "Identifies anchoring as undue reliance on the initial estimate when considering later information.",
+          "Identifies confirmation bias as favoring evidence for the preferred explanation while discounting contrary evidence.",
+          "Connects the team’s time and information constraints to reliance on cognitive shortcuts that can produce predictable errors."
+        ],
+        "partial_evidence": [
+          "Correctly names the two systems but does not explain how monitoring can fail.",
+          "Recognizes a relevant bias but leaves its effect on the team’s decision unexplained."
+        ],
+        "misconceptions_or_red_flags": [
+          "Claims intuition is always wrong or deliberate reasoning is always correct.",
+          "Reverses the defining attributes of the two cognitive systems.",
+          "Claims experience can eliminate cognitive bias entirely."
+        ],
+        "insufficient_evidence_conditions": [
+          "The response is nonresponsive, fragmentary, or too ambiguous to establish the targeted reasoning.",
+          "The response lists terms or actions without explaining their relevance to the scenario.",
+          "A fair judgment would require content absent from the assigned embedded reading; do not infer a learner deficit from that source gap."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "L10-S01",
+          "title": "Cognitive Bias",
+          "edition_or_date": "not stated; assigned length 8 pages",
+          "coursebook_page_or_section": "Coursebook PDF pp. 181-185, sections 3-7; especially pp. 181-182 and 184.",
+          "url": "https://elearning.mcele.usmc.mil/moodle/mod/book/view.php?id=294116&chapterid=87253",
+          "verification_status": "embedded"
+        }
+      ],
+      "validation_notes": [
+        "Mastery-dimension groupings and evidence distinctions are draft judgments pending human SME validation; this file does not establish operational validation.",
+        "Use only in an authorised evaluator context; do not expose the evidence guide as a student answer key.",
+        "L10-S01 is fully available as an embedded assigned reading; its compilation date is unstated and its cited works span multiple dates. No live Moodle access or supplemental reading is required.",
+        "L10-MD03 is sampled through anchoring, confirmation bias, and constrained processing; exhaustive bias categories are outside this short conversation."
+      ]
+    },
+    {
+      "lesson_id": "L11",
+      "lesson_number": 11,
+      "question_id": "L11-Q01",
+      "lesson_title": "Accessing Doctrine",
+      "estimated_response_minutes": 3,
+      "question_text": "A Marine joins a joint planning staff preparing a logistics plan. The staff needs a shared basis for its work, while a Marine detachment also needs guidance for performing a specific task. One planner proposes treating every passage in every publication as an unchangeable checklist. Explain a defensible way to select and apply the relevant joint and Marine Corps publications described in the assigned reading.",
+      "target_mastery_dimensions": [
+        "L11-MD01",
+        "L11-MD03"
+      ],
+      "target_educational_objectives": [
+        "L11-EO01",
+        "L11-EO02",
+        "L11-EO06"
+      ],
+      "selection_rationale": "Connects finding the appropriate doctrinal family to judgment in application, while excluding the unresolved Army architecture and edition conflict.",
+      "follow_up_probes": [
+        "What would make a detailed passage require exact adherence rather than adaptation?",
+        "How would the purpose of an MCTP differ from that of its parent MCWP?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Explains that joint doctrine supplies common principles for coordinated employment across Services.",
+          "Selects the joint 4-0 series for the logistics problem on the basis of its subject matter.",
+          "Explains that authoritative doctrine guides judgment rather than replacing it with a universal checklist.",
+          "Uses the distinction between overarching MCWP guidance and more focused MCTP or MCRP content to locate task-relevant Marine guidance.",
+          "Distinguishes prescriptive procedures from tactics or techniques that require judgment in application."
+        ],
+        "partial_evidence": [
+          "Locates a plausible publication family but provides little explanation of why its scope fits.",
+          "Recognizes a need for judgment but does not distinguish doctrinal guidance from prescribed task steps."
+        ],
+        "misconceptions_or_red_flags": [
+          "Treats all doctrine as mandatory step-by-step procedure.",
+          "Treats all tactics, techniques, and procedures as interchangeable in their degree of prescription.",
+          "Assigns logistics content to the wrong joint subject series.",
+          "Treats an MCRP as a repository of individual training standards."
+        ],
+        "insufficient_evidence_conditions": [
+          "The response is nonresponsive, fragmentary, or too ambiguous to establish the targeted reasoning.",
+          "The response lists terms or actions without explaining their relevance to the scenario.",
+          "A fair judgment would require content absent from the assigned embedded reading; do not infer a learner deficit from that source gap."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "L11-S01",
+          "title": "Accessing Doctrine",
+          "edition_or_date": "not stated; assigned length 7 pages",
+          "coursebook_page_or_section": "Coursebook PDF pp. 191-192, section 3.a; pp. 194-195, section 3.g and section 4.",
+          "url": "https://elearning.mcele.usmc.mil/moodle/mod/book/view.php?id=294116&chapterid=87255",
+          "verification_status": "embedded"
+        }
+      ],
+      "validation_notes": [
+        "Mastery-dimension groupings and evidence distinctions are draft judgments pending human SME validation; this file does not establish operational validation.",
+        "Use only in an authorised evaluator context; do not expose the evidence guide as a student answer key.",
+        "L11 remains needs_sme_resolution. Preparation cites ADP 1-01 (Jul 2019), but the embedded reference cites Jul 2014; L11-MD02 and L11-EO03 through L11-EO05 are excluded.",
+        "Assesses the joint and Marine structures as presented in the assigned corpus; it does not certify that linked repositories or example publication editions are currently authoritative.",
+        "Samples hierarchy and prescription distinctions; full designator lists, numbering rules, and review-cycle recall are outside this short conversation."
+      ]
+    },
+    {
+      "lesson_id": "L12",
+      "lesson_number": 12,
+      "question_id": "L12-Q01",
+      "lesson_title": "Human Performance",
+      "estimated_response_minutes": 3,
+      "question_text": "A unit preparing for a demanding field exercise plans to double its training workload immediately. To save time, the schedule omits preparation at the start of each session, shortens recovery between sessions, and leaves meals and drinks to chance. Leaders want Marines ready to perform again the next day. Explain the changes you would prioritize using the assigned reading’s approach to sustained performance.",
+      "target_mastery_dimensions": [
+        "L12-MD04",
+        "L12-MD05"
+      ],
+      "target_educational_objectives": [
+        "L12-EO07",
+        "L12-EO08"
+      ],
+      "selection_rationale": "Integrates the prevention and fueling decisions that make repeated mission performance possible, without requiring a full exercise prescription or memorized nutrition quantities.",
+      "follow_up_probes": [
+        "Why might the next day’s performance depend on what happens after today’s session?",
+        "What features of the exercise would change the unit’s fluid planning?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Recommends increasing workload gradually in relation to training status instead of making an abrupt jump.",
+          "Explains how a dynamic warm-up prepares task-relevant movement and reduces injury risk before demanding activity.",
+          "Relates planned food intake before and during sustained work to the energy being expended.",
+          "Explains that post-activity refueling supports recovery needed for the next performance demand.",
+          "Explains that fluid needs vary with the individual, activity demands, and environment rather than one fixed amount for everyone."
+        ],
+        "partial_evidence": [
+          "Recommends sensible preparation and recovery but does not explain their contribution to repeated performance.",
+          "Mentions food and water without connecting timing or requirements to the planned work."
+        ],
+        "misconceptions_or_red_flags": [
+          "Recommends abrupt workload increases regardless of the Marine’s training status.",
+          "Claims a single practice such as stretching guarantees injury prevention.",
+          "Treats identical fluid quantities as sufficient for every person and environment.",
+          "Treats rest or refueling as dispensable when another demanding session is planned.",
+          "Presents the course’s illustrative nutrition quantities as individualized medical prescriptions."
+        ],
+        "insufficient_evidence_conditions": [
+          "The response is nonresponsive, fragmentary, or too ambiguous to establish the targeted reasoning.",
+          "The response lists terms or actions without explaining their relevance to the scenario.",
+          "A fair judgment would require content absent from the assigned embedded reading; do not infer a learner deficit from that source gap."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "L12-S01",
+          "title": "Human Performance",
+          "edition_or_date": "not stated; assigned length 12 pages",
+          "coursebook_page_or_section": "Coursebook PDF pp. 197-200, sections 1.a-1.c; pp. 202-204, section 2.",
+          "url": "https://elearning.mcele.usmc.mil/moodle/mod/book/view.php?id=294116&chapterid=87257",
+          "verification_status": "embedded"
+        }
+      ],
+      "validation_notes": [
+        "Mastery-dimension groupings and evidence distinctions are draft judgments pending human SME validation; this file does not establish operational validation.",
+        "Use only in an authorised evaluator context; do not expose the evidence guide as a student answer key.",
+        "L12-S01 compilation date is unstated and references 2019 and 2010 material; assessment is restricted to the embedded course principles, without individual medical or nutritional prescriptions.",
+        "Source discrepancy: L12-MD01 lists carry among the foundational movements, but coursebook p. 199 lists Plank. L12-MD01 is not targeted; an SME should reconcile the rubric with the coursebook.",
+        "The question samples L12-MD04 through progression and preparation; it does not require an exhaustive prevention checklist or all workout phases."
+      ]
+    },
+    {
+      "lesson_id": "L13",
+      "lesson_number": 13,
+      "question_id": "L13-Q01",
+      "lesson_title": "Sexual Harassment and Assault Awareness and Prevention",
+      "estimated_response_minutes": 3,
+      "question_text": "In a fictional unit, anonymous climate feedback says demeaning comments are often brushed aside and some Marines fear career consequences if they raise concerns. A supervisor proposes another annual briefing and waiting for a formal complaint before doing more. Using only this fictional scenario and the assigned reading, explain the leadership approach you would recommend to improve prevention in this unit.",
+      "target_mastery_dimensions": [
+        "L13-MD04"
+      ],
+      "target_educational_objectives": [
+        "L13-EO06"
+      ],
+      "selection_rationale": "Focuses on the lesson’s central transfer task: sustained leader action that creates a protective command climate. This coherent scenario avoids unsupported trend claims and the missing Watch List table.",
+      "follow_up_probes": [
+        "How would you determine whether the unit’s climate is improving?",
+        "What responsibility remains with leaders when they seek help from specialists?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Recommends routine direct engagement and active listening to understand how Marines experience the climate.",
+          "Explains why inappropriate conduct should receive timely correction before it escalates.",
+          "Explains how taking concerns seriously without reprisal builds confidence in reporting.",
+          "Uses continued climate assessment to adapt prevention efforts to the unit’s needs.",
+          "Keeps leaders accountable for prevention while drawing on relevant expert assistance when the appropriate response is uncertain."
+        ],
+        "partial_evidence": [
+          "Suggests reasonable climate improvements but relies mainly on a one-time briefing.",
+          "Supports taking complaints seriously but gives little explanation of ongoing assessment or leader responsibility."
+        ],
+        "misconceptions_or_red_flags": [
+          "Treats a zero-tolerance statement or annual briefing alone as sufficient prevention.",
+          "Recommends waiting for escalation before addressing harmful conduct.",
+          "Dismisses concerns or supports adverse consequences for raising them.",
+          "Delegates all prevention responsibility away from unit leaders.",
+          "Blames a person for experiencing harassment or assault."
+        ],
+        "insufficient_evidence_conditions": [
+          "The response is nonresponsive, fragmentary, or too ambiguous to establish the targeted reasoning.",
+          "The response lists terms or actions without explaining their relevance to the scenario.",
+          "A fair judgment would require content absent from the assigned embedded reading; do not infer a learner deficit from that source gap.",
+          "The assessment cannot establish scenario reasoning without further clarification; personal experiences must never be requested or required as evidence."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "L13-S01",
+          "title": "Sexual Harassment and Assault Awareness and Prevention",
+          "edition_or_date": "not stated; assigned length 19 pages",
+          "coursebook_page_or_section": "Coursebook PDF pp. 212-214, section 5.a-5.b; p. 216, section 5.d.",
+          "url": "https://elearning.mcele.usmc.mil/moodle/mod/book/view.php?id=294116&chapterid=87259",
+          "verification_status": "embedded"
+        }
+      ],
+      "validation_notes": [
+        "Mastery-dimension groupings and evidence distinctions are draft judgments pending human SME validation; this file does not establish operational validation.",
+        "Use only in an authorised evaluator context; do not expose the evidence guide as a student answer key.",
+        "L13 remains needs_sme_resolution. Excludes L13-MD01/L13-EO01 because the embedded trends end in 2018 and the intended meaning of recent is unresolved.",
+        "Excludes L13-MD03 and L13-EO05 because Table 1, Signals of Risk for Sexual Assault, is missing on PDF pp. 215-216; no named Watch List signals are inferred. EO04 risk-factor content is available but is outside the selected leadership-action scope.",
+        "The fictional scenario is professional and non-graphic; the evaluator must not request personal disclosures or treat a learner’s refusal to disclose as missing evidence.",
+        "Only unit-level leadership principles in the embedded reading are assessed; current legal procedures, reporting eligibility, and policy revisions are outside the question."
+      ]
+    }
+  ],
+  "source_gaps": [
+    {
+      "lesson_id": "L01",
+      "source": "L01-MD03; ISS-L01-01",
+      "impact": "Institutional responsibility beyond the three roles named in EO04 remains an SME scope question and is not required evidence.",
+      "recommended_human_action": "Confirm the intended institutional-role scope before expanding L01 assessment."
+    },
+    {
+      "lesson_id": "L02",
+      "source": "L02-S03; L02-S11",
+      "impact": "Required NSS date differs between coursebook (4 December 2025) and official document (November 2025); optional CJCSM date also conflicts. Selected question uses embedded levels-of-war content only.",
+      "recommended_human_action": "Confirm intended NSS edition/date and correct the optional reference date."
+    },
+    {
+      "lesson_id": "L03",
+      "source": "L03-S02; coursebook PDF pp. 23-24; upstream strategy-version issues",
+      "impact": "Rubric reports supersession of the assigned 2022 strategy. The question explicitly tests its historical response framework and adds no current-policy requirements.",
+      "recommended_human_action": "Curriculum owner must confirm the AY27 policy baseline before operational release."
+    },
+    {
+      "lesson_id": "L03",
+      "source": "L03-S04, 2025 Interim National Defense Guidance, 1 May 2025, six slides",
+      "impact": "Exact assigned slide set remains unavailable. Its content is excluded; no budget briefing or one-page memorandum is substituted.",
+      "recommended_human_action": "Supply the exact six-slide reading or formally revise the assigned corpus before assessing it."
+    },
+    {
+      "lesson_id": "L04",
+      "source": "L04-S02; ISS-L04-01 and ISS-L04-02",
+      "impact": "No blocking gap for selected evidence. Coursebook p. 27 explains statutory Defense terminology under the War lesson title; reading continues onto p. 67. Naming changes and Coast Guard coverage are not tested.",
+      "recommended_human_action": "SME/editor should retain or resolve the title convention and verify complete reading pagination before release."
+    },
+    {
+      "lesson_id": "L05",
+      "source": "L05-S02; ISS-L05-01 and ISS-L05-02",
+      "impact": "Conflicting Commandant ordinal and time-sensitive force data are excluded from evidence requirements; organizational examples are evaluated only within the assigned reading.",
+      "recommended_human_action": "Correct the Commandant reference and validate current inventories, assignments, and organizational examples if contemporary recall is desired."
+    },
+    {
+      "lesson_id": "L06",
+      "source": "L06-S02; ISS-L06-01; L06-MD02",
+      "impact": "Assigned doctrine edition alignment remains an SME question. Rubric support-relationship language is not required because the verified prose instead develops COCOM, OPCON, TACON, and ADCON.",
+      "recommended_human_action": "Confirm intended doctrine editions and reconcile the rubric command-relationship list with the exact assigned content before operational use."
+    },
+    {
+      "lesson_id": "L07",
+      "source": "L07-S02, required embedded Russia reading",
+      "impact": "Mixed-date projections and force structures remain unresolved; question excludes current inventories, force organization and battlefield forecasts (L07-MD04/MD05).",
+      "recommended_human_action": "SME should identify controlling dates and revise stale content or scoring anchors before operational use."
+    },
+    {
+      "lesson_id": "L07",
+      "source": "L07-S02, coursebook section 3 versus draft L07-MD02",
+      "impact": "Rubric overlap wording can exceed the embedded highest-activity bilateral model; question assesses different actor pairs instead.",
+      "recommended_human_action": "SME should reconcile the rubric with coursebook p. 132 and provide a paragraph-level citation map for the compiled reading."
+    },
+    {
+      "lesson_id": "L08",
+      "source": "L08-S01 key terms versus L08-S02 2024 report",
+      "impact": "PLASSF key term conflicts with assigned report’s April 2024 organizational update; organization dimension is not targeted.",
+      "recommended_human_action": "Clarify former and successor force terminology; retain the assigned 2024 report and do not penalize source-accurate answers."
+    },
+    {
+      "lesson_id": "L09",
+      "source": "L09-S01 and L09-S02",
+      "impact": "Main reading edition is unstated and separately assigned reference sheet boundaries are uncertain; assessment uses only clearly embedded main-reading sections.",
+      "recommended_human_action": "Confirm the edition and the separate four-page reference sheet’s exact content before expanding assessment coverage."
+    },
+    {
+      "lesson_id": "L10",
+      "source": "L10-S01, Cognitive Bias",
+      "impact": "Compilation date is unspecified; embedded assigned content supports the question without establishing an exact external edition.",
+      "recommended_human_action": "Confirm the lesson compilation version during SME review; retain embedded content as the assessment boundary."
+    },
+    {
+      "lesson_id": "L11",
+      "source": "L11-S01, Accessing Doctrine; ADP 1-01 references",
+      "impact": "Jul 2019/Jul 2014 conflict and Army hierarchy currency remain unresolved. L11-MD02 is excluded.",
+      "recommended_human_action": "Resolve the intended ADP edition and validate the embedded Army architecture before assessing L11-MD02."
+    },
+    {
+      "lesson_id": "L12",
+      "source": "L12-S01, Human Performance",
+      "impact": "Compilation version is uncertain and references 2019 and 2010 materials. No individualized prescriptions are assessed.",
+      "recommended_human_action": "Confirm the assigned edition and review nutrition/training statements before operational use."
+    },
+    {
+      "lesson_id": "L12",
+      "source": "L12-MD01 versus coursebook PDF p. 199",
+      "impact": "Rubric lists carry, while authoritative seven-movement list includes Plank. The dimension is excluded from this question.",
+      "recommended_human_action": "Correct or explain the rubric discrepancy against the coursebook before using the foundational-movement list for assessment."
+    },
+    {
+      "lesson_id": "L13",
+      "source": "L13-S01, trends and Table 1",
+      "impact": "Trends end in 2018 and the intended recent period is undefined; Table 1 is missing. L13-MD01 and L13-MD03 are excluded.",
+      "recommended_human_action": "Supply the intended table and resolve the trend time window; verify the intended compilation/version during SME review."
+    },
+    {
+      "lesson_id": "L11",
+      "source": "I-L11-02, doctrine portals",
+      "impact": "Live access to restricted doctrine repositories is not verified; no learner login or retrieval is required by this question.",
+      "recommended_human_action": "Confirm learner access if adding a practical retrieval assessment."
+    }
+  ],
+  "coverage_audit": {
+    "lessons_requested": 13,
+    "lessons_with_questions": 13,
+    "lessons_blocked": 0,
+    "dimension_coverage": {
+      "L01": {
+        "targeted_dimensions": [
+          "L01-MD01",
+          "L01-MD03"
+        ],
+        "untargeted_dimensions": [
+          "L01-MD02",
+          "L01-MD04"
+        ],
+        "targeted_objectives": [
+          "L01-EO01",
+          "L01-EO02",
+          "L01-EO04"
+        ],
+        "untargeted_objectives": [
+          "L01-EO03",
+          "L01-EO05",
+          "L01-EO06"
+        ],
+        "scope": "Selected evidence within the named dimensions; not a comprehensive assessment of every dimension or objective.",
+        "upstream_lesson_validation_status": "ready_for_review"
+      },
+      "L02": {
+        "targeted_dimensions": [
+          "L02-MD04"
+        ],
+        "untargeted_dimensions": [
+          "L02-MD01",
+          "L02-MD02",
+          "L02-MD03",
+          "L02-MD05"
+        ],
+        "targeted_objectives": [
+          "L02-EO09"
+        ],
+        "untargeted_objectives": [
+          "L02-EO01",
+          "L02-EO02",
+          "L02-EO03",
+          "L02-EO04",
+          "L02-EO05",
+          "L02-EO06",
+          "L02-EO07",
+          "L02-EO08",
+          "L02-EO10",
+          "L02-EO11",
+          "L02-EO12",
+          "L02-EO13",
+          "L02-EO14"
+        ],
+        "scope": "Selected evidence within the named dimensions; not a comprehensive assessment of every dimension or objective.",
+        "upstream_lesson_validation_status": "ready_for_review"
+      },
+      "L03": {
+        "targeted_dimensions": [
+          "L03-MD03"
+        ],
+        "untargeted_dimensions": [
+          "L03-MD01",
+          "L03-MD02",
+          "L03-MD04"
+        ],
+        "targeted_objectives": [
+          "L03-EO05"
+        ],
+        "untargeted_objectives": [
+          "L03-EO01",
+          "L03-EO02",
+          "L03-EO03",
+          "L03-EO04",
+          "L03-EO06",
+          "L03-EO07"
+        ],
+        "scope": "Selected evidence within the named dimensions; not a comprehensive assessment of every dimension or objective.",
+        "upstream_lesson_validation_status": "needs_sme_resolution"
+      },
+      "L04": {
+        "targeted_dimensions": [
+          "L04-MD01",
+          "L04-MD02"
+        ],
+        "untargeted_dimensions": [
+          "L04-MD03",
+          "L04-MD04",
+          "L04-MD05"
+        ],
+        "targeted_objectives": [
+          "L04-EO01",
+          "L04-EO02",
+          "L04-EO03",
+          "L04-EO05",
+          "L04-EO06"
+        ],
+        "untargeted_objectives": [
+          "L04-EO04",
+          "L04-EO07",
+          "L04-EO08",
+          "L04-EO09",
+          "L04-EO10",
+          "L04-EO11",
+          "L04-EO12",
+          "L04-EO13",
+          "L04-EO14"
+        ],
+        "scope": "Selected evidence within the named dimensions; not a comprehensive assessment of every dimension or objective.",
+        "upstream_lesson_validation_status": "ready_for_review"
+      },
+      "L05": {
+        "targeted_dimensions": [
+          "L05-MD04",
+          "L05-MD05"
+        ],
+        "untargeted_dimensions": [
+          "L05-MD01",
+          "L05-MD02",
+          "L05-MD03"
+        ],
+        "targeted_objectives": [
+          "L05-EO10",
+          "L05-EO11",
+          "L05-EO12",
+          "L05-EO17",
+          "L05-EO18"
+        ],
+        "untargeted_objectives": [
+          "L05-EO01",
+          "L05-EO02",
+          "L05-EO03",
+          "L05-EO04",
+          "L05-EO05",
+          "L05-EO06",
+          "L05-EO07",
+          "L05-EO08",
+          "L05-EO09",
+          "L05-EO13",
+          "L05-EO14",
+          "L05-EO15",
+          "L05-EO16"
+        ],
+        "scope": "Selected evidence within the named dimensions; not a comprehensive assessment of every dimension or objective.",
+        "upstream_lesson_validation_status": "ready_for_review"
+      },
+      "L06": {
+        "targeted_dimensions": [
+          "L06-MD02",
+          "L06-MD04"
+        ],
+        "untargeted_dimensions": [
+          "L06-MD01",
+          "L06-MD03"
+        ],
+        "targeted_objectives": [
+          "L06-EO04",
+          "L06-EO06",
+          "L06-EO09",
+          "L06-EO10"
+        ],
+        "untargeted_objectives": [
+          "L06-EO01",
+          "L06-EO02",
+          "L06-EO03",
+          "L06-EO05",
+          "L06-EO07",
+          "L06-EO08"
+        ],
+        "scope": "Selected evidence within the named dimensions; not a comprehensive assessment of every dimension or objective.",
+        "upstream_lesson_validation_status": "ready_for_review"
+      },
+      "L07": {
+        "targeted_dimensions": [
+          "L07-MD02",
+          "L07-MD03"
+        ],
+        "untargeted_dimensions": [
+          "L07-MD01",
+          "L07-MD04",
+          "L07-MD05"
+        ],
+        "targeted_objectives": [
+          "L07-EO03",
+          "L07-EO04",
+          "L07-EO05"
+        ],
+        "untargeted_objectives": [
+          "L07-EO01",
+          "L07-EO02",
+          "L07-EO06",
+          "L07-EO07"
+        ],
+        "scope": "Selected evidence within the named dimensions; not a comprehensive assessment of every dimension or objective.",
+        "upstream_lesson_validation_status": "needs_sme_resolution"
+      },
+      "L08": {
+        "targeted_dimensions": [
+          "L08-MD01",
+          "L08-MD02"
+        ],
+        "untargeted_dimensions": [
+          "L08-MD03"
+        ],
+        "targeted_objectives": [
+          "L08-EO01",
+          "L08-EO02",
+          "L08-EO03"
+        ],
+        "untargeted_objectives": [
+          "L08-EO04"
+        ],
+        "scope": "Selected evidence within the named dimensions; not a comprehensive assessment of every dimension or objective.",
+        "upstream_lesson_validation_status": "ready_for_review"
+      },
+      "L09": {
+        "targeted_dimensions": [
+          "L09-MD02",
+          "L09-MD03"
+        ],
+        "untargeted_dimensions": [
+          "L09-MD01",
+          "L09-MD04"
+        ],
+        "targeted_objectives": [
+          "L09-EO03",
+          "L09-EO04",
+          "L09-EO05",
+          "L09-EO06",
+          "L09-EO07"
+        ],
+        "untargeted_objectives": [
+          "L09-EO01",
+          "L09-EO02",
+          "L09-EO08",
+          "L09-EO09"
+        ],
+        "scope": "Selected evidence within the named dimensions; not a comprehensive assessment of every dimension or objective.",
+        "upstream_lesson_validation_status": "ready_for_review"
+      },
+      "L10": {
+        "targeted_dimensions": [
+          "L10-MD02",
+          "L10-MD03"
+        ],
+        "untargeted_dimensions": [
+          "L10-MD01"
+        ],
+        "targeted_objectives": [
+          "L10-EO02",
+          "L10-EO03",
+          "L10-EO04"
+        ],
+        "untargeted_objectives": [
+          "L10-EO01"
+        ],
+        "scope": "Selected evidence within the named dimensions; not a comprehensive assessment of every dimension or objective.",
+        "upstream_lesson_validation_status": "ready_for_review"
+      },
+      "L11": {
+        "targeted_dimensions": [
+          "L11-MD01",
+          "L11-MD03"
+        ],
+        "untargeted_dimensions": [
+          "L11-MD02"
+        ],
+        "targeted_objectives": [
+          "L11-EO01",
+          "L11-EO02",
+          "L11-EO06"
+        ],
+        "untargeted_objectives": [
+          "L11-EO03",
+          "L11-EO04",
+          "L11-EO05"
+        ],
+        "scope": "Selected evidence within the named dimensions; not a comprehensive assessment of every dimension or objective.",
+        "upstream_lesson_validation_status": "needs_sme_resolution"
+      },
+      "L12": {
+        "targeted_dimensions": [
+          "L12-MD04",
+          "L12-MD05"
+        ],
+        "untargeted_dimensions": [
+          "L12-MD01",
+          "L12-MD02",
+          "L12-MD03"
+        ],
+        "targeted_objectives": [
+          "L12-EO07",
+          "L12-EO08"
+        ],
+        "untargeted_objectives": [
+          "L12-EO01",
+          "L12-EO02",
+          "L12-EO03",
+          "L12-EO04",
+          "L12-EO05",
+          "L12-EO06"
+        ],
+        "scope": "Selected evidence within the named dimensions; not a comprehensive assessment of every dimension or objective.",
+        "upstream_lesson_validation_status": "ready_for_review"
+      },
+      "L13": {
+        "targeted_dimensions": [
+          "L13-MD04"
+        ],
+        "untargeted_dimensions": [
+          "L13-MD01",
+          "L13-MD02",
+          "L13-MD03"
+        ],
+        "targeted_objectives": [
+          "L13-EO06"
+        ],
+        "untargeted_objectives": [
+          "L13-EO01",
+          "L13-EO02",
+          "L13-EO03",
+          "L13-EO04",
+          "L13-EO05"
+        ],
+        "scope": "Selected evidence within the named dimensions; not a comprehensive assessment of every dimension or objective.",
+        "upstream_lesson_validation_status": "needs_sme_resolution"
+      }
+    },
+    "warnings": [
+      "All questions and evaluator judgments remain draft pending human SME review; generation complete means thirteen records are supplied, not operational approval.",
+      "Questions assess selected dimensions in short conversations; full-lesson mastery must not be inferred from sampled coverage.",
+      "L03, L07, L11 and L13 retain upstream needs_sme_resolution status; disputed or missing content is excluded.",
+      "Additional rubric/coursebook alignment issues identified for L06 command relationships, L07 bilateral competition conditions, and L12 foundational movement names are recorded in source_gaps.",
+      "No live Moodle import, evaluator conversation, or operational scoring validation has been performed."
+    ]
+  },
+  "upstream_source_gaps": [
+    {
+      "source_id": "L02-S03",
+      "lesson_id": "L02",
+      "status": "externally_retrieved_version_uncertain",
+      "gap": "Title and 33-page extent align, but the official PDF is labeled November 2025 while the coursebook gives 4 Dec 2025, likely a release-date/document-date distinction requiring confirmation."
+    },
+    {
+      "source_id": "L03-S02",
+      "lesson_id": "L03",
+      "status": "externally_retrieved_superseded",
+      "gap": "Exact named 2022 integrated NDS/NPR/MDR file retrieved. The NDS portion aligns to the coursebook, but the strategy was superseded by the official 2026 NDS."
+    },
+    {
+      "source_id": "L03-S04",
+      "lesson_id": "L03",
+      "status": "missing_or_inaccessible",
+      "gap": "No exact public six-slide file was located. An official FY2026 budget briefing contains summary slides but was not substituted because it does not match the named title and extent."
+    },
+    {
+      "source_id": "L09-S01",
+      "lesson_id": "L09",
+      "status": "embedded; linked Moodle page may require authorization",
+      "gap": "version_uncertain; embedded reading cites MIL-STD-2525D (10 Jun 2014), FM 1-02.1 (28 Feb 2024), FM 1-02.2 (13 Aug 2025), MCDP 1-0 changes 1-3 (29 Mar 2019), and MCTP 3-10F (4 Apr 2018)"
+    },
+    {
+      "source_id": "L09-S02",
+      "lesson_id": "L09",
+      "status": "embedded/linked; portal copy may require authorization",
+      "gap": "version_uncertain and boundary_uncertain"
+    },
+    {
+      "source_id": "L10-S01",
+      "lesson_id": "L10",
+      "status": "embedded; linked Moodle page may require authorization",
+      "gap": "version_uncertain; synthesis cites works dated 2011, 2015, 2019, and 2015"
+    },
+    {
+      "source_id": "L12-S01",
+      "lesson_id": "L12",
+      "status": "embedded; linked Moodle page may require authorization",
+      "gap": "version_uncertain; references 2019 Force Fitness Instructor Course material and a 2010 article"
+    },
+    {
+      "source_id": "L13-S01",
+      "lesson_id": "L13",
+      "status": "embedded; linked Moodle page may require authorization",
+      "gap": "version_uncertain; reading foregrounds a June 2021 RAND report and May 2022 Commander’s Smart Pack, and trend data end in 2018"
+    }
+  ],
+  "upstream_issues_for_sme_review": [
+    {
+      "issue_id": "ISSUE-L03-001",
+      "lesson_id": "ALL",
+      "severity": "critical",
+      "category": "superseded_required_source",
+      "description": "The coursebook created 9 Sep 2026 states the 2025 NDS was not released and the 2022 NDS remains in effect, but the official 2026 NDS is dated 23 Jan 2026. Human curriculum owners must determine the intended AY27 policy baseline.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISSUE-L03-002",
+      "lesson_id": "ALL",
+      "severity": "high",
+      "category": "missing_required_source",
+      "description": "The exact six-slide 2025 Interim National Defense Guidance dated 1 May 2025 was not publicly retrievable. Upload or authorize it; do not substitute FY2026 budget slides without approval.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISSUE-L02-001",
+      "lesson_id": "ALL",
+      "severity": "medium",
+      "category": "date_alignment",
+      "description": "The official 33-page 2025 NSS is labeled November 2025, while the coursebook names 4 Dec 2025. Confirm whether the coursebook date is the release date for the same edition.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISSUE-L02-002",
+      "lesson_id": "ALL",
+      "severity": "low",
+      "category": "supplemental_version_conflict",
+      "description": "CJCSM 3105.01B is dated 22 Dec 2023 in the optional list and 22 Dec 2022 in the embedded reading reference list.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISS-L01-01",
+      "lesson_id": "L01",
+      "severity": "medium",
+      "category": "sme_validation",
+      "description": "Confirm whether the rubric should explicitly score the Marine Corps institutional role even though L01-EO04 names only individual Marines, instructors, and leaders.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISS-L02-01",
+      "lesson_id": "L02",
+      "severity": "medium",
+      "category": "sme_validation",
+      "description": "Resolve the CJCSM 3105.01B date conflict: 22 Dec 2023 in the supplemental list versus 22 Dec 2022 in the embedded reading references.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISS-L02-02",
+      "lesson_id": "L02",
+      "severity": "medium",
+      "category": "sme_validation",
+      "description": "Confirm that the official NSS's November 2025 document date is the intended source despite the coursebook's 4 Dec 2025 date.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISS-L03-01",
+      "lesson_id": "L03",
+      "severity": "medium",
+      "category": "sme_validation",
+      "description": "Critical version conflict: the coursebook was created 9 Sep 2026 yet says the 2025 NDS was not released and the 2022 NDS remains in effect; an official 2026 NDS dated 23 Jan 2026 is publicly available.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISS-L03-02",
+      "lesson_id": "L03",
+      "severity": "medium",
+      "category": "sme_validation",
+      "description": "Upload or authorize the exact six-slide '2025 Interim National Defense Guidance' dated 1 May 2025. The official 2025 memorandum references interim strategic guidance but does not contain the six slides.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISS-L03-03",
+      "lesson_id": "L03",
+      "severity": "medium",
+      "category": "sme_validation",
+      "description": "Decide whether AY27 learners should be assessed on the assigned 2022 framework, the current 2026 NDS, or an explicit comparison. The draft descriptors currently assess only the named required 2022 framework and flag its supersession.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISS-L04-01",
+      "lesson_id": "L04",
+      "severity": "medium",
+      "category": "sme_validation",
+      "description": "Confirm whether the official lesson title 'Department of War' is intended to coexist with statutory Department of Defense terminology throughout the assigned embedded reading.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISS-L04-02",
+      "lesson_id": "L04",
+      "severity": "medium",
+      "category": "sme_validation",
+      "description": "The Lesson 4 reading continues onto coursebook PDF p. 67 before Lesson 5 begins; ensure page-range metadata does not truncate L04-EO14 support.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISS-L05-01",
+      "lesson_id": "L05",
+      "severity": "medium",
+      "category": "source_internal_inconsistency",
+      "description": "Lesson 5 labels the August 2024 item as the 39th Commandant’s Planning Guidance in preparation but calls it the 38th Commandant in the embedded reading references while naming General Eric M. Smith.",
+      "evidence_citation": "SRC-CB, PDF pp. 69; Lesson 5 section 4.c and reading references",
+      "required_action": "SME/editor should correct the ordinal/title in the coursebook and confirm the intended document.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISS-L05-02",
+      "lesson_id": "L05",
+      "severity": "medium",
+      "category": "time_sensitive_content",
+      "description": "The embedded reading contains force structure, platform inventory, deployment-cycle, and organization statements drawn from references dated 2017-2025.",
+      "evidence_citation": "SRC-CB, PDF pp. 69-111; Lesson 5 Reading",
+      "required_action": "SME should validate fleet assignments, platform status, force counts, and group composition before operational use; update the embedded reading if current recall is expected.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISS-L06-01",
+      "lesson_id": "L06",
+      "severity": "medium",
+      "category": "edition_alignment",
+      "description": "The embedded joint-operations reading cites JP 3-0 (22 Oct 2018), JP 3-33 (31 Jan 2018), MCWP 7-10 (4 Apr 2018), and 2019 planning guidance.",
+      "evidence_citation": "SRC-CB, PDF pp. 112; Lesson 6 preparation and reading references",
+      "required_action": "SME should confirm that AY27 intends these editions and reconcile any superseding doctrine before operational scoring.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISS-L07-01",
+      "lesson_id": "L07",
+      "severity": "high",
+      "category": "stale_or_conflicted_content",
+      "description": "The required Russia reading combines older projections and force descriptions with a 2025 threat-assessment passage. Examples include forecasts framed around 2019-2021 and pre-/early-war force structures.",
+      "evidence_citation": "SRC-CB, PDF pp. 127-157; Lesson 7 Reading, especially sections 5.c-5.j",
+      "required_action": "SME should identify which facts learners are expected to reproduce versus which require an updated Russia source; revise the reading or scoring anchors accordingly.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISS-L07-02",
+      "lesson_id": "L07",
+      "severity": "medium",
+      "category": "source_traceability",
+      "description": "The embedded Lesson 7 reading synthesizes multiple references but does not provide granular citations for every paragraph or data point.",
+      "evidence_citation": "SRC-CB, PDF pp. 127; Lesson 7 Reading, references; SRC-CB, PDF pp. 127-157; Lesson 7 Reading",
+      "required_action": "Retain coursebook section citations for draft scoring and ask the SME/editor for the source-authored lesson file or citation map if claim-level validation is required.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISS-L08-01",
+      "lesson_id": "L08",
+      "severity": "low",
+      "category": "version_alignment",
+      "description": "The exact required 18 Dec 2024 DoD report was publicly located and matches the coursebook. A 2025 annual report also exists but was not substituted.",
+      "evidence_citation": "SRC-CB, PDF pp. 157-158; Lesson 8, sections 4.a-4.c; L08-S02, official DoD 2024 report",
+      "required_action": "Score against the 2024 assigned edition unless the course owner formally changes the requirement.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISS-L08-02",
+      "lesson_id": "L08",
+      "severity": "medium",
+      "category": "coursebook_key_term_mismatch",
+      "description": "Lesson 8 key terms include the PLA Strategic Support Force, while the assigned 2024 report discusses its April 2024 dissolution and successor information-support, aerospace, and cyberspace forces.",
+      "evidence_citation": "SRC-CB, PDF pp. 157; Lesson 8, section 3, Key Terms; L08-S02, Executive Summary and Chapter 2, report pp. VII-VIII, 67-72",
+      "required_action": "SME should clarify whether learners must know both the former PLASSF and the post-April 2024 structure; do not penalize a source-accurate answer.",
+      "status": "open"
+    },
+    {
+      "issue_id": "ISS-L08-03",
+      "lesson_id": "L08",
+      "severity": "low",
+      "category": "duplicate_source_listing",
+      "description": "The 2024 DoD China report is both the required reading/review and the last supplemental reference.",
+      "evidence_citation": "SRC-CB, PDF pp. 157-158; Lesson 8, section 4",
+      "required_action": "Treat it as required under sections 4.a-4.b and flag the supplemental entry as a duplicate, as done in this fragment.",
+      "status": "open"
+    },
+    {
+      "issue_id": "I-L09-01",
+      "lesson_id": "L09",
+      "severity": "medium",
+      "category": "sme_validation",
+      "description": "The separately assigned four-page Operational Terms and Graphics Reference Sheet is not visibly labeled as a separate artifact in the captured PDF; confirm its page/content boundary.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "I-L10-01",
+      "lesson_id": "L10",
+      "severity": "low",
+      "category": "sme_validation",
+      "description": "Correct or intentionally retain the source typo 'Identity' in EO04; define which bias types count as 'most common.'",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "I-L11-01",
+      "lesson_id": "L11",
+      "severity": "high",
+      "category": "sme_validation",
+      "description": "Resolve the ADP 1-01 Jul 2019 versus Jul 2014 citation conflict and validate whether the embedded ADP/ADRP/FM/ATP Army structure is current for AY27.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "I-L11-02",
+      "lesson_id": "L11",
+      "severity": "medium",
+      "category": "sme_validation",
+      "description": "Confirm current accessibility and intended use of the restricted Navy and Marine Corps doctrine portals; the SharePoint link cannot be assumed public.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "I-L12-01",
+      "lesson_id": "L12",
+      "severity": "medium",
+      "category": "sme_validation",
+      "description": "EO07 is supported across multiple sections rather than a discrete injury-prevention section; SME should confirm the intended bounded evidence set and currency of 2010/2019 fitness guidance.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "I-L13-01",
+      "lesson_id": "L13",
+      "severity": "critical",
+      "category": "sme_validation",
+      "description": "Table 1, Signals of Risk for Sexual Assault, is blank in the captured PDF. Supply the intended table or authorized source before operationalizing L13-EO05/L13-MD03.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "I-L13-02",
+      "lesson_id": "L13",
+      "severity": "high",
+      "category": "sme_validation",
+      "description": "Define 'recent' for EO01 and either authorize use of the embedded 2006-2018 trend series as historical course content or supply a current authoritative trend source.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    },
+    {
+      "issue_id": "I-ALL-01",
+      "lesson_id": "ALL",
+      "severity": "high",
+      "category": "sme_validation",
+      "description": "All rubrics are draft decision support and require human SME validation before operational use.",
+      "evidence_citation": "See cited lesson/source records.",
+      "required_action": "SME/editor to review and resolve before operational use.",
+      "status": "open"
+    }
+  ]
+}

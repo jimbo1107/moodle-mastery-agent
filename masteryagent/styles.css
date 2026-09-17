@@ -1,0 +1,35 @@
+.masteryagent-conversation {
+    margin-bottom: 1.5rem;
+}
+
+.masteryagent-message {
+    border-radius: 0.5rem;
+    margin-bottom: 0.75rem;
+    padding: 0.75rem 1rem;
+}
+
+.masteryagent-message.masteryagent-agent {
+    background-color: #f2f4f7;
+    border-left: 3px solid #6c757d;
+}
+
+.masteryagent-message.masteryagent-student {
+    background-color: #eef5fb;
+    border-left: 3px solid #0f6cbf;
+}
+
+.masteryagent-role {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+}
+
+.masteryagent-text {
+    line-height: 1.5;
+}
+
+.masteryagent-form textarea {
+    width: 100%;
+}

@@ -1,0 +1,66 @@
+{
+  "_readme": "Template for mod_masteryagent question sets. Emit one object in 'questions' per lesson, in the shape of the worked example below. Field rules and writing guidance are in masteryagent_question_set_spec.md; validate with validate_question_set.py before handing the file over. Keys starting with an underscore are ignored by the plugin and may be removed.",
+  "course": "COURSE NAME AND ACADEMIC YEAR",
+  "schema_version": "1.0",
+  "rubric_validation_status": "DRAFT_PENDING_HUMAN_VALIDATION",
+  "questions": [
+    {
+      "lesson_id": "L01",
+      "lesson_number": 1,
+      "question_id": "L01-Q01",
+      "lesson_title": "MCDP 7 – Learning",
+      "estimated_response_minutes": 3,
+      "question_text": "A unit treats learning as attendance at formal classes plus repetition of already familiar drills. Explain why that approach is incomplete for warfighting, and how individual Marines, instructors and leaders should combine education, training, experience and feedback to build adaptive competence.",
+      "target_mastery_dimensions": [
+        "L01-MD01",
+        "L01-MD03"
+      ],
+      "target_educational_objectives": [
+        "L01-EO01",
+        "L01-EO02",
+        "L01-EO04"
+      ],
+      "selection_rationale": "Integrates the lesson's warfighting purpose of learning with reciprocal responsibility for a learning culture, distinguishing genuine development from attendance or memorisation.",
+      "follow_up_probes": [
+        "What different contribution should education make that training alone may not?",
+        "What responsibility belongs specifically to leaders rather than to learners or instructors?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Explains learning as continuous development of knowledge, skills and attitudes for judgement under uncertainty.",
+          "Distinguishes education as intellectual development from training as learning by doing, while showing both contribute to competence.",
+          "Differentiates learner ownership, instructor facilitation, and leader responsibility to set conditions and develop subordinates.",
+          "Connects feedback and experience to changed performance rather than course completion."
+        ],
+        "partial_evidence": [
+          "Values both education and training but gives little explanation of how they interact.",
+          "Names some role responsibilities but assigns most responsibility to one actor."
+        ],
+        "misconceptions_or_red_flags": [
+          "Equates learning with memorisation, attendance or repetition alone.",
+          "Treats education and training as interchangeable, or either as sufficient by itself.",
+          "Assigns responsibility solely to instructors and omits leader example or learner ownership."
+        ],
+        "insufficient_evidence_conditions": [
+          "The response is nonresponsive, fragmentary or too ambiguous to distinguish rubric levels.",
+          "The learner gives labels or lists without enough explanation to demonstrate the targeted reasoning.",
+          "A fair judgement would require a missing or inaccessible source that this prompt was designed not to require."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "L01-S01",
+          "title": "MCDP 7, Learning",
+          "edition_or_date": "20 Feb 2020; 81 pages",
+          "coursebook_page_or_section": "MCDP 7 PDF pp. 8-18, Chapter 1",
+          "url": "https://www.marines.mil/Portals/1/Publications/MCDP%207.pdf",
+          "verification_status": "verified_exact"
+        }
+      ],
+      "validation_notes": [
+        "Mastery-dimension grouping, misconceptions and performance distinctions are agent-generated draft judgements pending human SME validation.",
+        "Use only in an authorised evaluator context; do not expose the evidence guide as a student answer key."
+      ]
+    }
+  ]
+}
