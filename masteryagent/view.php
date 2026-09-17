@@ -64,31 +64,29 @@ if ($sequence->count() === 0) {
 
 $current = attempt::get_latest($instance, (int) $USER->id);
 
-if ($canattempt && $action !== '' && confirm_sesskey()) {
-    if ($action === 'start') {
-        $allowed = $current === null
-            || ($current->is_finished() && !empty($instance->allowretry));
-        if ($allowed) {
-            $current = attempt::start($instance, (int) $USER->id, $sequence);
+// AJAX intercepts these forms when JavaScript is available. Keep a safe POST fallback.
+$draft = '';
+if ($action !== '' && data_submitted()) {
+    require_sesskey();
+    $draft = optional_param('reply', '', PARAM_RAW);
+    try {
+        $result = \mod_masteryagent\conversation::process(
+            $instance, $context, $action, required_param('state', PARAM_ALPHANUM), $draft
+        );
+        $current = $result['attempt'];
+        if ($result['stale']) {
+            $error = get_string('conversationchanged', 'mod_masteryagent');
+        } else {
+            redirect(new moodle_url('/mod/masteryagent/view.php', ['id' => $cm->id]));
         }
-    } else if ($action === 'reply' && $current !== null && !$current->is_finished()) {
-        $reply = trim(required_param('reply', PARAM_RAW));
-        if ($reply !== '') {
-            try {
-                $current->submit($reply, $sequence, (int) $context->id);
-            } catch (moodle_exception $e) {
-                $error = $e->getMessage();
-            }
-            $current = attempt::get_latest($instance, (int) $USER->id);
-        }
-    } else if ($action === 'finish' && $current !== null && !$current->is_finished()) {
-        try {
-            $current->finish_now($sequence, (int) $context->id);
-        } catch (moodle_exception $e) {
-            $error = $e->getMessage();
-        }
+    } catch (moodle_exception $e) {
         $current = attempt::get_latest($instance, (int) $USER->id);
+        $error = $e->getMessage();
     }
+}
+
+if ($canattempt) {
+    $PAGE->requires->js_call_amd('mod_masteryagent/conversation', 'init', ['#masteryagent-app']);
 }
 
 echo $OUTPUT->header();
@@ -98,7 +96,7 @@ if (!empty($instance->intro)) {
     echo $OUTPUT->box(format_module_intro('masteryagent', $instance, $cm->id), 'generalbox', 'intro');
 }
 
-if ($error !== null) {
+if ($error !== null && !$canattempt) {
     echo $OUTPUT->notification($error, 'error');
 }
 
@@ -131,207 +129,33 @@ if (!$canattempt) {
     exit;
 }
 
-/**
- * Render the final assessment for one lesson.
- *
- * @param array $result Stored per-lesson result.
- * @return string
- */
-function masteryagent_render_lesson_result(array $result): string {
-    $heading = trim(($result['lesson_id'] ?? '') . ' ' . ($result['title'] ?? ''));
-    $out = html_writer::tag('h5', s($heading) . ' — ' . s((string) ($result['score'] ?? '')) . '/'
-        . (int) ($result['max'] ?? 0));
-    $out .= html_writer::tag('p', nl2br(s((string) ($result['summary'] ?? ''))));
-
-    $verdictmap = [
-        'met' => 'verdictmetshort',
-        'partial' => 'verdictpartial',
-        'notmet' => 'verdictnotmetshort',
-    ];
-    $rows = '';
-    foreach ((array) ($result['dimensions'] ?? []) as $dimension) {
-        if (!is_array($dimension)) {
-            continue;
-        }
-        $raw = preg_replace('/[^a-z]/', '', strtolower((string) ($dimension['verdict'] ?? '')));
-        $label = isset($verdictmap[$raw])
-            ? get_string($verdictmap[$raw], 'mod_masteryagent')
-            : s((string) ($dimension['verdict'] ?? ''));
-        $rows .= html_writer::tag(
-            'tr',
-            html_writer::tag('td', s((string) ($dimension['id'] ?? '')))
-            . html_writer::tag('td', $label)
-            . html_writer::tag('td', s((string) ($dimension['comment'] ?? '')))
-        );
-    }
-    if ($rows !== '') {
-        $out .= html_writer::tag(
-            'table',
-            html_writer::tag(
-                'thead',
-                html_writer::tag(
-                    'tr',
-                    html_writer::tag('th', get_string('dimension', 'mod_masteryagent'))
-                    . html_writer::tag('th', get_string('verdict', 'mod_masteryagent'))
-                    . html_writer::tag('th', get_string('comment', 'mod_masteryagent'))
-                )
-            ) . html_writer::tag('tbody', $rows),
-            ['class' => 'table table-sm']
-        );
-    }
-
-    if (!empty($result['next_step'])) {
-        $out .= html_writer::tag('p', html_writer::tag('strong', get_string('nextstep', 'mod_masteryagent'))
-            . ' ' . s((string) $result['next_step']));
-    }
-
-    return $out;
+// Status and error regions stay mounted while only the conversation fragment changes.
+echo html_writer::start_div('masteryagent-app', [
+    'id' => 'masteryagent-app',
+    'data-cmid' => $cm->id,
+    'data-processing' => get_string('processing', 'mod_masteryagent'),
+    'data-updated' => get_string('conversationupdated', 'mod_masteryagent'),
+    'data-error' => get_string('ajaxerror', 'mod_masteryagent'),
+]);
+echo html_writer::div($error === null ? '' : s($error), 'alert alert-danger', [
+    'data-region' => 'error', 'role' => 'alert', 'tabindex' => '-1',
+] + ($error === null ? ['hidden' => 'hidden'] : []));
+echo html_writer::div('', 'masteryagent-status text-muted', [
+    'data-region' => 'status', 'role' => 'status', 'aria-live' => 'polite',
+]);
+$showdraft = $draft !== '' && ($current === null || $current->is_finished());
+echo html_writer::div(
+    html_writer::tag('label', get_string('recovereddraft', 'mod_masteryagent'), ['for' => 'masteryagent-draft'])
+    . html_writer::tag('textarea', $showdraft ? s($draft) : '', [
+        'id' => 'masteryagent-draft', 'readonly' => 'readonly', 'rows' => 5, 'class' => 'form-control',
+    ]),
+    'mb-3', ['data-region' => 'draft'] + ($showdraft ? [] : ['hidden' => 'hidden'])
+);
+$html = \mod_masteryagent\output\conversation_view::render($instance, $cm, $sequence, $current);
+if ($draft !== '') {
+    // Preserve the learner's text on an unsuccessful non-JavaScript submission.
+    $html = str_replace('</textarea>', s($draft) . '</textarea>', $html);
 }
-
-if ($current === null) {
-    $blurb = $sequence->is_multi()
-        ? get_string('introblurbmulti', 'mod_masteryagent', (object) [
-            'lessons' => $sequence->count(),
-            'turns' => (int) $instance->maxturns,
-        ])
-        : get_string('introblurb', 'mod_masteryagent', (int) $instance->maxturns);
-
-    echo $OUTPUT->box(
-        html_writer::tag('p', $blurb)
-        . html_writer::div(
-            html_writer::link(
-                new moodle_url('/mod/masteryagent/view.php', [
-                    'id' => $cm->id,
-                    'action' => 'start',
-                    'sesskey' => sesskey(),
-                ]),
-                get_string('begin', 'mod_masteryagent'),
-                ['class' => 'btn btn-primary']
-            )
-        ),
-        'generalbox'
-    );
-    echo $OUTPUT->footer();
-    exit;
-}
-
-// Progress through the sequence.
-if (!$current->is_finished() && $sequence->is_multi()) {
-    $lesson = $sequence->get($current->lesson_index());
-    echo $OUTPUT->box(
-        html_writer::tag('strong', get_string('progress', 'mod_masteryagent', (object) [
-            'position' => $current->lesson_index() + 1,
-            'total' => $sequence->count(),
-        ]))
-        . ' ' . s($lesson === null ? '' : trim($lesson->lesson_id() . ' ' . $lesson->title())),
-        'generalbox py-2'
-    );
-}
-
-// The conversation.
-echo html_writer::start_div('masteryagent-conversation');
-foreach ($current->messages() as $message) {
-    $isagent = $message->role === 'agent';
-    $label = $isagent
-        ? get_string('roleagent', 'mod_masteryagent')
-        : get_string('rolestudent', 'mod_masteryagent');
-    echo html_writer::div(
-        html_writer::tag('div', $label, ['class' => 'masteryagent-role'])
-        . html_writer::tag('div', nl2br(s($message->message)), ['class' => 'masteryagent-text']),
-        'masteryagent-message ' . ($isagent ? 'masteryagent-agent' : 'masteryagent-student')
-    );
-}
+echo html_writer::div($html, '', ['data-region' => 'content', 'aria-busy' => 'false']);
 echo html_writer::end_div();
-
-if (!$current->is_finished()) {
-    echo html_writer::tag(
-        'p',
-        get_string('turnsleft', 'mod_masteryagent', $current->turns_left()),
-        ['class' => 'text-muted']
-    );
-
-    echo html_writer::start_tag('form', [
-        'method' => 'post',
-        'action' => new moodle_url('/mod/masteryagent/view.php'),
-        'class' => 'masteryagent-form',
-    ]);
-    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'id', 'value' => $cm->id]);
-    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'action', 'value' => 'reply']);
-    echo html_writer::empty_tag('input', ['type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()]);
-    echo html_writer::tag('textarea', '', [
-        'name' => 'reply',
-        'rows' => 8,
-        'class' => 'form-control',
-        'required' => 'required',
-        'placeholder' => get_string('replyplaceholder', 'mod_masteryagent'),
-    ]);
-    echo html_writer::div(
-        html_writer::empty_tag('input', [
-            'type' => 'submit',
-            'class' => 'btn btn-primary mt-2',
-            'value' => get_string('sendreply', 'mod_masteryagent'),
-        ]),
-        'mt-2'
-    );
-    echo html_writer::end_tag('form');
-
-    echo html_writer::div(
-        html_writer::link(
-            new moodle_url('/mod/masteryagent/view.php', [
-                'id' => $cm->id,
-                'action' => 'finish',
-                'sesskey' => sesskey(),
-            ]),
-            get_string('finishnow', 'mod_masteryagent'),
-            ['class' => 'btn btn-link']
-        ),
-        'mt-2'
-    );
-} else {
-    $record = $current->get_record();
-    $results = $current->lesson_results();
-
-    $body = html_writer::tag('h4', get_string('scoreline', 'mod_masteryagent', (object) [
-        'score' => format_float((float) $record->score, 0),
-        'max' => masteryagent_total_grade($instance),
-    ]));
-
-    if ($sequence->is_multi()) {
-        $body .= html_writer::tag('p', get_string('lessonsmastered', 'mod_masteryagent', (object) [
-            'mastered' => $current->lessons_mastered(),
-            'total' => count($results),
-        ]), ['class' => 'lead']);
-    } else {
-        $body .= html_writer::tag('p', $current->met_threshold()
-            ? get_string('verdictmet', 'mod_masteryagent')
-            : get_string('verdictnotmet', 'mod_masteryagent', (int) $instance->threshold), ['class' => 'lead']);
-    }
-
-    if (!empty($instance->provisional)) {
-        $body .= html_writer::div(get_string('provisionalbanner', 'mod_masteryagent'), 'alert alert-info');
-    }
-
-    $body .= html_writer::tag('p', nl2br(s((string) $record->summary)));
-    echo $OUTPUT->box($body, 'generalbox');
-
-    foreach ($results as $result) {
-        echo $OUTPUT->box(masteryagent_render_lesson_result($result), 'generalbox');
-    }
-
-    if (!empty($instance->allowretry)) {
-        echo html_writer::div(
-            html_writer::link(
-                new moodle_url('/mod/masteryagent/view.php', [
-                    'id' => $cm->id,
-                    'action' => 'start',
-                    'sesskey' => sesskey(),
-                ]),
-                get_string('tryagain', 'mod_masteryagent'),
-                ['class' => 'btn btn-primary']
-            ),
-            'mt-2'
-        );
-    }
-}
-
 echo $OUTPUT->footer();

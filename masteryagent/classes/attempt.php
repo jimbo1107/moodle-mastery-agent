@@ -109,7 +109,7 @@ class attempt {
             'lessonscores' => json_encode([]),
             'score' => null,
             'summary' => null,
-            'evidencejson' => json_encode(['covered' => [], 'misconceptions' => []]),
+            'evidencejson' => json_encode(['covered' => [], 'misconceptions' => [], 'resolved' => []]),
             'timestarted' => time(),
             'timefinished' => 0,
         ];
@@ -185,9 +185,9 @@ class attempt {
     public function ledger(): array {
         $decoded = json_decode((string) $this->record->evidencejson, true);
         if (!is_array($decoded)) {
-            return ['covered' => [], 'misconceptions' => []];
+            return ['covered' => [], 'misconceptions' => [], 'resolved' => []];
         }
-        return $decoded + ['covered' => [], 'misconceptions' => []];
+        return $decoded + ['covered' => [], 'misconceptions' => [], 'resolved' => []];
     }
 
     /**
@@ -290,6 +290,7 @@ class attempt {
         $this->record->evidencejson = json_encode([
             'covered' => $result['covered'],
             'misconceptions' => $result['misconceptions'],
+            'resolved' => $result['resolved'],
         ]);
         $DB->set_field(
             'masteryagent_attempt',
@@ -382,7 +383,7 @@ class attempt {
 
         $this->record->lessonindex = $index;
         $this->record->turnsused = 0;
-        $this->record->evidencejson = json_encode(['covered' => [], 'misconceptions' => []]);
+        $this->record->evidencejson = json_encode(['covered' => [], 'misconceptions' => [], 'resolved' => []]);
         $DB->update_record('masteryagent_attempt', $this->record);
 
         $this->add_message('agent', $lesson->question_text(), $sequence->key_for($index), 0);

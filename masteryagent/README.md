@@ -38,7 +38,49 @@ this plugin makes. The plugin stores no credentials of its own.
 ## Installation
 
 Upload the zip at **Site administration → Plugins → Install plugins**, or
-extract into `mod/masteryagent` (`public/mod/masteryagent` on Moodle 5.0+).
+extract into `mod/masteryagent` (`public/mod/masteryagent` when your Moodle installation uses a `public` web root).
+
+## AJAX conversation (0.4.0)
+
+Beginning an assessment, sending a reply, ending and scoring, and starting a
+new attempt now update the conversation in place. There is no AJAX setting to
+toggle. JavaScript-enabled browsers automatically use Moodle's `core/ajax`
+service; normal POST forms remain available if JavaScript is unavailable.
+
+The page shows a processing status, prevents concurrent submissions, moves
+focus to the reply box or final result, and preserves draft text after errors.
+Stale requests from another tab or after a lost response refresh the conversation
+without applying the action again. Review the displayed conversation before
+resubmitting a preserved draft.
+
+The service validates the module context, enrolment/access and capabilities,
+uses the signed-in user's latest attempt, and returns only the learner-facing
+HTML. A per-user/activity lock serializes updates. Conversation actions use a
+DB transaction so provider or scoring failures do not save a partial turn or
+grade. External provider requests themselves cannot be rolled back.
+
+### Upgrading from 0.3.2
+
+1. Install the new ZIP through **Site administration → Plugins → Install plugins**,
+   or replace the existing `mod/masteryagent` directory under your Moodle web root.
+2. Visit **Site administration → Notifications** and complete the plugin upgrade.
+   Version `2026091703` registers `mod_masteryagent_update_conversation` from
+   `db/services.php`. Copying the files alone does not register this service.
+3. Purge Moodle caches using **Site administration → Development → Purge caches**.
+4. Open an activity as an enrolled learner and begin, reply, finish, and retry
+   if allowed. The conversation and scores should update without a new page load.
+
+The built JavaScript and source map are included in `amd/build`; no build tool
+is required for installation. There is no need to enable general external web
+services, create a token, or change the existing AI-provider settings. In a
+Moodle development checkout, rebuild edited JavaScript with `npx grunt amd`
+from the plugin directory.
+
+Implementation references:
+[Moodle AJAX](https://moodledev.io/docs/5.1/guides/javascript/ajax),
+[external service definitions](https://moodledev.io/docs/5.1/apis/subsystems/external/writing-a-service),
+[external API security](https://moodledev.io/docs/5.1/apis/subsystems/external/security),
+and [the Lock API](https://moodledev.io/docs/5.1/apis/core/lock).
 
 ## Settings
 
@@ -87,16 +129,26 @@ transcript, the evidence ledger the agent maintained, and the rubric behind
 every lesson — which is what a subject matter expert needs in order to validate
 or overturn the agent's judgement.
 
+## Tests
+
+`tests/` holds 86 PHPUnit tests covering the parser, lesson selection, prompt
+construction, the conversation engine, gradebook, and AJAX access and recovery.
+The 15 AJAX regression tests are new in 0.4.0. They have been added but have not
+been executed in the packaging environment, which has no Moodle/PHP runtime.
+No AI provider is called by the tests. See `tests/README.md` for setup, browser
+tests, and the suite command.
+
 ## Known limitations
 
 - **No backup/restore support.** `FEATURE_BACKUP_MOODLE2` is declared false, so
   these activities are skipped by course backup rather than silently corrupting
   one. This is the first thing to add for production use.
-- **No web services or mobile app support.** The conversation is a plain form
-  post, which works in any browser but does not appear in the Moodle app.
-- **Synchronous model calls.** Each reply waits on the provider, typically a few
-  seconds. There is no queue or retry. A thirteen-lesson sitting is a long
-  session; consider splitting it if learners are on poor connections.
+- **No Moodle Mobile app integration.** The browser uses an authenticated AJAX
+  service, but the plugin does not provide a Moodle Mobile interface.
+- **Synchronous model calls on the server.** AJAX keeps the browser page in
+  place while the provider works; it does not stream tokens or queue background
+  jobs. Failed requests are not automatically replayed. Learners may retry
+  manually, with the displayed revision checked to prevent duplicate turns.
 - **Rubrics are agent-generated drafts.** The supplied question set is marked
   `DRAFT_PENDING_HUMAN_VALIDATION`. Keep the AI-provisional flag on until an SME
   has validated the rubric.

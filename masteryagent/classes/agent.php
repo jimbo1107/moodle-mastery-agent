@@ -68,9 +68,11 @@ class agent {
      * Produce the agent's next conversational turn and updated evidence ledger.
      *
      * @param array $transcript List of ['role' => 'agent'|'student', 'message' => string].
-     * @param array $ledger Current ledger: ['covered' => [...], 'misconceptions' => [...]].
+     * @param array $ledger Current ledger: ['covered' => [...], 'misconceptions' => [...],
+     *                       'resolved' => [...]].
      * @param int $turnsused Student replies consumed so far.
-     * @return array ['covered' => [], 'misconceptions' => [], 'ready_to_close' => bool, 'reply' => string]
+     * @return array ['covered' => [], 'misconceptions' => [], 'resolved' => [],
+     *                'ready_to_close' => bool, 'reply' => string]
      * @throws \moodle_exception On provider failure or unparseable output.
      */
     public function next_turn(array $transcript, array $ledger, int $turnsused): array {
@@ -94,21 +96,36 @@ class agent {
             . "- If a misconception appeared, challenge it plainly and give them a chance to correct it.\n"
             . "- If evidence is thin, probe the single largest gap. Use a suggested probe when one fits.\n"
             . "- Do not praise effort or use filler. No headings, no bullet lists longer than two items.\n"
+            . "Rules for the ledger:\n"
+            . "- covered is cumulative: an element stays covered once the Marine has demonstrated it.\n"
+            . "- misconceptions holds only the misconceptions the Marine is STILL holding.\n"
+            . "- When they correct a misconception you challenged, move its code out of misconceptions "
+            . "and into resolved. If they fall back into a resolved one, move it back.\n"
+            . "- A code belongs to misconceptions or resolved, never both.\n"
             . "Set ready_to_close to true only when every strong-evidence element is covered with no "
             . "outstanding misconception, or when further questioning clearly will not help.\n\n"
             . "=== OUTPUT FORMAT ===\n"
             . 'Return ONLY a JSON object, no code fence: {"covered":["SE1"],"misconceptions":["MC2"],'
-            . '"ready_to_close":false,"reply":"your message to the Marine"}' . "\n"
-            . "covered and misconceptions must be the cumulative lists, using the codes above.";
+            . '"resolved":["MC1"],"ready_to_close":false,"reply":"your message to the Marine"}' . "\n"
+            . "covered, misconceptions and resolved must be the cumulative lists, using the codes above.";
 
         $decoded = self::decode_json($this->call($prompt));
         if ($decoded === null || !isset($decoded['reply'])) {
             throw new \moodle_exception('errorbadresponse', 'mod_masteryagent');
         }
 
+        $misconceptions = self::string_list($decoded['misconceptions'] ?? []);
+        $resolved = self::string_list($decoded['resolved'] ?? []);
+        // A code returned in both lists counts as resolved. The usual cause is
+        // carrying the cumulative misconception list forward without retiring
+        // the code just marked corrected, and leaving it outstanding is
+        // precisely what penalises a Marine who did correct it.
+        $misconceptions = array_values(array_diff($misconceptions, $resolved));
+
         return [
             'covered' => self::string_list($decoded['covered'] ?? []),
-            'misconceptions' => self::string_list($decoded['misconceptions'] ?? []),
+            'misconceptions' => $misconceptions,
+            'resolved' => $resolved,
             'ready_to_close' => !empty($decoded['ready_to_close']),
             'reply' => trim((string) $decoded['reply']),
         ];
@@ -136,19 +153,17 @@ class agent {
             . "\n\n=== YOUR TASK ===\n"
             . "The conversation is over. Score the Marine's demonstrated mastery across the whole "
             . "conversation, not just the last reply.\n\n"
-            . "Scoring bands, whole numbers only, 0 to {$max}:\n"
-            . "{$max} - Mastery. Most strong-evidence elements demonstrated, accurate, no misconceptions.\n"
-            . ($max > 3 ? "3 - Acceptable. Core reasoning demonstrated with minor gaps and no misconceptions.\n" : "")
-            . "2 - Developing. Partial evidence only, thin explanation or a missing element.\n"
-            . "1 - Minimal. Terms or lists without the targeted reasoning, or a damaging misconception.\n"
-            . "0 - Insufficient evidence. Nonresponsive, or dominated by red-flag misconceptions.\n"
-            . "A response containing a listed misconception cannot score above 2. "
-            . "{$threshold} is the acceptable mastery threshold.\n\n"
+            . self::scoring_bands($max, $threshold) . "\n"
+            . "Judge where the Marine ended up. A misconception they raised early and then corrected "
+            . "when challenged is evidence of the reasoning this lesson asks for, not a defect: score "
+            . "it as demonstrated and do not hold the first answer against them. Only a misconception "
+            . "still outstanding at the end caps the score, at " . max(0, $threshold - 1) . ", below "
+            . "the mastery threshold of {$threshold}.\n\n"
             . "Write the summary to the Marine, second person, under 180 words: what they established, "
             . "what is still missing, and what to do about it. Do not reveal the rubric or the evidence "
             . "codes, and do not answer the question for them.\n\n"
             . "=== OUTPUT FORMAT ===\n"
-            . 'Return ONLY a JSON object, no code fence: {"score":3,"summary":"...",'
+            . 'Return ONLY a JSON object, no code fence: {"score":' . $threshold . ',"summary":"...",'
             . '"dimensions":[{"id":"' . ($dimensions[0] ?? 'DIM') . '","verdict":"met",'
             . '"comment":"one sentence"}],"strengths":["..."],"gaps":["..."],"next_step":"..."}' . "\n"
             . "verdict must be one of: met, partial, notmet. Report on every dimension listed above.";
@@ -159,7 +174,7 @@ class agent {
         }
 
         $score = (float) $decoded['score'];
-        $score = max(0, min($max, $score));
+        $score = (float) max(0, min($max, $score));
 
         return [
             'score' => $score,
@@ -222,6 +237,50 @@ class agent {
     }
 
     /**
+     * The scoring band table, scaled to this activity's maximum and threshold.
+     *
+     * Every point from 0 to the maximum has to fall inside a band. A table that
+     * names a few fixed values instead leaves the model nothing to say for the
+     * points in between, and the scores collapse onto the named ones.
+     *
+     * @param int $max Maximum score for one lesson.
+     * @param int $threshold Score at or above which the lesson counts as mastered.
+     * @return string
+     */
+    protected static function scoring_bands(int $max, int $threshold): string {
+        $threshold = max(1, min($max, $threshold));
+        // Where "developing" starts: half way up to the threshold, so the band
+        // below the threshold still has room when the threshold is high.
+        $developing = max(1, (int) ceil($threshold / 2));
+
+        $bands = [
+            [$max, $max,
+                'Mastery. Every strong-evidence element demonstrated, accurate, nothing outstanding.'],
+            [$threshold, $max - 1,
+                'Mastered with minor gaps. Core reasoning and most strong-evidence elements, '
+                . 'no outstanding misconception.'],
+            [$developing, $threshold - 1,
+                'Developing. Partial evidence only, thin explanation or a missing element.'],
+            [1, $developing - 1,
+                'Minimal. Terms or lists without the targeted reasoning.'],
+            [0, 0,
+                'Insufficient evidence. Nonresponsive, or dominated by red-flag misconceptions.'],
+        ];
+
+        $lines = ["Scoring bands, whole numbers only, 0 to {$max}:"];
+        foreach ($bands as [$low, $high, $text]) {
+            $low = max(0, $low);
+            if ($high < $low) {
+                // Squeezed out by this activity's maximum and threshold.
+                continue;
+            }
+            $label = $low === $high ? (string) $low : "{$low} to {$high}";
+            $lines[] = $label . ' - ' . $text;
+        }
+        return implode("\n", $lines) . "\n";
+    }
+
+    /**
      * The shared rubric preamble sent with every request.
      *
      * @return string
@@ -270,14 +329,18 @@ class agent {
     /**
      * Render the evidence ledger for the prompt.
      *
-     * @param array $ledger ['covered' => [...], 'misconceptions' => [...]].
+     * @param array $ledger ['covered' => [...], 'misconceptions' => [...], 'resolved' => [...]].
      * @return string
      */
     protected function ledger_block(array $ledger): string {
         $covered = self::string_list($ledger['covered'] ?? []);
         $misconceptions = self::string_list($ledger['misconceptions'] ?? []);
+        $resolved = self::string_list($ledger['resolved'] ?? []);
         return 'Covered so far: ' . (empty($covered) ? '(none)' : implode(', ', $covered)) . "\n"
-            . 'Misconceptions seen: ' . (empty($misconceptions) ? '(none)' : implode(', ', $misconceptions));
+            . 'Misconceptions still outstanding: '
+            . (empty($misconceptions) ? '(none)' : implode(', ', $misconceptions)) . "\n"
+            . 'Misconceptions raised and then corrected: '
+            . (empty($resolved) ? '(none)' : implode(', ', $resolved));
     }
 
     /**

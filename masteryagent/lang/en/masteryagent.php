@@ -123,6 +123,18 @@ $string['errorlessonnotfound'] = 'No lesson matching "{$a}" was found in the upl
 $string['errorlessonrequired'] = 'One or more of those lessons is not in the uploaded file. Available: {$a}';
 $string['errorthreshold'] = 'The mastery threshold cannot be higher than the maximum score.';
 $string['errormaxgrade'] = 'The maximum score must be at least 1.';
-$string['errorprovider'] = 'The AI provider could not be reached: {$a} Your answer has been saved; try sending it again.';
-$string['errorempty'] = 'The AI provider returned an empty response. Your answer has been saved; try sending it again.';
-$string['errorbadresponse'] = 'The AI provider returned something this activity could not read. Your answer has been saved; try sending it again.';
+$string['errorprovider'] = 'The AI provider could not be reached: {$a} Please try again. Your draft remains in the reply box.';
+$string['errorempty'] = 'The AI provider returned an empty response. Please try again. Your draft remains in the reply box.';
+$string['errorbadresponse'] = 'The AI provider returned something this activity could not read. Please try again. Your draft remains in the reply box.';
+
+// AJAX conversation.
+$string['yourreply'] = 'Your reply';
+$string['processing'] = 'The evaluator is working. Please wait…';
+$string['conversationupdated'] = 'Conversation updated.';
+$string['ajaxerror'] = 'The request could not be completed. Your draft is still here. Check your connection and try again.';
+$string['conversationbusy'] = 'This conversation is already processing a request. Please wait and try again.';
+$string['conversationchanged'] = 'The conversation has changed, possibly in another tab or after a delayed request. The latest saved conversation is shown. Review it before sending another reply.';
+$string['attemptnotavailable'] = 'This action is not available for the current attempt.';
+$string['replyrequired'] = 'Enter a reply before sending it.';
+$string['replytoolong'] = 'Your reply must contain no more than {$a} characters.';
+$string['recovereddraft'] = 'Your unsent draft (copy it before starting another attempt)';

@@ -1,0 +1,154 @@
+{
+  "course": "Sample Course",
+  "schema_version": "1.0",
+  "rubric_validation_status": "DRAFT_PENDING_HUMAN_VALIDATION",
+  "questions": [
+    {
+      "lesson_id": "S01",
+      "lesson_number": 1,
+      "question_id": "S01-Q01",
+      "lesson_title": "Reading the Ground",
+      "estimated_response_minutes": 3,
+      "question_text": "A patrol plans its route entirely from a digital map display and is surprised by terrain that slows it to a halt. Explain what the planners should have drawn from the ground itself, and how they should combine map study, reconnaissance and the reports of others when the picture disagrees.",
+      "target_mastery_dimensions": ["S01-MD01", "S01-MD02"],
+      "target_educational_objectives": ["S01-EO01", "S01-EO02"],
+      "selection_rationale": "Joins terrain interpretation to the habit of reconciling conflicting sources.",
+      "follow_up_probes": [
+        "What would you go and look at yourself before committing the patrol?",
+        "When two sources disagree about the ground, how do you decide which to trust?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Explains that a map represents the ground at a moment and must be checked against it.",
+          "Describes reconnaissance as the way to resolve what a map cannot show, such as trafficability.",
+          "Reconciles conflicting sources by weighing recency, vantage point and the reporter's purpose."
+        ],
+        "partial_evidence": [
+          "Values reconnaissance but does not say what it would resolve.",
+          "Names sources of information without explaining how to weigh them against each other."
+        ],
+        "misconceptions_or_red_flags": [
+          "Treats the map as authoritative over direct observation.",
+          "Treats any single report as decisive regardless of its origin."
+        ],
+        "insufficient_evidence_conditions": [
+          "The response is nonresponsive or too fragmentary to distinguish rubric levels.",
+          "The learner lists terms without demonstrating the targeted reasoning."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "S01-S01",
+          "title": "Sample Lesson 1 Reading",
+          "edition_or_date": "1 Jan 2026",
+          "coursebook_page_or_section": "pp. 1-6",
+          "url": "",
+          "verification_status": "embedded"
+        }
+      ],
+      "validation_notes": [
+        "Synthetic fixture content for automated tests. Not course material."
+      ]
+    },
+    {
+      "lesson_id": "S02",
+      "lesson_number": 2,
+      "question_id": "S02-Q01",
+      "lesson_title": "Deciding Under Time Pressure",
+      "estimated_response_minutes": 3,
+      "question_text": "A team must act before it can gather everything it would like to know. Explain how a leader should decide what is enough to act on, what should be held back for later, and how the decision itself should be communicated so subordinates can adapt when the situation changes.",
+      "target_mastery_dimensions": ["S02-MD01"],
+      "target_educational_objectives": ["S02-EO01", "S02-EO03"],
+      "selection_rationale": "Separates decisiveness from recklessness and ties intent to adaptation.",
+      "follow_up_probes": [
+        "What would tell you that waiting for more information costs more than acting now?",
+        "What has to be in the order so a subordinate can adapt without asking permission?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Distinguishes information that changes the decision from information that merely adds detail.",
+          "Explains that delay is itself a decision with a cost.",
+          "Communicates intent so subordinates can act when circumstances change."
+        ],
+        "partial_evidence": [
+          "Recognises the need to act early but gives no way to judge sufficiency.",
+          "Mentions intent without explaining what it enables a subordinate to do."
+        ],
+        "misconceptions_or_red_flags": [
+          "Treats acting fast as a virtue independent of judgement.",
+          "Treats an order as a script that removes subordinate judgement."
+        ],
+        "insufficient_evidence_conditions": [
+          "The response is nonresponsive or too fragmentary to distinguish rubric levels."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "S02-S01",
+          "title": "Sample Lesson 2 Reading",
+          "edition_or_date": "1 Jan 2026",
+          "coursebook_page_or_section": "pp. 7-12",
+          "url": "",
+          "verification_status": "embedded"
+        }
+      ],
+      "validation_notes": [
+        "Synthetic fixture content for automated tests. Not course material."
+      ]
+    },
+    {
+      "lesson_id": "S03",
+      "lesson_number": 3,
+      "question_id": "S03-Q01",
+      "lesson_title": "Learning From What Happened",
+      "estimated_response_minutes": 3,
+      "question_text": "A unit holds a review after every event, yet the same failures keep recurring. Explain why a review can produce agreement without producing change, and what a leader must do differently so that what is learned actually alters how the unit performs.",
+      "target_mastery_dimensions": ["S03-MD01", "S03-MD02"],
+      "target_educational_objectives": ["S03-EO02"],
+      "selection_rationale": "Targets the gap between discussing a lesson and institutionalising it.",
+      "follow_up_probes": [
+        "What makes a review safe enough that people say what actually happened?",
+        "How would you know a month later that the lesson took hold?"
+      ],
+      "evaluator_evidence_guide": {
+        "strong_evidence": [
+          "Explains that a review only changes performance when findings become owned actions.",
+          "Connects candour in the review to the climate a leader sets beforehand.",
+          "Describes how a change is checked later rather than assumed."
+        ],
+        "partial_evidence": [
+          "Calls for honesty in reviews without saying how a leader produces it.",
+          "Names follow-up actions without any means of verifying them."
+        ],
+        "misconceptions_or_red_flags": [
+          "Treats holding the review as the outcome.",
+          "Treats blame as the mechanism that produces improvement."
+        ],
+        "insufficient_evidence_conditions": [
+          "The response is nonresponsive or too fragmentary to distinguish rubric levels."
+        ]
+      },
+      "source_evidence": [
+        {
+          "source_id": "S03-S01",
+          "title": "Sample Lesson 3 Reading",
+          "edition_or_date": "1 Jan 2026",
+          "coursebook_page_or_section": "pp. 13-18",
+          "url": "",
+          "verification_status": "embedded"
+        }
+      ],
+      "validation_notes": [
+        "Synthetic fixture content for automated tests. Not course material."
+      ]
+    }
+  ],
+  "source_gaps": [],
+  "coverage_audit": {
+    "lessons_requested": 3,
+    "lessons_with_questions": 3,
+    "lessons_blocked": 0,
+    "dimension_coverage": {},
+    "warnings": []
+  }
+}

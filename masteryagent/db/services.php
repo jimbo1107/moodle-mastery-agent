@@ -15,17 +15,21 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version details for mod_masteryagent.
+ * AJAX service definitions.
  *
- * @package    mod_masteryagent
- * @copyright  2026 MCU-NPS AI Learning Initiatives
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package mod_masteryagent
+ * @copyright 2026 MCU-NPS AI Learning Initiatives
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026091703;
-$plugin->requires  = 2024100700; // Moodle 4.5 (core AI subsystem).
-$plugin->component = 'mod_masteryagent';
-$plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.4.0';
+$functions = [
+    'mod_masteryagent_update_conversation' => [
+        'classname' => 'mod_masteryagent\external\update_conversation',
+        'description' => 'Start, reply to, or finish the current learner\'s mastery assessment.',
+        'type' => 'write',
+        'ajax' => true,
+        'loginrequired' => true,
+        'capabilities' => 'mod/masteryagent:view,mod/masteryagent:attempt',
+    ],
+];

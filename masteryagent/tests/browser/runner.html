@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Mastery agent AJAX regression tests</title>
+<style>body{font:16px system-ui;margin:2rem}li{margin:.5rem 0}.pass{color:#176237}.fail{color:#b02020}#fixture{border:1px solid #ccc;padding:1rem;margin-top:2rem}</style></head>
+<body><h1>Mastery agent AJAX regression tests</h1><p>Real browser DOM; mocked Moodle AJAX responses. No Moodle server or AI provider is called.</p>
+<p id="summary">Running…</p><ol id="results"></ol><div id="fixture"></div>
+<script>
+const pending = [];
+let filterUpdates = 0;
+window.define = (name, deps, factory) => {
+    const exports = {};
+    const modules = {require: () => {}, exports,
+        'core/ajax': {call: requests => requests.map(request => new Promise((resolve, reject) => {
+            pending.push({request, resolve, reject});
+        }))},
+        'core_filters/events': {notifyFilterContentUpdated: () => filterUpdates++},
+    };
+    factory(...deps.map(dep => modules[dep]));
+    window.conversation = exports;
+};
+</script><script src="../../amd/build/conversation.min.js"></script><script>
+const q = selector => document.querySelector('#fixture ' + selector);
+const assert = (condition, message) => {if (!condition) throw Error(message);};
+const settle = () => new Promise(resolve => setTimeout(resolve, 0));
+const form = (action, state, extra = '') => `<form data-action="${action}" method="post" action="unexpected-navigation.html">
+<input name="state" type="hidden" value="${state}">${extra}<button type="submit">${action}</button></form>`;
+const active = (state = 'state1', id = 1) => `<div class="masteryagent-agent" data-message-id="${id}">Question ${id}</div>
+${form('reply', state, '<label for="reply">Reply</label><textarea id="reply" name="reply" required></textarea>')}${form('finish',state)}`;
+const finished = () => `<div data-region="results" tabindex="-1">Score: 3 of 4</div>${form('start', 'finished')}`;
+const mount = (html = form('start','new')) => {
+    pending.length = 0; filterUpdates = 0;
+    document.querySelector('#fixture').innerHTML = `<div id="masteryagent-app" data-cmid="42" data-processing="Working" data-updated="Updated" data-error="Request failed">
+<div data-region="error" role="alert" tabindex="-1" hidden></div><div data-region="status" role="status"></div>
+<div data-region="draft" hidden><textarea readonly></textarea></div><div data-region="content" aria-busy="false">${html}</div></div>`;
+    window.conversation.init('#masteryagent-app');
+};
+const submit = (action, reply) => {
+    if (reply !== undefined) q('[name="reply"]').value = reply;
+    q(`form[data-action="${action}"]`).requestSubmit();
+};
+const respond = async (html, stale = false, warning = '') => {
+    pending.at(-1).resolve({html, stale, warning}); await settle();
+};
+const tests = [
+['Begin updates the page and focuses the reply without navigation', async () => {
+    mount(); submit('start');
+    assert(q('button').disabled, 'Start button should be disabled while processing');
+    assert(q('[data-region="status"]').textContent === 'Working', 'Loading feedback missing');
+    assert(pending[0].request.args.cmid === 42 && pending[0].request.args.state === 'new', 'Wrong service parameters');
+    await respond(active());
+    assert(document.activeElement === q('[name="reply"]'), 'Reply box was not focused');
+    assert(filterUpdates === 1, 'Moodle filters were not notified');
+}],
+['Repeated submit and finish are blocked while a reply is pending', async () => {
+    mount(active()); submit('reply', 'My answer');
+    for(const action of ['reply','finish']) q(`form[data-action="${action}"]`).dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+    assert(pending.length === 1, 'Duplicate request sent');
+    assert(q('[name="reply"]').readOnly, 'Reply remained editable while pending');
+    assert(q('form[data-action="finish"] button').disabled, 'Finish remained enabled');
+    await respond(active('state2',3));
+    assert(q('[name="reply"]').value === '', 'Successful reply did not clear draft');
+    assert(!q('[name="reply"]').readOnly, 'Reply remained read-only');
+}],
+['The delegated handler survives three consecutive replies', async () => {
+    mount(active());
+    for(let i=1;i<=3;i++){submit('reply',`Answer ${i}`);assert(pending.length===i,'Handler lost or duplicated');await respond(active('state'+(i+1),2*i+1));}
+}],
+['Finish displays results and retry opens a fresh conversation', async () => {
+    mount(active());submit('finish');await respond(finished());
+    assert(document.activeElement === q('[data-region="results"]'), 'Results not focused');
+    submit('start');assert(pending.at(-1).request.args.state === 'finished','Retry used wrong revision');
+    await respond(active('newattempt',10));assert(q('[name="reply"]'),'New attempt missing');
+}],
+['Provider errors preserve drafts and safely display error text', async () => {
+    mount(active());submit('reply','My unsent answer');
+    pending[0].reject({message:'<img src=x onerror=alert(1)> Provider error'});await settle();
+    assert(q('[name="reply"]').value==='My unsent answer','Draft lost');
+    assert(!q('[data-region="error"] img'),'Error HTML executed');
+    assert(!q('form[data-action="reply"] button').disabled,'Submit remains disabled');
+    assert(q('form[data-action="reply"] [name="state"]').value==='state1','Revision changed on failure');
+}],
+['Transport errors never replay a write automatically', async () => {
+    mount(active());submit('reply','Possibly saved');pending[0].reject('Connection lost');await settle();
+    assert(pending.length===1,'Write replayed automatically');
+    submit('reply');assert(pending.at(-1).request.args.state==='state1','Manual retry must retain old revision');
+    await respond(active('state2',3),true,'Review latest conversation');
+    assert(q('[name="reply"]').value==='Possibly saved','Draft lost after ambiguous result');
+}],
+['Stale responses render the latest conversation and retain the draft', async () => {
+    mount(active());submit('reply','My other-tab draft');await respond(active('state9',9),true,'Conversation changed');
+    assert(q('[name="reply"]').value==='My other-tab draft','Draft lost');
+    assert(q('form[data-action="reply"] [name="state"]').value==='state9','Revision not updated');
+    assert(q('[data-region="error"]').textContent==='Conversation changed','Warning missing');
+}],
+['Already-finished stale responses preserve a copyable draft', async () => {
+    mount(active());submit('reply','Keep this text');await respond(finished(),true,'Already finished');
+    assert(!q('[data-region="draft"]').hidden,'Recovered draft is hidden');
+    assert(q('[data-region="draft"] textarea').value==='Keep this text','Recovered draft lost');
+}],
+['Blank and whitespace-only replies send no request', async () => {
+    mount(active());submit('reply','');submit('reply','   \n  ');assert(pending.length===0,'Blank reply sent');
+}],
+['Initializing twice does not create duplicate listeners', async () => {
+    mount();window.conversation.init('#masteryagent-app');submit('start');assert(pending.length===1,'Duplicate listener');await respond(active());
+}],
+['Malformed responses keep the current form and draft usable', async () => {
+    mount(active());submit('reply','Keep my draft');pending[0].resolve({unexpected:true});await settle();
+    assert(q('[name="reply"]').value==='Keep my draft','Draft lost');
+    assert(!q('form[data-action="reply"] button').disabled,'Form disabled after error');
+    assert(!q('[data-region="error"]').hidden,'Error missing');
+}],
+];
+(async()=>{
+    let passed=0;
+    for(const [name,run] of tests){const li=document.createElement('li');try{await run();passed++;li.className='pass';li.textContent='PASS — '+name;}catch(e){li.className='fail';li.textContent='FAIL — '+name+': '+e.message;}document.querySelector('#results').append(li);}
+    document.querySelector('#summary').textContent=`${passed}/${tests.length} tests passed`;
+    document.title=`${passed}/${tests.length} — Mastery agent AJAX tests`;
+})();
+</script></body></html>
