@@ -144,12 +144,16 @@ echo html_writer::start_div('masteryagent-app', [
     'data-error' => get_string('ajaxerror', 'mod_masteryagent'),
     'data-unsent' => get_string('finishunsent', 'mod_masteryagent'),
     'data-confirmrequired' => get_string('finishconfirmationrequired', 'mod_masteryagent'),
+    'data-resultsready' => get_string('assessmentresultsready', 'mod_masteryagent'),
 ]);
 echo html_writer::div($error === null ? '' : s($error), 'alert alert-danger', [
     'data-region' => 'error', 'role' => 'alert', 'tabindex' => '-1',
 ] + ($error === null ? ['hidden' => 'hidden'] : []));
 echo html_writer::div('', 'masteryagent-status text-muted', [
-    'data-region' => 'status', 'role' => 'status', 'aria-live' => 'polite',
+    'data-region' => 'status', 'aria-hidden' => 'true',
+]);
+echo html_writer::div('', 'masteryagent-sr-only', [
+    'data-region' => 'announcements', 'role' => 'status', 'aria-live' => 'polite', 'aria-atomic' => 'true',
 ]);
 $showdraft = $draft !== '' && ($current === null || $current->is_finished());
 echo html_writer::div(

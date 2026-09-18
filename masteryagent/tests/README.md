@@ -1,6 +1,6 @@
 # Running the mastery agent tests
 
-95 PHPUnit tests covering the question-set parser, lesson selection, prompt
+99 PHPUnit tests covering the question-set parser, lesson selection, prompt
 construction, the conversation engine, gradebook, and AJAX endpoint. They never call a real
 AI provider — a scripted responder stands in for one — so they cost nothing to
 run and are deterministic.
@@ -39,7 +39,8 @@ vendor/bin/phpunit --filter test_a_sequence_advances_on_its_own
 The original suite contained 71 tests. The AJAX update added 15 tests in
 `external_test.php`. The learning-plan update adds 3 tests in
 `learning_plan_test.php`. Pausing and final submission add 6 more tests in
-`external_test.php`, for 95 tests in total. The PHP suite has not been
+`external_test.php`. Conversation navigation adds 4 tests in
+`conversation_view_test.php`, for 99 tests in total. The PHP suite has not been
 executed in this workspace; run it on a development Moodle site.
 
 ## What each file covers
@@ -51,6 +52,7 @@ executed in this workspace; run it on a development Moodle site.
 | `agent_test.php` | Prompt contents, scoring bands across scale widths, corrected-misconception handling, JSON parsing (fenced, prose-wrapped, malformed), score clamping, course summary |
 | `attempt_test.php` | Turns, budget exhaustion, automatic lesson advance, totals, early finish, provider failure recovery |
 | `external_test.php` | Authenticated AJAX access, ownership and hidden activities, duplicate/stale requests, progression, grades, retry settings, input limits, escaped output and atomic provider/scoring failures |
+| `conversation_view_test.php` | Lesson grouping, message order, navigation targets, finished history, legacy keys and escaped saved titles |
 | `lib_test.php` | Settings form save paths, file upload and re-upload, gradebook item and grade writing, deletion cleanup |
 
 ## After you change something
@@ -93,14 +95,15 @@ rather than against any real question set.
 
 ## Browser regression checks
 
-`browser/runner.html` runs 17 DOM-level regression scenarios against the shipped
+`browser/runner.html` runs 26 DOM-level regression scenarios against the shipped
 AMD bundle, with mocked `core/ajax` and filter-event modules. Serve the plugin
 directory locally, then open `tests/browser/runner.html`. The runner contains
 only synthetic test data and never contacts an AI provider or Moodle server.
-All 17 scenarios passed in headless Microsoft Edge during 0.4.2 packaging.
-They cover reply, pause, confirmation, draft recovery and browser history behavior.
+All 26 scenarios passed in headless Microsoft Edge during 0.4.3 packaging.
+They cover reply, pause, confirmation, draft recovery, browser history, conversation
+navigation, preserved reading focus, new-message announcements and narrow text wrapping.
 
-An equivalent standalone Playwright suite is also included. With Node.js,
+A standalone Playwright suite for the original 17 scenarios is also included. With Node.js,
 Playwright, and its Chromium browser available, run:
 
 ```bash
@@ -108,7 +111,7 @@ node --test tests/browser/conversation.test.cjs
 ```
 
 Set `CHROME_PATH` if using an existing Chromium browser executable. The standalone
-Playwright suite was not run for 0.4.2; the in-browser runner was used instead.
+Playwright suite was not run for 0.4.3; the in-browser runner was used instead.
 The UI checks do not replace the Moodle/PHP suite.
 
 ## Integration checks on a Moodle test site
@@ -151,3 +154,31 @@ empty reply can be paused, and an unsent reply blocks final submission. Check
 the final grade after deliberately ending a partially completed sequence. Use
 two tabs to verify an old pause cannot overwrite a newer draft. A failed normal
 POST must retain the edited draft once, including an explicitly cleared box.
+
+
+## Conversation navigation checks (0.4.3)
+
+The four PHP tests exercise the real renderer and saved messages. They check
+collapsed history and the current lesson, matching and unique navigation targets,
+visible final results, message ordering with missing/repeated lesson keys, and
+escaped historical titles. They have not run in this workspace because Moodle
+and PHP are unavailable.
+
+Before the demo, validate in your Moodle theme:
+
+- Use Tab and Shift+Tab to reach lesson links and disclosure summaries, then
+  Enter/Space to open and close history. Follow the latest-message and reply
+  links; focus must reach visible content with no keyboard trap.
+- While an AI reply is pending, open an earlier lesson and focus its message.
+  After the response arrives, verify that it stays open and your position remains.
+- With NVDA/Firefox or VoiceOver/Safari, verify that the initial transcript is
+  not announced as a live update, new evaluator messages are announced once,
+  and errors and final results are discoverable. Check a lesson transition too.
+- Test at 200% and 400% zoom and a narrow viewport with long replies and titles.
+  Controls and text should wrap without a separate transcript scroll area.
+- Disable JavaScript, reopen the activity, expand earlier lessons and follow
+  the lesson/reply links. Submit a reply and pause using the native forms.
+
+These checks follow the
+[Moodle accessibility checklist](https://moodledev.io/general/development/process/peer-review/accessibility-checklist).
+The automated DOM checks do not certify assistive-technology behavior.

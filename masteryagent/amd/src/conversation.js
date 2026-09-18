@@ -36,9 +36,35 @@ export const init = selector => {
     root.dataset.initialized = 'true';
     const content = root.querySelector('[data-region="content"]');
     const status = root.querySelector('[data-region="status"]');
+    const announcements = root.querySelector('[data-region="announcements"]');
     const error = root.querySelector('[data-region="error"]');
     const recoveredDraft = root.querySelector('[data-region="draft"]');
     let busy = false;
+
+    const announce = message => {
+        if (announcements) {
+            announcements.textContent = message;
+        }
+    };
+
+    root.addEventListener('click', event => {
+        const link = event.target.closest('[data-conversation-jump]');
+        if (!link || !content.contains(link) || event.button !== 0
+                || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) {
+            return;
+        }
+        const target = document.getElementById(link.dataset.conversationJump);
+        if (!target || !content.contains(target)) {
+            return;
+        }
+        event.preventDefault();
+        const history = target.closest('[data-region="lesson-history"]');
+        if (history) {
+            history.open = true;
+        }
+        target.focus({preventScroll: true});
+        target.scrollIntoView({block: 'nearest'});
+    });
 
     const setBusy = value => {
         busy = value;
@@ -51,10 +77,12 @@ export const init = selector => {
         });
         if (value) {
             status.textContent = root.dataset.processing;
+            announce(root.dataset.processing);
         }
     };
 
     const showError = message => {
+        announce('');
         // Neither a provider error nor a transport error is trusted HTML.
         error.textContent = message;
         error.hidden = false;
@@ -68,6 +96,7 @@ export const init = selector => {
             // Let the server's revision check reconcile any saved draft changes.
             setBusy(false);
             status.textContent = '';
+            announce('');
         }
     });
 
@@ -87,6 +116,7 @@ export const init = selector => {
             // Do not disable form controls: the submitter and reply must be included in the POST.
             busy = true;
             status.textContent = root.dataset.processing;
+            announce(root.dataset.processing);
             return;
         }
         event.preventDefault();
@@ -129,8 +159,21 @@ export const init = selector => {
             if (!response || typeof response.html !== 'string' || typeof response.stale !== 'boolean') {
                 throw new Error(root.dataset.error);
             }
+            // Capture at response time: learners may browse history while waiting for the evaluator.
+            const historyState = new Map(Array.from(content.querySelectorAll('[data-region="lesson-history"]'),
+                node => [node.dataset.sectionKey, node.open]));
+            const browsing = document.activeElement;
+            const preserveFocus = content.contains(browsing) && browsing.closest(
+                '[data-region="lesson-history"], [data-region="conversation-navigation"], [data-region="current-lesson"]');
+            const browsingId = preserveFocus ? browsing.id : '';
+            const browsingTop = preserveFocus ? browsing.getBoundingClientRect().top : 0;
             // HTML comes only from the plugin's escaped, learner-only PHP renderer.
             content.innerHTML = response.html;
+            content.querySelectorAll('[data-region="lesson-history"]').forEach(node => {
+                if (historyState.has(node.dataset.sectionKey)) {
+                    node.open = historyState.get(node.dataset.sectionKey);
+                }
+            });
             const newReplyBox = content.querySelector('textarea[name="reply"]');
             if (response.stale && draft) {
                 if (newReplyBox) {
@@ -148,15 +191,36 @@ export const init = selector => {
                 recoveredDraft.hidden = true;
                 recoveredDraft.querySelector('textarea').value = '';
                 const results = content.querySelector('[data-region="results"]');
-                const focusTarget = results || newReplyBox;
-                if (focusTarget) {
-                    focusTarget.focus({preventScroll: true});
-                }
-                const firstNewAgent = Array.from(content.querySelectorAll('.masteryagent-agent[data-message-id]'))
-                    .find(node => !previousMessages.has(node.dataset.messageId));
-                const scrollTarget = results || firstNewAgent || focusTarget;
-                if (scrollTarget) {
-                    scrollTarget.scrollIntoView({block: 'nearest'});
+                const newAgents = Array.from(content.querySelectorAll('.masteryagent-agent[data-message-id]'))
+                    .filter(node => !previousMessages.has(node.dataset.messageId));
+                announce(results ? (root.dataset.resultsready || root.dataset.updated)
+                    : newAgents.map(node => {
+                        const role = node.querySelector('.masteryagent-role');
+                        const message = node.querySelector('.masteryagent-text');
+                        return role && message ? `${role.textContent}: ${message.textContent}` : node.textContent.trim();
+                    }).join('\n\n') || root.dataset.updated);
+                const restoredFocus = browsingId ? document.getElementById(browsingId) : null;
+                if (restoredFocus && content.contains(restoredFocus)) {
+                    // A lesson may have just closed while the learner was reading one of its messages.
+                    const history = restoredFocus.closest('[data-region="lesson-history"]');
+                    if (history && restoredFocus.tagName !== 'SUMMARY') {
+                        history.open = true;
+                    }
+                    restoredFocus.focus({preventScroll: true});
+                    window.scrollBy(0, restoredFocus.getBoundingClientRect().top - browsingTop);
+                } else {
+                    const focusTarget = results || newReplyBox;
+                    if (focusTarget) {
+                        focusTarget.focus({preventScroll: true});
+                    }
+                    const latestVisibleAgent = newAgents.filter(node => {
+                        const history = node.closest('[data-region="lesson-history"]');
+                        return !history || history.open;
+                    }).pop();
+                    const scrollTarget = results || latestVisibleAgent || focusTarget;
+                    if (scrollTarget) {
+                        scrollTarget.scrollIntoView({block: 'nearest'});
+                    }
                 }
             }
             notifyFilterContentUpdated([content]);

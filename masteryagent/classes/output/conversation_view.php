@@ -75,21 +75,7 @@ class conversation_view {
             );
         }
 
-        // The conversation.
-        $out .= html_writer::start_div('masteryagent-conversation');
-        foreach ($current->messages() as $message) {
-            $isagent = $message->role === 'agent';
-            $label = $isagent
-                ? get_string('roleagent', 'mod_masteryagent')
-                : get_string('rolestudent', 'mod_masteryagent');
-            $out .= html_writer::div(
-                html_writer::tag('div', $label, ['class' => 'masteryagent-role'])
-                . html_writer::tag('div', nl2br(s($message->message)), ['class' => 'masteryagent-text']),
-                'masteryagent-message ' . ($isagent ? 'masteryagent-agent' : 'masteryagent-student'),
-                ['data-message-id' => $message->id]
-            );
-        }
-        $out .= html_writer::end_div();
+        $out .= self::render_transcript($sequence, $current);
 
         if (!$current->is_finished()) {
             $out .= html_writer::tag(
@@ -156,7 +142,7 @@ class conversation_view {
             $record = $current->get_record();
             $results = $current->lesson_results();
 
-            $body = html_writer::tag('h4', get_string('scoreline', 'mod_masteryagent', (object) [
+            $body = html_writer::tag('h3', get_string('scoreline', 'mod_masteryagent', (object) [
                 'score' => format_float((float) $record->score, 0),
                 'max' => masteryagent_total_grade($instance),
             ]));
@@ -177,7 +163,9 @@ class conversation_view {
             }
 
             $body .= html_writer::tag('p', nl2br(s((string) $record->summary)));
-            $out .= html_writer::div($body, 'generalbox', ['data-region' => 'results', 'tabindex' => '-1']);
+            $out .= html_writer::div($body, 'generalbox', [
+                'data-region' => 'results', 'id' => 'masteryagent-results', 'tabindex' => '-1',
+            ]);
 
             foreach ($results as $result) {
                 $out .= $OUTPUT->box(self::render_lesson_result($result), 'generalbox');
@@ -192,6 +180,102 @@ class conversation_view {
         }
 
         return $out;
+    }
+
+    /**
+     * Group adjacent messages without reordering history or dropping legacy messages.
+     *
+     * @param sequence $sequence Selected lessons.
+     * @param attempt $current Learner attempt.
+     * @return string Escaped transcript and native navigation.
+     */
+    private static function render_transcript(sequence $sequence, attempt $current): string {
+        $titles = [];
+        foreach ($sequence->all() as $index => $lesson) {
+            $titles[$sequence->key_for($index)] = trim($lesson->lesson_id() . ' ' . $lesson->title());
+        }
+        foreach ($current->lesson_results() as $result) {
+            // Prefer the saved public title when the instructor has since replaced the content.
+            $titles[$result['key'] ?? ''] = trim(($result['lesson_id'] ?? '') . ' ' . ($result['title'] ?? ''));
+        }
+        $groups = [];
+        $latestagent = null;
+        foreach ($current->messages() as $message) {
+            $key = (string) ($message->lessonkey ?? '');
+            $last = count($groups) - 1;
+            if ($last < 0 || $groups[$last]['key'] !== $key) {
+                $groups[] = ['key' => $key, 'messages' => []];
+                $last++;
+            }
+            $groups[$last]['messages'][] = $message;
+            if ($message->role === 'agent') {
+                $latestagent = $message->id;
+            }
+        }
+        $links = '';
+        $sections = '';
+        foreach ($groups as $index => $group) {
+            $id = 'masteryagent-section-' . (int) $group['messages'][0]->id;
+            $title = $titles[$group['key']] ?? '';
+            if ($title === '') {
+                $title = get_string('conversationsection', 'mod_masteryagent', $index + 1);
+            }
+            $active = !$current->is_finished() && $index === count($groups) - 1;
+            $label = s($title) . ($active ? ' — ' . get_string('currentlesson', 'mod_masteryagent') : '');
+            $links .= html_writer::tag('li', self::jump_link($id, $label));
+            $messages = '';
+            foreach ($group['messages'] as $message) {
+                $isagent = $message->role === 'agent';
+                $messages .= html_writer::div(
+                    html_writer::div(get_string($isagent ? 'roleagent' : 'rolestudent', 'mod_masteryagent'),
+                        'masteryagent-role')
+                    . html_writer::div(nl2br(s($message->message)), 'masteryagent-text'),
+                    'masteryagent-message ' . ($isagent ? 'masteryagent-agent' : 'masteryagent-student'), [
+                        'id' => 'masteryagent-message-' . (int) $message->id,
+                        'data-message-id' => $message->id, 'tabindex' => '-1',
+                    ]
+                );
+            }
+            if ($active) {
+                $sections .= html_writer::tag('section',
+                    html_writer::tag('h3', $label, ['id' => $id, 'tabindex' => '-1']) . $messages,
+                    ['data-region' => 'current-lesson', 'aria-labelledby' => $id]);
+            } else {
+                $sections .= html_writer::tag('details',
+                    html_writer::tag('summary', $label, ['id' => $id]) . $messages,
+                    ['class' => 'masteryagent-history', 'data-region' => 'lesson-history', 'data-section-key' => $id]);
+            }
+        }
+        $shortcuts = '';
+        if ($latestagent !== null) {
+            $shortcuts .= self::jump_link('masteryagent-message-' . (int) $latestagent,
+                get_string('latestagentmessage', 'mod_masteryagent'));
+        }
+        $shortcuts .= self::jump_link($current->is_finished() ? 'masteryagent-results' : 'masteryagent-reply',
+            get_string($current->is_finished() ? 'jumptoresults' : 'jumptoreply', 'mod_masteryagent'));
+        return html_writer::tag('nav',
+            html_writer::div($shortcuts, 'masteryagent-shortcuts')
+            . html_writer::tag('ul', $links, ['class' => 'masteryagent-lesson-links']), [
+                'aria-label' => get_string('conversationnavigation', 'mod_masteryagent'),
+                'data-region' => 'conversation-navigation', 'class' => 'masteryagent-navigation',
+            ]) . html_writer::div($sections, 'masteryagent-conversation')
+            . (!$current->is_finished() && $latestagent !== null ? html_writer::tag('p',
+                self::jump_link('masteryagent-message-' . (int) $latestagent,
+                    get_string('latestagentmessage', 'mod_masteryagent'), '-by-reply')) : '');
+    }
+
+    /**
+     * Render a fragment link that also works without JavaScript.
+     *
+     * @param string $target Generated element ID.
+     * @param string $label Escaped link label.
+     * @param string $suffix Distinguishes repeated shortcuts.
+     * @return string
+     */
+    private static function jump_link(string $target, string $label, string $suffix = ''): string {
+        return html_writer::link('#' . $target, $label, [
+            'data-conversation-jump' => $target, 'id' => 'jump-' . $target . $suffix,
+        ]);
     }
 
     /**
@@ -244,7 +328,7 @@ class conversation_view {
      */
     private static function render_lesson_result(array $result): string {
         $heading = trim(($result['lesson_id'] ?? '') . ' ' . ($result['title'] ?? ''));
-        $out = html_writer::tag('h5', s($heading) . ' — ' . s((string) ($result['score'] ?? '')) . '/'
+        $out = html_writer::tag('h4', s($heading) . ' — ' . s((string) ($result['score'] ?? '')) . '/'
             . (int) ($result['max'] ?? 0));
         $out .= html_writer::tag('p', nl2br(s((string) ($result['summary'] ?? ''))));
 
@@ -256,7 +340,7 @@ class conversation_view {
 
         $nextstep = is_string($result['next_step'] ?? null) ? trim($result['next_step']) : '';
         $out .= html_writer::div(
-            html_writer::tag('h6', get_string('learningnextstep', 'mod_masteryagent'))
+            html_writer::tag('h5', get_string('learningnextstep', 'mod_masteryagent'))
             . html_writer::tag('p', $nextstep !== '' ? nl2br(s($nextstep))
                 : get_string('learningnextstepempty', 'mod_masteryagent')),
             'masteryagent-next-step'
@@ -329,7 +413,7 @@ class conversation_view {
             }
         }
         return html_writer::div(
-            html_writer::tag('h6', get_string($heading, 'mod_masteryagent'))
+            html_writer::tag('h5', get_string($heading, 'mod_masteryagent'))
             . ($list !== '' ? html_writer::tag('ul', $list)
                 : html_writer::tag('p', get_string($empty, 'mod_masteryagent'), ['class' => 'text-muted'])),
             'masteryagent-feedback-section'
@@ -366,7 +450,7 @@ class conversation_view {
                 . ($details ? html_writer::div(s(implode(' · ', $details)), 'text-muted') : ''));
         }
         return html_writer::div(
-            html_writer::tag('h6', get_string('learningreadings', 'mod_masteryagent'))
+            html_writer::tag('h5', get_string('learningreadings', 'mod_masteryagent'))
             . ($list !== ''
                 ? html_writer::tag('p', get_string('learningreadingshelp', 'mod_masteryagent'))
                     . html_writer::tag('ul', $list)

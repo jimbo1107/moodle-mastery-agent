@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Mastery agent AJAX regression tests</title>
+<link rel="stylesheet" href="../../styles.css">
 <style>body{font:16px system-ui;margin:2rem}li{margin:.5rem 0}.pass{color:#176237}.fail{color:#b02020}#fixture{border:1px solid #ccc;padding:1rem;margin-top:2rem}</style></head>
 <body><h1>Mastery agent AJAX regression tests</h1><p>Real browser DOM; mocked Moodle AJAX responses. No Moodle server or AI provider is called.</p>
 <p id="summary">Running…</p><ol id="results"></ol><div id="fixture"></div>
@@ -32,10 +33,16 @@ const active = (state = 'state1', id = 1) => `<div class="masteryagent-agent" da
 <details><summary>Submit final assessment</summary><p>Unanswered lessons contribute zero.</p>
 <button name="action" value="finish" formnovalidate>Yes, submit and score</button></details></form>`;
 const finished = () => `<div data-region="results" tabindex="-1">Score: 3 of 4</div>${form('start', 'finished')}`;
+const history = (open = false) => `<details class="masteryagent-history" data-region="lesson-history" data-section-key="lesson1" ${open ? 'open' : ''}>
+<summary id="lesson1">Earlier lesson</summary><div id="old-message" class="masteryagent-agent" data-message-id="100" tabindex="-1">Old feedback</div></details>`;
+const navigable = (state = 'state1', id = 1, open = false) => `<nav data-region="conversation-navigation" aria-label="Conversation navigation">
+<a id="review-old" href="#old-message" data-conversation-jump="old-message">Earlier feedback</a>
+<a id="jump-reply" href="#reply" data-conversation-jump="reply">Jump to reply</a></nav>${history(open)}${active(state, id)}`;
 const mount = (html = form('start','new')) => {
     pending.length = 0; filterUpdates = 0;
-    document.querySelector('#fixture').innerHTML = `<div id="masteryagent-app" data-cmid="42" data-processing="Working" data-updated="Updated" data-error="Request failed" data-unsent="Send or clear your draft first" data-confirmrequired="Confirm final submission">
-<div data-region="error" role="alert" tabindex="-1" hidden></div><div data-region="status" role="status"></div>
+    document.querySelector('#fixture').innerHTML = `<div id="masteryagent-app" class="masteryagent-app" data-cmid="42" data-processing="Working" data-updated="Updated" data-error="Request failed" data-unsent="Send or clear your draft first" data-confirmrequired="Confirm final submission" data-resultsready="Results and feedback are ready">
+<div data-region="error" role="alert" tabindex="-1" hidden></div><div data-region="status" aria-hidden="true"></div>
+<div data-region="announcements" class="masteryagent-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 <div data-region="draft" hidden><textarea readonly></textarea></div><div data-region="content" aria-busy="false">${html}</div></div>`;
     window.conversation.init('#masteryagent-app');
 };
@@ -49,6 +56,65 @@ const respond = async (html, stale = false, warning = '') => {
     pending.at(-1).resolve({html, stale, warning}); await settle();
 };
 const tests = [
+['Navigation reveals collapsed feedback and moves focus to the destination', async () => {
+    mount(navigable());q('#review-old').focus();q('#review-old').click();
+    assert(q('[data-region="lesson-history"]').open,'History stayed hidden');
+    assert(document.activeElement===q('#old-message'),'Feedback was not focused');
+    q('#jump-reply').click();assert(document.activeElement===q('[name="reply"]'),'Reply was not focused');
+    assert(pending.length===0,'Navigation sent a request');
+}],
+['History opened while waiting stays open and retains the reading focus', async () => {
+    mount(navigable());submit('reply','Answer');q('#review-old').click();
+    await respond(navigable('state2',3));
+    assert(q('[data-region="lesson-history"]').open,'Open history collapsed');
+    assert(document.activeElement===q('#old-message'),'Update stole focus from earlier feedback');
+}],
+['History closed while waiting stays closed after replacement', async () => {
+    mount(navigable('state1',1,true));submit('reply','Answer');
+    q('#lesson1').click();assert(!q('[data-region="lesson-history"]').open,'Summary did not close');
+    await respond(navigable('state2',3,true));
+    assert(!q('[data-region="lesson-history"]').open,'Closed history reopened');
+}],
+['Navigation focus survives replacement without losing the reply', async () => {
+    mount(navigable());submit('reply','Answer');q('#jump-reply').focus();
+    await respond(navigable('state2',3));
+    assert(document.activeElement===q('#jump-reply'),'Navigation focus lost');
+    q('#jump-reply').click();assert(document.activeElement===q('[name="reply"]'),'Replaced shortcut stopped working');
+}],
+['A newly completed lesson remains visible if its message is being read', async () => {
+    const message='<div id="reading-now" tabindex="-1">Current question</div>';
+    mount(`<section data-region="current-lesson">${message}</section>${active()}`);
+    submit('reply','Answer');q('#reading-now').focus();
+    await respond(`<details data-region="lesson-history" data-section-key="just-closed"><summary>Earlier lesson</summary>${message}</details>${active('state2',3)}`);
+    assert(q('[data-region="lesson-history"]').open,'Focused message was hidden after the lesson closed');
+    assert(document.activeElement===q('#reading-now'),'Reading focus was lost after the lesson closed');
+}],
+['Only new evaluator content is announced, using text rather than HTML', async () => {
+    mount(navigable());assert(q('[data-region="announcements"]').textContent==='','Initial history was announced');
+    submit('reply','Answer');assert(q('[data-region="announcements"]').textContent==='Working','Processing was not announced');
+    await respond(navigable('state2',3).replace('Question 3','&lt;img src=x&gt; New feedback'));
+    const region=q('[data-region="announcements"]');
+    assert(region.textContent==='<img src=x> New feedback','Old messages or status mixed with new feedback');
+    assert(!region.querySelector('img'),'Announcement interpreted text as HTML');
+    assert(region.getAttribute('aria-live')==='polite','Announcement is not polite');
+}],
+['Stale and failed responses clear processing without replaying transcript', async () => {
+    mount(navigable());submit('reply','Answer');await respond(navigable('state2',3),true,'Changed in another tab');
+    assert(q('[data-region="announcements"]').textContent==='','Stale transcript was announced');
+    submit('reply');pending.at(-1).reject(Error('Offline'));await settle();
+    assert(q('[data-region="announcements"]').textContent==='','Processing announcement remained after failure');
+}],
+['Final results are announced while preserving an open history section', async () => {
+    mount(navigable('state1',1,true));submit('finish');await respond(history()+finished());
+    assert(q('[data-region="announcements"]').textContent==='Results and feedback are ready','Results announcement missing');
+    assert(q('[data-region="lesson-history"]').open,'Open history lost on completion');
+    assert(document.activeElement===q('[data-region="results"]'),'Results were not focused');
+}],
+['Long message text wraps within a narrow conversation panel', async () => {
+    mount(`<div class="masteryagent-message">${'LongUnbrokenWord'.repeat(60)}</div>`);
+    const panel=q('[data-region="content"]');panel.style.width='240px';
+    assert(panel.scrollWidth<=panel.clientWidth+1,'Long text caused horizontal overflow');
+}],
 ['Begin updates the page and focuses the reply without navigation', async () => {
     mount(); submit('start');
     assert(q('button').disabled, 'Start button should be disabled while processing');

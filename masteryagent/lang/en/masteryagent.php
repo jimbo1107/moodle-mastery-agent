@@ -164,3 +164,12 @@ $string['learningbreakdown'] = 'Feedback on assessed skills';
 $string['learningskill'] = 'Assessed skill';
 $string['learningdimensionfallback'] = 'Assessed skill {$a}';
 $string['learningverdictunknown'] = 'Not recorded';
+
+// Conversation navigation.
+$string['conversationnavigation'] = 'Conversation navigation';
+$string['conversationsection'] = 'Conversation section {$a}';
+$string['currentlesson'] = 'Current lesson';
+$string['latestagentmessage'] = 'Latest evaluator message';
+$string['jumptoreply'] = 'Jump to your reply';
+$string['jumptoresults'] = 'Jump to your results';
+$string['assessmentresultsready'] = 'Your assessment results and learning feedback are ready.';

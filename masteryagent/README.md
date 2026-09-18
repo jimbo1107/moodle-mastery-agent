@@ -114,6 +114,32 @@ revised questions and rubrics. Nothing else changes and existing attempts are
 left alone. This is the intended path for keeping the assessment current as
 lessons and educational objectives are revised.
 
+## Conversation navigation and accessibility (0.4.3)
+
+Conversations are grouped by lesson. The current lesson stays visible; earlier
+lessons collapse into native disclosure sections that can be opened with the
+keyboard. Navigation links jump to each lesson, the latest evaluator message,
+and the reply box or final results. A second latest-message link beside the
+reply form helps learners review the prompt without scrolling back through history.
+
+During AJAX updates, opened history sections remain open. If the learner is
+reviewing a message or navigation link while waiting, focus and reading position
+are restored. A newly closed lesson remains open when needed to keep that focused
+message visible. Otherwise, focus returns to the reply box or results.
+These expansion choices last across replies on the current page, not across a
+full page reload.
+
+A persistent polite live region announces processing and newly added evaluator
+messages without replaying the full transcript. Final completion announces that
+results are ready. Links, native disclosure controls, visible focus outlines,
+sequential heading levels, and wrapping long text support keyboard use and
+narrow screens. Navigation and disclosures remain available without JavaScript;
+screen-reader behavior still needs verification in your Moodle theme.
+
+Install the updated ZIP, complete version **2026091706** through Moodle's plugin
+upgrade, and purge caches. This release has no new database schema changes.
+Reopen activity tabs after upgrading.
+
 ## Pausing and final submission (0.4.2)
 
 **Save and leave** saves the learner's place and exact unsent reply, then
@@ -189,10 +215,11 @@ or overturn the agent's judgement.
 
 ## Tests
 
-`tests/` holds 95 PHPUnit tests covering the parser, lesson selection, prompt
+`tests/` holds 99 PHPUnit tests covering the parser, lesson selection, prompt
 construction, the conversation engine, gradebook, and AJAX access and recovery.
 The suite includes 15 AJAX regression tests from 0.4.0, 3 learning-plan tests
-from 0.4.1, and 6 pause/final-submission tests from 0.4.2.
+from 0.4.1, 6 pause/final-submission tests from 0.4.2, and 4 transcript/navigation
+tests from 0.4.3.
 The PHP suite has not been executed in this workspace, which has no
 Moodle/PHP runtime.
 No AI provider is called by the tests. See `tests/README.md` for setup, browser
