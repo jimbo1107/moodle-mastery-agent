@@ -228,6 +228,21 @@ $string['learningskill'] = 'Assessed skill';
 $string['learningdimensionfallback'] = 'Assessed skill {$a}';
 $string['learningverdictunknown'] = 'Not recorded';
 
+// Printable and copyable learning plan.
+$string['learningplantitle'] = 'My learning plan';
+$string['learningplanopen'] = 'Print or copy learning plan (opens in a new tab)';
+$string['learningplannotavailable'] = 'A learning plan is available after you submit this assessment.';
+$string['learningplanback'] = 'Back to attempt feedback';
+$string['learningplanprint'] = 'Print / save as PDF';
+$string['learningplancopy'] = 'Copy learning plan';
+$string['learningplanhelp'] = 'Keep this plan for your next study session. Use your browser\'s Print option to print or save a PDF, or copy the text below.';
+$string['learningplanmanual'] = 'Select and copy text';
+$string['learningplantext'] = 'Learning plan text';
+$string['learningplanmanualhelp'] = 'Select the text in this box and use your device\'s Copy command. With a keyboard, use Ctrl+A then Ctrl+C (Command+A then Command+C on Mac) while in the box.';
+$string['learningplancopied'] = 'Learning plan copied.';
+$string['learningplancopyfailed'] = 'Automatic copying is unavailable. Open Select and copy text, then use your device\'s Copy command.';
+$string['learningplanprintfailed'] = 'The print dialog could not open. Use your browser\'s Print option.';
+
 // Conversation navigation.
 $string['conversationnavigation'] = 'Conversation navigation';
 $string['conversationsection'] = 'Conversation section {$a}';

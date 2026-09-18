@@ -114,6 +114,31 @@ revised questions and rubrics. Nothing else changes and existing attempts are
 left alone. This is the intended path for keeping the assessment current as
 lessons and educational objectives are revised.
 
+## Keep a learning plan (0.4.10)
+
+Completed results and completed previous-attempt reviews offer **Print or copy
+learning plan**. This opens a new tab with saved scores, feedback, next
+steps, skill comments and reading references. It does not include the conversation,
+unsent drafts or private evaluation data. Previous plans use saved feedback rather
+than recalculating results against current lesson settings. Keeping the original
+tab open preserves any recovered unsent answer still displayed there.
+
+Use **Print / save as PDF** to open the browser's print dialog, or **Copy learning
+plan** to copy plain text with reading URLs. If clipboard access is unavailable,
+the page opens a labelled, selectable text box with manual copying instructions.
+The manual option and browser-menu printing also work without JavaScript. Print
+styles hide controls and show reading URLs on paper.
+
+Access is restricted to the signed-in learner's own completed attempts within the
+activity, after Moodle checks course access and view permission. Opening, printing
+or copying a plan does not change the attempt or grades, and makes no AI request.
+Plain text is derived from the same public feedback HTML using
+[Moodle's HTML-to-text converter](https://github.com/moodle/moodle/blob/MOODLE_405_STABLE/lib/weblib.php).
+
+Install the updated ZIP, complete version **2026091806** through Moodle's plugin
+upgrade, purge caches, and reopen activity tabs. This release adds no database
+schema changes.
+
 ## Feedback on small screens (0.4.9)
 
 Skill-level feedback now uses cards with a skill heading and explicit
@@ -384,7 +409,7 @@ or overturn the agent's judgement.
 
 ## Tests
 
-`tests/` holds 155 PHPUnit tests covering the parser, lesson selection, prompt
+`tests/` holds 159 PHPUnit tests covering the parser, lesson selection, prompt
 construction, the conversation engine, gradebook, and AJAX access and recovery.
 The suite includes 15 AJAX regression tests from 0.4.0, 3 learning-plan tests
 from 0.4.1, 6 pause/final-submission tests from 0.4.2, and 4 transcript/navigation
@@ -400,7 +425,10 @@ Version 0.4.8 adds 14 clarification service/prompt tests, 6 clarification-view
 tests and 10 browser scenarios for draft preservation and accessible help.
 Version 0.4.9 adds a shared skill-card rendering test and 3 browser scenarios for
 narrow layouts, enlarged text and resizing. All 73 browser scenarios passed in
-headless Microsoft Edge during packaging.
+headless Microsoft Edge during 0.4.9 packaging.
+Version 0.4.10 adds 4 PHP export tests and a separate 6-case print/copy browser
+runner. All 79 browser scenarios across both runners passed in headless Edge
+during 0.4.10 packaging.
 The PHP suite has not been executed in this workspace, which has no
 Moodle/PHP runtime.
 No AI provider is called by the tests. See `tests/README.md` for setup, browser

@@ -1,6 +1,6 @@
 # Running the mastery agent tests
 
-155 PHPUnit tests covering the question-set parser, lesson selection, prompt
+159 PHPUnit tests covering the question-set parser, lesson selection, prompt
 construction, the conversation engine, gradebook, AJAX endpoint and learner history. They never call a real
 AI provider — a scripted responder stands in for one — so they cost nothing to
 run and are deterministic.
@@ -45,7 +45,8 @@ with 4 further tests for the welcome summary and editor markup in 0.4.5.
 Version 0.4.6 adds 8 history-access tests, 5 history-list tests and 7 saved-review
 tests. Version 0.4.7 adds 5 nearby request-feedback tests. Version 0.4.8 adds
 14 clarification service/prompt tests and 6 clarification-view tests. Version 0.4.9
-adds one shared skill-card rendering test, for 155 tests in total.
+adds one shared skill-card rendering test. Version 0.4.10 adds 4 learning-plan
+export tests, for 159 tests in total.
 The PHP suite has not been
 executed in this workspace; run it on a development Moodle site.
 
@@ -57,6 +58,7 @@ executed in this workspace; run it on a development Moodle site.
 | `sequence_test.php` | Lesson selection by id, ordering, unknown ids, legacy single-lesson instances |
 | `agent_test.php` | Prompt contents, scoring bands across scale widths, corrected-misconception handling, JSON parsing (fenced, prose-wrapped, malformed), score clamping, course summary |
 | `learning_plan_test.php` | Saved public feedback, safe reading links, legacy fallbacks and semantic skill cards shared by finished and historical attempts |
+| `learning_plan_export_test.php` | Completed-attempt export links, HTML/plain-text feedback, safe reading URLs, private-data exclusion, unchanged records and historical consistency |
 | `attempt_test.php` | Turns, budget exhaustion, automatic lesson advance, totals, early finish, provider failure recovery |
 | `external_test.php` | Authenticated AJAX access, ownership and hidden activities, duplicate/stale requests, progression, grades, retry settings, input limits, escaped output and atomic provider/scoring failures |
 | `conversation_view_test.php` | Lesson grouping, message order, navigation targets, finished history, legacy keys, escaped saved titles, overview settings, saved reply context, welcome summaries and editor guidance |
@@ -112,7 +114,7 @@ rather than against any real question set.
 AMD bundle and stylesheet, with mocked `core/ajax` and filter-event modules. Serve the plugin
 directory locally, then open `tests/browser/runner.html`. The runner contains
 only synthetic test data and never contacts an AI provider or Moodle server.
-All 73 scenarios passed in headless Microsoft Edge during 0.4.9 packaging.
+All 73 scenarios passed in headless Microsoft Edge during 0.4.10 packaging.
 They cover reply, pause, confirmation, draft recovery, browser history, conversation
 navigation, preserved reading focus, new-message announcements and narrow text wrapping.
 The 11 scenarios added in 0.4.4 cover focus visibility after long replies, announcement
@@ -138,7 +140,7 @@ node --test tests/browser/conversation.test.cjs
 ```
 
 Set `CHROME_PATH` if using an existing Chromium browser executable. The standalone
-Playwright suite was not run for 0.4.9; the in-browser runner was used instead.
+Playwright suite was not run for 0.4.10; the in-browser runners were used instead.
 The UI checks do not replace the Moodle/PHP suite.
 
 ## Integration checks on a Moodle test site
@@ -393,3 +395,43 @@ On a Moodle test site, complete an assessment and open an earlier attempt too:
 - Disable JavaScript and review both current results and saved history. All
   feedback should remain readable. On a wide page, cards may sit side by side;
   narrowing the page must preserve the same content and order.
+
+## Printable and copyable learning plan checks (0.4.10)
+
+`learning_plan_export_test.php` covers completed-attempt links, saved feedback
+and reading URLs in both HTML and plain text, escaping and private-data exclusion,
+unchanged database records, independence from replacement course content, and
+legacy/unfinished attempts. The PHP suite requires a development Moodle site
+and has not been executed in this workspace.
+
+`browser/learning_plan.html` runs standalone browser checks against the shipped
+learning-plan AMD bundle. Clipboard and print APIs are mocked; these checks cover
+exact copied text, success feedback, denied/unavailable clipboard fallback,
+late failures without stealing focus, explicit printing and duplicate initialization.
+They do not verify real operating-system clipboard permissions or print dialogs.
+All 6 checks passed in headless Microsoft Edge during 0.4.10 packaging, alongside
+the 73 checks in `browser/runner.html` (79 browser checks in total).
+A separate synthetic layout check used Edge print-media emulation and PDF output:
+controls and page navigation were hidden, reading URLs were visible, a long plan
+produced seven pages, and the export fit a 320-pixel viewport. This does not replace
+checking pagination and screen-reader behavior in the installed Moodle theme.
+
+On a Moodle test site:
+
+- Open **Print or copy learning plan** from completed current results and an
+  older completed attempt. Compare the saved summaries, scores, next steps,
+  skills and reading references with that attempt's feedback. Confirm the
+  conversation and unsent draft are absent.
+- Print a long, multi-lesson plan and inspect every preview page. All feedback
+  should be present, headings readable, controls absent, and reading URLs shown.
+  Try Save as PDF in the installed theme and repeat with JavaScript disabled.
+- Copy to a text editor and check labels, line breaks and reading URLs. Deny
+  clipboard permission and try HTTP without a secure clipboard context; the
+  manual text box should remain available. Copy manually on a phone and with a
+  keyboard. Check the status announcement and labels using a screen reader.
+- Request another learner's attempt, an attempt in another activity, a missing
+  attempt and an unfinished attempt. No plan should be returned. Check hidden
+  activities and users without view permission too. Students with view permission
+  should still review their own completed plans when retries are disabled.
+- Verify that grades, attempts and messages are unchanged by opening, printing
+  or copying a plan. No AI-provider request should occur.

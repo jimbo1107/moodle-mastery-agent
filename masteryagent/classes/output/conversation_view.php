@@ -207,6 +207,7 @@ class conversation_view {
             $out .= html_writer::div($body, 'generalbox', [
                 'data-region' => 'results', 'id' => 'masteryagent-results', 'tabindex' => '-1',
             ]);
+            $out .= html_writer::div(self::learning_plan_link($cm, $current), 'masteryagent-learning-plan-entry mb-3');
 
             foreach ($results as $result) {
                 $out .= $OUTPUT->box(self::render_lesson_result($result), 'generalbox');
@@ -249,15 +250,15 @@ class conversation_view {
     }
 
     /**
-     * Review only public information saved with an attempt, independently of current activity settings.
+     * Render public feedback saved with an attempt, independently of current activity settings.
      *
      * The caller must establish ownership before passing an attempt. This renderer never resumes,
      * scores or changes it, and deliberately excludes unsent drafts and private evaluation data.
      *
      * @param attempt $review Attempt the learner is allowed to review.
-     * @return string Escaped, read-only feedback and transcript without JavaScript dependencies.
+     * @return string Escaped, read-only feedback without transcript or controls.
      */
-    public static function render_review(attempt $review): string {
+    public static function render_feedback(attempt $review): string {
         $record = $review->get_record();
         $feedback = html_writer::tag('h3', get_string('historyreviewfeedback', 'mod_masteryagent'),
             ['id' => 'masteryagent-history-feedback-title']);
@@ -283,9 +284,19 @@ class conversation_view {
         if (!$results) {
             $feedback .= html_writer::tag('p', get_string('historyreviewlessonfeedbackmissing', 'mod_masteryagent'));
         }
-        $out = html_writer::tag('section', $feedback, [
+        return html_writer::tag('section', $feedback, [
             'data-region' => 'history-review-results', 'aria-labelledby' => 'masteryagent-history-feedback-title',
         ]);
+    }
+
+    /**
+     * Review saved public feedback and submitted messages without changing the attempt.
+     *
+     * @param attempt $review Attempt the learner is allowed to review.
+     * @return string Read-only feedback and transcript without JavaScript dependencies.
+     */
+    public static function render_review(attempt $review): string {
+        $out = self::render_feedback($review);
         $messages = $review->messages();
         $transcript = html_writer::tag('h3', get_string('historyreviewtranscript', 'mod_masteryagent'),
             ['id' => 'masteryagent-history-transcript-title']);
@@ -294,6 +305,43 @@ class conversation_view {
         return $out . html_writer::tag('section', $transcript, [
             'data-region' => 'history-review-transcript', 'aria-labelledby' => 'masteryagent-history-transcript-title',
         ]);
+    }
+
+    /**
+     * Open a completed attempt's saved learning plan.
+     *
+     * @param \stdClass $cm Course module.
+     * @param attempt $review Attempt the learner is allowed to review.
+     * @return string Native link for finished attempts, otherwise an empty string.
+     */
+    public static function learning_plan_link(\stdClass $cm, attempt $review): string {
+        if (!$review->is_finished()) {
+            return '';
+        }
+        return html_writer::link(new moodle_url('/mod/masteryagent/learningplan.php', [
+            'id' => $cm->id, 'attempt' => $review->get_id(),
+        ]), get_string('learningplanopen', 'mod_masteryagent'), [
+            'class' => 'btn btn-secondary', 'target' => '_blank', 'rel' => 'noopener noreferrer',
+        ]);
+    }
+
+    /**
+     * Render the same saved learning feedback as an exportable document, with no conversation or private data.
+     *
+     * @param attempt $review Finished attempt the learner is allowed to review.
+     * @param string $activityname Plain-text activity label.
+     * @return string Escaped document ready for printing or Moodle's plain-text conversion.
+     * @throws \moodle_exception When the attempt has not been submitted.
+     */
+    public static function render_learning_plan(attempt $review, string $activityname): string {
+        if (!$review->is_finished()) {
+            throw new \moodle_exception('learningplannotavailable', 'mod_masteryagent');
+        }
+        return html_writer::tag('article',
+            html_writer::tag('h2', get_string('learningplantitle', 'mod_masteryagent'))
+            . html_writer::tag('p', s($activityname))
+            . history_view::metadata($review->get_record())
+            . self::render_feedback($review), ['class' => 'masteryagent-export-document']);
     }
 
     /**

@@ -47,6 +47,7 @@
     overflow-wrap: anywhere;
 }
 
+.masteryagent-export :focus-visible,
 .masteryagent-app :focus-visible,
 .masteryagent-attempt-history :focus-visible,
 .masteryagent-history-entry :focus-visible,
@@ -381,6 +382,83 @@
 
 .masteryagent-skill-card dd + dt {
     margin-top: 0.75rem;
+}
+
+.masteryagent-export {
+    max-width: 70rem;
+    margin: 0 auto;
+    overflow-wrap: anywhere;
+}
+
+.masteryagent-export-controls {
+    margin-bottom: 1.5rem;
+}
+
+.masteryagent-export-controls > p {
+    margin-top: 0.75rem;
+}
+
+.masteryagent-export-controls summary {
+    cursor: pointer;
+    padding: 0.75rem 0;
+    font-weight: 600;
+}
+
+.masteryagent-export-controls textarea {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-height: 16rem;
+    font: inherit;
+    line-height: 1.5;
+}
+
+.masteryagent-export [hidden] {
+    display: none !important;
+}
+
+@media print {
+    body.masteryagent-print-page #page-header,
+    body.masteryagent-print-page #page-footer,
+    body.masteryagent-print-page nav,
+    body.masteryagent-print-page .activity-header,
+    body.masteryagent-print-page .masteryagent-export-controls {
+        display: none !important;
+    }
+
+    body.masteryagent-print-page,
+    body.masteryagent-print-page #page,
+    body.masteryagent-print-page #page-content,
+    body.masteryagent-print-page #region-main {
+        height: auto !important;
+        overflow: visible !important;
+        background: white !important;
+        color: black !important;
+    }
+
+    .masteryagent-print-page .masteryagent-export {
+        max-width: none;
+        margin: 0;
+    }
+
+    .masteryagent-print-page .masteryagent-export-document .masteryagent-feedback-grid,
+    .masteryagent-print-page .masteryagent-export-document .masteryagent-skill-cards {
+        display: block;
+    }
+
+    .masteryagent-print-page .masteryagent-skill-card {
+        margin-bottom: 1rem;
+        break-inside: avoid;
+    }
+
+    .masteryagent-print-page .masteryagent-export-document :is(h2, h3, h4, h5, h6) {
+        break-after: avoid;
+    }
+
+    .masteryagent-print-page .masteryagent-export-document a[href]::after {
+        content: " (" attr(href) ")";
+        overflow-wrap: anywhere;
+    }
 }
 
 @media (min-width: 48rem) {

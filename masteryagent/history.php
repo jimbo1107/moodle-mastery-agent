@@ -88,6 +88,7 @@ echo html_writer::tag('p', get_string('historyreturnhelp', 'mod_masteryagent'), 
 if ($review !== null) {
     echo html_writer::tag('p', get_string('historyreadonly', 'mod_masteryagent'));
     echo history_view::metadata($review->get_record());
+    echo html_writer::div(conversation_view::learning_plan_link($cm, $review), 'mb-3');
     echo conversation_view::render_review($review);
 } else {
     $records = attempt::page_for_user($instance, $userid, $page, history_view::PER_PAGE);
