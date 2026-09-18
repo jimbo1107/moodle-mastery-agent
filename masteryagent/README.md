@@ -114,6 +114,15 @@ revised questions and rubrics. Nothing else changes and existing attempts are
 left alone. This is the intended path for keeping the assessment current as
 lessons and educational objectives are revised.
 
+## Clearer report navigation (0.5.1)
+
+The instructor report button is labelled **Class attempts and scores** to
+distinguish it from **My attempts and feedback**, which opens personal history.
+The class report is available to users with reporting permission.
+
+Install the updated ZIP, complete version **2026091808** through Moodle's plugin
+upgrade, and purge caches to refresh the button label.
+
 ## Student experience update (0.5.0)
 
 This release improves submission, answer protection and results review:
@@ -433,7 +442,7 @@ them or answer the question on the learner's behalf.
 
 ## Instructor report
 
-**View attempts** lists every attempt with its total, how many lessons closed,
+**Class attempts and scores** lists every attempt with its total, how many lessons closed,
 and its status. Opening one shows the per-lesson score table, the full
 transcript, the evidence ledger the agent maintained, and the rubric behind
 every lesson — which is what a subject matter expert needs in order to validate

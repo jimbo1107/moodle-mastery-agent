@@ -168,7 +168,7 @@ $string['historyreviewtranscript'] = 'Saved conversation';
 $string['historyreviewnomessages'] = 'No submitted messages were saved for this attempt.';
 
 // Report.
-$string['viewreport'] = 'View attempts';
+$string['viewreport'] = 'Class attempts and scores';
 $string['viewtranscript'] = 'View transcript';
 $string['backtoreport'] = 'Back to attempts';
 $string['noattempts'] = 'Nobody has attempted this assessment yet.';
