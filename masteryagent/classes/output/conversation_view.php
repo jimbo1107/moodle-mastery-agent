@@ -37,9 +37,11 @@ class conversation_view {
      * @param \stdClass $cm Course module record.
      * @param sequence $sequence Selected lessons.
      * @param attempt|null $current Current user's attempt.
+     * @param string|null $draftoverride Unsent text from a failed normal POST, if any.
      * @return string Escaped HTML.
      */
-    public static function render(\stdClass $instance, \stdClass $cm, sequence $sequence, ?attempt $current): string {
+    public static function render(\stdClass $instance, \stdClass $cm, sequence $sequence, ?attempt $current,
+            ?string $draftoverride = null): string {
         global $OUTPUT;
         $out = '';
         if ($current === null) {
@@ -102,9 +104,16 @@ class conversation_view {
                 'class' => 'masteryagent-form',
                 'data-action' => 'reply',
             ]);
-            $out .= self::form_fields($cm, $current, 'reply');
+            // One form keeps the current draft attached to every action, including without JavaScript.
+            $out .= self::form_fields($cm, $current, '');
+            $out .= html_writer::empty_tag('input', [
+                'type' => 'hidden', 'name' => 'confirmed', 'value' => '1',
+            ]);
+            if ($draftoverride === null && $current->draft_reply() !== '') {
+                $out .= html_writer::tag('p', get_string('draftrestored', 'mod_masteryagent'), ['class' => 'text-muted']);
+            }
             $out .= html_writer::tag('label', get_string('yourreply', 'mod_masteryagent'), ['for' => 'masteryagent-reply']);
-            $out .= html_writer::tag('textarea', '', [
+            $out .= html_writer::tag('textarea', s($draftoverride ?? $current->draft_reply()), [
                 'name' => 'reply',
                 'id' => 'masteryagent-reply',
                 'maxlength' => attempt::MAX_REPLY_CHARS,
@@ -114,19 +123,35 @@ class conversation_view {
                 'placeholder' => get_string('replyplaceholder', 'mod_masteryagent'),
             ]);
             $out .= html_writer::div(
-                html_writer::empty_tag('input', [
-                    'type' => 'submit',
-                    'class' => 'btn btn-primary mt-2',
-                    'value' => get_string('sendreply', 'mod_masteryagent'),
+                html_writer::tag('button', get_string('sendreply', 'mod_masteryagent'), [
+                    'type' => 'submit', 'name' => 'action', 'value' => 'reply',
+                    'class' => 'btn btn-primary',
+                ])
+                . html_writer::tag('button', get_string('saveandleave', 'mod_masteryagent'), [
+                    'type' => 'submit', 'name' => 'action', 'value' => 'pause',
+                    'class' => 'btn btn-secondary', 'formnovalidate' => 'formnovalidate',
                 ]),
-                'mt-2'
+                'masteryagent-attempt-actions mt-2'
+            );
+            $out .= html_writer::tag('p', get_string('pausehelp', 'mod_masteryagent'), ['class' => 'text-muted mt-2']);
+
+            $unanswered = max(0, $sequence->count() - $current->lesson_index()
+                - ($current->turns_used() > 0 ? 1 : 0));
+            $out .= html_writer::tag('details',
+                html_writer::tag('summary', get_string('finishassessment', 'mod_masteryagent'))
+                . html_writer::tag('p', get_string('finishprogress', 'mod_masteryagent', (object) [
+                    'done' => count($current->lesson_results()), 'total' => $sequence->count(),
+                ]), ['class' => 'mt-3'])
+                . html_writer::tag('p', get_string('finishconsequences', 'mod_masteryagent'))
+                . html_writer::tag('p', get_string('finishunanswered', 'mod_masteryagent', $unanswered))
+                . html_writer::tag('p', get_string('finishunsent', 'mod_masteryagent'))
+                . html_writer::tag('button', get_string('confirmfinish', 'mod_masteryagent'), [
+                    'type' => 'submit', 'name' => 'action', 'value' => 'finish',
+                    'class' => 'btn btn-outline-danger', 'formnovalidate' => 'formnovalidate',
+                ]),
+                ['class' => 'masteryagent-finish-confirmation mt-3']
             );
             $out .= html_writer::end_tag('form');
-
-            $out .= html_writer::div(
-                self::action_form($cm, $current, 'finish', 'finishnow', 'btn btn-link'),
-                'mt-2'
-            );
         } else {
             $record = $current->get_record();
             $results = $current->lesson_results();
@@ -170,7 +195,7 @@ class conversation_view {
     }
 
     /**
-     * Render a start, retry or finish POST form, also handled by the AJAX module.
+     * Render a start or retry POST form, also handled by the AJAX module.
      *
      * @param \stdClass $cm Course module.
      * @param attempt|null $current Latest attempt.
@@ -203,6 +228,9 @@ class conversation_view {
         $out = '';
         foreach (['id' => $cm->id, 'action' => $action, 'sesskey' => sesskey(),
                 'state' => conversation::state($current)] as $name => $value) {
+            if ($name === 'action' && $action === '') {
+                continue;
+            }
             $out .= html_writer::empty_tag('input', ['type' => 'hidden', 'name' => $name, 'value' => $value]);
         }
         return $out;

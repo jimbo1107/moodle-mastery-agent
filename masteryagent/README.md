@@ -114,6 +114,35 @@ revised questions and rubrics. Nothing else changes and existing attempts are
 left alone. This is the intended path for keeping the assessment current as
 lessons and educational objectives are revised.
 
+## Pausing and final submission (0.4.2)
+
+**Save and leave** saves the learner's place and exact unsent reply, then
+returns to the course. Opening the activity again restores that draft. Pausing
+does not call the AI, use a reply, close a lesson, or submit a final grade.
+Drafts are saved when this button is used; typing alone does not autosave them.
+
+**Submit final assessment** opens a confirmation section showing completed
+lessons and the number of lessons without a submitted answer. Those unanswered
+lessons contribute zero points. **Yes, submit and score** finalizes the attempt;
+it cannot be resumed. The learner must send or clear any unsent answer before
+confirming, or choose Save and leave to keep working later. Normal automatic
+completion after the last lesson continues to work as before.
+
+All three buttons share the reply form, so drafts and the selected action also
+reach the server without JavaScript. Saving and leaving intentionally uses a
+normal POST and course redirect. Replies and confirmed final submission keep
+their AJAX behavior. Server checks reject unconfirmed final submissions and
+stale requests; old tabs cannot silently overwrite a newer saved draft.
+
+### Upgrading to 0.4.2
+
+Install the updated ZIP, then visit **Site administration → Notifications** to
+complete version **2026091705**. This adds the nullable `draftreply` column to
+the attempts table and updates the AJAX service's optional confirmation
+parameter. Purge Moodle caches to load the new script, strings and styles.
+Existing attempts remain usable; no question-set re-upload is needed for this
+change. Reopen any activity tabs left open during the upgrade.
+
 ## Student learning plan (0.4.1)
 
 Completed lessons now show **What you understand**, **What needs work** and
@@ -160,10 +189,11 @@ or overturn the agent's judgement.
 
 ## Tests
 
-`tests/` holds 89 PHPUnit tests covering the parser, lesson selection, prompt
+`tests/` holds 95 PHPUnit tests covering the parser, lesson selection, prompt
 construction, the conversation engine, gradebook, and AJAX access and recovery.
-The suite includes 15 AJAX regression tests from 0.4.0 and 3 learning-plan tests
-from 0.4.1. The PHP suite has not been executed in this workspace, which has no
+The suite includes 15 AJAX regression tests from 0.4.0, 3 learning-plan tests
+from 0.4.1, and 6 pause/final-submission tests from 0.4.2.
+The PHP suite has not been executed in this workspace, which has no
 Moodle/PHP runtime.
 No AI provider is called by the tests. See `tests/README.md` for setup, browser
 tests, and the suite command.
