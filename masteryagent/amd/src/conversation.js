@@ -37,9 +37,39 @@ export const init = selector => {
     const content = root.querySelector('[data-region="content"]');
     const status = root.querySelector('[data-region="status"]');
     const announcements = root.querySelector('[data-region="announcements"]');
+    const announcementMode = root.querySelector('[data-region="announcement-mode"]');
     const error = root.querySelector('[data-region="error"]');
     const recoveredDraft = root.querySelector('[data-region="draft"]');
     let busy = false;
+
+    if (announcementMode) {
+        const preferenceKey = 'masteryagent-announcement-mode';
+        try {
+            const savedMode = window.sessionStorage.getItem(preferenceKey);
+            if (savedMode === 'brief' || savedMode === 'full') {
+                announcementMode.value = savedMode;
+            }
+        } catch (exception) {
+            // Storage can be unavailable; the choice still works for this page.
+        }
+        announcementMode.addEventListener('change', () => {
+            try {
+                window.sessionStorage.setItem(preferenceKey, announcementMode.value);
+            } catch (exception) {
+                // A blocked storage policy must not interrupt an assessment.
+            }
+        });
+        const announcementSettings = root.querySelector('[data-region="announcement-settings"]');
+        if (announcementSettings) {
+            announcementSettings.hidden = false;
+        }
+    }
+
+    const preserveExternalFocus = () => {
+        const active = document.activeElement;
+        // Disabling a submit button can return focus to the document body.
+        return active && active !== document.body && active !== document.documentElement && !content.contains(active);
+    };
 
     const announce = message => {
         if (announcements) {
@@ -81,13 +111,15 @@ export const init = selector => {
         }
     };
 
-    const showError = message => {
+    const showError = (message, moveFocus = true) => {
         announce('');
         // Neither a provider error nor a transport error is trusted HTML.
         error.textContent = message;
         error.hidden = false;
-        error.focus({preventScroll: true});
-        error.scrollIntoView({block: 'nearest'});
+        if (moveFocus) {
+            error.focus({preventScroll: true});
+            error.scrollIntoView({block: 'nearest'});
+        }
     };
 
     window.addEventListener('pageshow', event => {
@@ -160,18 +192,22 @@ export const init = selector => {
                 throw new Error(root.dataset.error);
             }
             // Capture at response time: learners may browse history while waiting for the evaluator.
-            const historyState = new Map(Array.from(content.querySelectorAll('[data-region="lesson-history"]'),
-                node => [node.dataset.sectionKey, node.open]));
+            const expandableSections = '[data-region="lesson-history"], [data-region="original-scenario"]';
+            const sectionKey = node => `${node.dataset.region}:${node.dataset.sectionKey}`;
+            const historyState = new Map(Array.from(content.querySelectorAll(expandableSections),
+                node => [sectionKey(node), node.open]));
             const browsing = document.activeElement;
+            const keepExternalFocus = preserveExternalFocus();
             const preserveFocus = content.contains(browsing) && browsing.closest(
-                '[data-region="lesson-history"], [data-region="conversation-navigation"], [data-region="current-lesson"]');
+                '[data-region="lesson-history"], [data-region="conversation-navigation"], '
+                + '[data-region="current-lesson"], [data-region="reply-context"], [data-region="original-scenario"]');
             const browsingId = preserveFocus ? browsing.id : '';
             const browsingTop = preserveFocus ? browsing.getBoundingClientRect().top : 0;
             // HTML comes only from the plugin's escaped, learner-only PHP renderer.
             content.innerHTML = response.html;
-            content.querySelectorAll('[data-region="lesson-history"]').forEach(node => {
-                if (historyState.has(node.dataset.sectionKey)) {
-                    node.open = historyState.get(node.dataset.sectionKey);
+            content.querySelectorAll(expandableSections).forEach(node => {
+                if (historyState.has(sectionKey(node))) {
+                    node.open = historyState.get(sectionKey(node));
                 }
             });
             const newReplyBox = content.querySelector('textarea[name="reply"]');
@@ -186,19 +222,21 @@ export const init = selector => {
             setBusy(false);
             status.textContent = root.dataset.updated;
             if (response.stale) {
-                showError(response.warning || root.dataset.error);
+                showError(response.warning || root.dataset.error, !keepExternalFocus);
             } else {
                 recoveredDraft.hidden = true;
                 recoveredDraft.querySelector('textarea').value = '';
                 const results = content.querySelector('[data-region="results"]');
                 const newAgents = Array.from(content.querySelectorAll('.masteryagent-agent[data-message-id]'))
                     .filter(node => !previousMessages.has(node.dataset.messageId));
+                const fullAnnouncement = !announcementMode || announcementMode.value === 'full';
+                const feedbackAnnouncement = fullAnnouncement ? newAgents.map(node => {
+                    const role = node.querySelector('.masteryagent-role');
+                    const message = node.querySelector('.masteryagent-text');
+                    return role && message ? `${role.textContent}: ${message.textContent}` : node.textContent.trim();
+                }).join('\n\n') : (newAgents.length ? root.dataset.newfeedback : '');
                 announce(results ? (root.dataset.resultsready || root.dataset.updated)
-                    : newAgents.map(node => {
-                        const role = node.querySelector('.masteryagent-role');
-                        const message = node.querySelector('.masteryagent-text');
-                        return role && message ? `${role.textContent}: ${message.textContent}` : node.textContent.trim();
-                    }).join('\n\n') || root.dataset.updated);
+                    : feedbackAnnouncement || root.dataset.updated);
                 const restoredFocus = browsingId ? document.getElementById(browsingId) : null;
                 if (restoredFocus && content.contains(restoredFocus)) {
                     // A lesson may have just closed while the learner was reading one of its messages.
@@ -208,18 +246,11 @@ export const init = selector => {
                     }
                     restoredFocus.focus({preventScroll: true});
                     window.scrollBy(0, restoredFocus.getBoundingClientRect().top - browsingTop);
-                } else {
+                } else if (!keepExternalFocus) {
                     const focusTarget = results || newReplyBox;
                     if (focusTarget) {
                         focusTarget.focus({preventScroll: true});
-                    }
-                    const latestVisibleAgent = newAgents.filter(node => {
-                        const history = node.closest('[data-region="lesson-history"]');
-                        return !history || history.open;
-                    }).pop();
-                    const scrollTarget = results || latestVisibleAgent || focusTarget;
-                    if (scrollTarget) {
-                        scrollTarget.scrollIntoView({block: 'nearest'});
+                        focusTarget.scrollIntoView({block: 'nearest'});
                     }
                 }
             }
@@ -229,7 +260,7 @@ export const init = selector => {
             // Keep the form's old revision so a manual retry cannot submit the same turn twice.
             setBusy(false);
             status.textContent = '';
-            showError(exception && exception.message ? exception.message : root.dataset.error);
+            showError(exception && exception.message ? exception.message : root.dataset.error, !preserveExternalFocus());
         }
     });
 };

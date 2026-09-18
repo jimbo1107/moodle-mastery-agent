@@ -38,11 +38,24 @@ const history = (open = false) => `<details class="masteryagent-history" data-re
 const navigable = (state = 'state1', id = 1, open = false) => `<nav data-region="conversation-navigation" aria-label="Conversation navigation">
 <a id="review-old" href="#old-message" data-conversation-jump="old-message">Earlier feedback</a>
 <a id="jump-reply" href="#reply" data-conversation-jump="reply">Jump to reply</a></nav>${history(open)}${active(state, id)}`;
-const mount = (html = form('start','new')) => {
+const scenario = (key = 'lesson1', open = false) => `<section class="masteryagent-reply-context" data-region="reply-context">
+<details class="masteryagent-original-scenario" data-region="original-scenario" data-section-key="${key}" ${open ? 'open' : ''}>
+<summary id="scenario-${key}">Review original scenario</summary><p>Original scenario for ${key}</p></details></section>`;
+const chooseMode = mode => {
+    const select=q('[data-region="announcement-mode"]');select.value=mode;select.dispatchEvent(new Event('change'));
+};
+const mount = (html = form('start','new'), {preservePreference = false, includePreference = true} = {}) => {
     pending.length = 0; filterUpdates = 0;
-    document.querySelector('#fixture').innerHTML = `<div id="masteryagent-app" class="masteryagent-app" data-cmid="42" data-processing="Working" data-updated="Updated" data-error="Request failed" data-unsent="Send or clear your draft first" data-confirmrequired="Confirm final submission" data-resultsready="Results and feedback are ready">
+    if (!preservePreference) {
+        try {window.sessionStorage.removeItem('masteryagent-announcement-mode');} catch (error) {}
+    }
+    document.querySelector('#fixture').innerHTML = `<a id="outside-app" href="#summary">Course navigation</a>
+<div id="masteryagent-app" class="masteryagent-app" data-cmid="42" data-processing="Working" data-updated="Updated" data-error="Request failed" data-unsent="Send or clear your draft first" data-confirmrequired="Confirm final submission" data-resultsready="Results and feedback are ready" data-newfeedback="New evaluator feedback is available beside your reply box.">
 <div data-region="error" role="alert" tabindex="-1" hidden></div><div data-region="status" aria-hidden="true"></div>
 <div data-region="announcements" class="masteryagent-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+${includePreference ? `<div class="masteryagent-announcement-settings" data-region="announcement-settings" hidden><label for="announcement-mode">Screen-reader updates</label>
+<select id="announcement-mode" data-region="announcement-mode"><option value="brief">Brief notifications</option>
+<option value="full">Read full feedback</option></select></div>` : ''}
 <div data-region="draft" hidden><textarea readonly></textarea></div><div data-region="content" aria-busy="false">${html}</div></div>`;
     window.conversation.init('#masteryagent-app');
 };
@@ -91,12 +104,100 @@ const tests = [
 }],
 ['Only new evaluator content is announced, using text rather than HTML', async () => {
     mount(navigable());assert(q('[data-region="announcements"]').textContent==='','Initial history was announced');
+    chooseMode('full');
     submit('reply','Answer');assert(q('[data-region="announcements"]').textContent==='Working','Processing was not announced');
     await respond(navigable('state2',3).replace('Question 3','&lt;img src=x&gt; New feedback'));
     const region=q('[data-region="announcements"]');
     assert(region.textContent==='<img src=x> New feedback','Old messages or status mixed with new feedback');
     assert(!region.querySelector('img'),'Announcement interpreted text as HTML');
     assert(region.getAttribute('aria-live')==='polite','Announcement is not polite');
+}],
+['Brief notifications are the default and leave detailed feedback beside the reply', async () => {
+    mount(active());assert(!q('[data-region="announcement-settings"]').hidden,'Preference remained hidden with JavaScript enabled');
+    assert(q('[data-region="announcement-mode"]').value==='brief','Brief notifications are not the default');
+    submit('reply','Answer');await respond(active('state2',3));
+    assert(q('[data-region="announcements"]').textContent==='New evaluator feedback is available beside your reply box.','Brief notification missing');
+    assert(!q('[data-region="announcements"]').textContent.includes('Question 3'),'Brief mode read full feedback');
+}],
+['Announcement preference survives a fresh initialization in the same tab', async () => {
+    mount(active());chooseMode('full');mount(active(),{preservePreference:true});
+    assert(q('[data-region="announcement-mode"]').value==='full','Stored preference was lost');
+    submit('reply','Answer');await respond(active('state2',3));
+    assert(q('[data-region="announcements"]').textContent==='Question 3','Restored full mode was ignored');
+    assert(!Object.keys(pending[0].request.args).some(key=>/announcement|preference|mode/i.test(key)),'Preference was sent to the server');
+}],
+['Invalid stored announcement preferences keep the accessible default', async () => {
+    mount(active());window.sessionStorage.setItem('masteryagent-announcement-mode','unexpected');
+    mount(active(),{preservePreference:true});
+    assert(q('[data-region="announcement-mode"]').value==='brief','Invalid preference removed the default selection');
+}],
+['Unavailable session storage does not prevent choosing feedback or sending a reply', async () => {
+    const descriptor=Object.getOwnPropertyDescriptor(window,'sessionStorage');
+    try {
+        Object.defineProperty(window,'sessionStorage',{configurable:true,get(){throw new DOMException('Blocked','SecurityError');}});
+        mount(active());chooseMode('full');submit('reply','Answer');await respond(active('state2',3));
+        assert(q('[data-region="announcements"]').textContent==='Question 3','Unavailable storage broke full feedback');
+        assert(q('[data-region="error"]').hidden,'Unavailable storage blocked the request');
+    } finally {Object.defineProperty(window,'sessionStorage',descriptor);}
+}],
+['Preference changes during processing apply to the next response without replaying text', async () => {
+    mount(active());submit('reply','Answer');q('[data-region="announcement-mode"]').focus();chooseMode('full');
+    assert(q('[data-region="announcements"]').textContent==='Working','Changing preference replayed feedback');
+    await respond(active('state2',3));
+    assert(q('[data-region="announcements"]').textContent==='Question 3','Response ignored the latest preference');
+    assert(document.activeElement===q('[data-region="announcement-mode"]'),'Response stole focus from the preference');
+    chooseMode('brief');
+    assert(q('[data-region="announcements"]').textContent==='Question 3','Changing preference replayed a notification');
+    assert(document.activeElement===q('[data-region="announcement-mode"]'),'Changing preference moved focus');
+}],
+['Outside navigation retains focus on successful, stale and failed responses', async () => {
+    for(const result of ['success','stale','error']) {
+        mount(active());submit('reply','Answer');q('#outside-app').focus();
+        if(result==='error'){pending.at(-1).reject(Error('Offline'));await settle();}
+        else await respond(active('state2',3),result==='stale','Changed in another tab');
+        assert(document.activeElement===q('#outside-app'),`${result} response stole focus from course navigation`);
+        if(result!=='success') assert(!q('[data-region="error"]').hidden,'Error was hidden when focus stayed outside');
+    }
+}],
+['Successful updates scroll the focused reply or results into view', async () => {
+    const original=Element.prototype.scrollIntoView;let scrolled;
+    Element.prototype.scrollIntoView=function(options){scrolled=this;return original.call(this,options);};
+    try {
+        mount();submit('start');
+        await respond(active().replace('Question 1','<div style="height:1200px">Long question</div>'));
+        assert(document.activeElement===q('[name="reply"]') && scrolled===document.activeElement,'Start focused and scrolled to different elements');
+        submit('reply','Answer');await respond(active('state2',3).replace('Question 3','<div style="height:1200px">Long feedback</div>'));
+        assert(document.activeElement===q('[name="reply"]') && scrolled===document.activeElement,'Reply focused and scrolled to different elements');
+        const bounds=document.activeElement.getBoundingClientRect();
+        // Layout bounds can be fractional while the browser rounds the document scroll offset.
+        assert(bounds.top>=-1 && bounds.bottom<=window.innerHeight+1,
+            `Focused reply was not visible: top=${bounds.top}, bottom=${bounds.bottom}, viewport=${window.innerHeight}, scroll=${window.scrollY}`);
+        submit('finish');await respond(finished());
+        assert(document.activeElement===q('[data-region="results"]') && scrolled===document.activeElement,'Results focused and scrolled to different elements');
+    } finally {Element.prototype.scrollIntoView=original;}
+}],
+['Original scenario expansion and focus survive updates within the same lesson', async () => {
+    mount(scenario()+active());submit('reply','Answer');q('#scenario-lesson1').click();q('#scenario-lesson1').focus();
+    await respond(scenario()+active('state2',3));
+    assert(q('[data-region="original-scenario"]').open,'Open scenario was collapsed');
+    assert(document.activeElement===q('#scenario-lesson1'),'Scenario reading focus was lost');
+    submit('reply','Another answer');q('#scenario-lesson1').click();
+    await respond(scenario('lesson1',true)+active('state3',5));
+    assert(!q('[data-region="original-scenario"]').open,'Closed scenario was reopened');
+}],
+['Original scenario expansion resets when the next lesson begins', async () => {
+    mount(scenario('lesson1',true)+active());submit('reply','Answer');
+    await respond(scenario('lesson2')+active('state2',3));
+    assert(!q('[data-region="original-scenario"]').open,'New lesson inherited the earlier scenario expansion');
+}],
+['Full feedback announcements ignore the copy next to the answer field', async () => {
+    mount(active());chooseMode('full');submit('reply','Answer');
+    await respond(active('state2',3)+'<section data-region="reply-context"><div class="masteryagent-context-text">Question 3</div></section>');
+    assert(q('[data-region="announcements"]').textContent==='Question 3','Context copy was announced twice');
+}],
+['Older wrappers without a preference keep full feedback announcements', async () => {
+    mount(active(),{includePreference:false});submit('reply','Answer');await respond(active('state2',3));
+    assert(q('[data-region="announcements"]').textContent==='Question 3','Legacy wrapper lost its feedback announcement');
 }],
 ['Stale and failed responses clear processing without replaying transcript', async () => {
     mount(navigable());submit('reply','Answer');await respond(navigable('state2',3),true,'Changed in another tab');

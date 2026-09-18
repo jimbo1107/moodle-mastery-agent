@@ -145,7 +145,23 @@ echo html_writer::start_div('masteryagent-app', [
     'data-unsent' => get_string('finishunsent', 'mod_masteryagent'),
     'data-confirmrequired' => get_string('finishconfirmationrequired', 'mod_masteryagent'),
     'data-resultsready' => get_string('assessmentresultsready', 'mod_masteryagent'),
+    'data-newfeedback' => get_string('newfeedbackavailable', 'mod_masteryagent'),
 ]);
+echo html_writer::div(
+    html_writer::tag('label', get_string('announcementsettings', 'mod_masteryagent'), [
+        'for' => 'masteryagent-announcement-mode',
+    ])
+    . html_writer::tag('select',
+        html_writer::tag('option', get_string('announcementbrief', 'mod_masteryagent'), ['value' => 'brief'])
+        . html_writer::tag('option', get_string('announcementfull', 'mod_masteryagent'), ['value' => 'full']), [
+            'id' => 'masteryagent-announcement-mode', 'data-region' => 'announcement-mode',
+            'class' => 'form-control', 'aria-describedby' => 'masteryagent-announcement-help',
+        ])
+    . html_writer::tag('p', get_string('announcementhelp', 'mod_masteryagent'), [
+        'id' => 'masteryagent-announcement-help', 'class' => 'text-muted mb-0',
+    ]),
+    'masteryagent-announcement-settings', ['data-region' => 'announcement-settings', 'hidden' => 'hidden']
+);
 echo html_writer::div($error === null ? '' : s($error), 'alert alert-danger', [
     'data-region' => 'error', 'role' => 'alert', 'tabindex' => '-1',
 ] + ($error === null ? ['hidden' => 'hidden'] : []));

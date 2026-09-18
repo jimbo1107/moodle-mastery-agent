@@ -1,6 +1,6 @@
 # Running the mastery agent tests
 
-99 PHPUnit tests covering the question-set parser, lesson selection, prompt
+105 PHPUnit tests covering the question-set parser, lesson selection, prompt
 construction, the conversation engine, gradebook, and AJAX endpoint. They never call a real
 AI provider — a scripted responder stands in for one — so they cost nothing to
 run and are deterministic.
@@ -40,7 +40,8 @@ The original suite contained 71 tests. The AJAX update added 15 tests in
 `external_test.php`. The learning-plan update adds 3 tests in
 `learning_plan_test.php`. Pausing and final submission add 6 more tests in
 `external_test.php`. Conversation navigation adds 4 tests in
-`conversation_view_test.php`, for 99 tests in total. The PHP suite has not been
+`conversation_view_test.php`, and the student overview/reply-context update adds 6 more in that file,
+for 105 tests in total. The PHP suite has not been
 executed in this workspace; run it on a development Moodle site.
 
 ## What each file covers
@@ -52,7 +53,7 @@ executed in this workspace; run it on a development Moodle site.
 | `agent_test.php` | Prompt contents, scoring bands across scale widths, corrected-misconception handling, JSON parsing (fenced, prose-wrapped, malformed), score clamping, course summary |
 | `attempt_test.php` | Turns, budget exhaustion, automatic lesson advance, totals, early finish, provider failure recovery |
 | `external_test.php` | Authenticated AJAX access, ownership and hidden activities, duplicate/stale requests, progression, grades, retry settings, input limits, escaped output and atomic provider/scoring failures |
-| `conversation_view_test.php` | Lesson grouping, message order, navigation targets, finished history, legacy keys and escaped saved titles |
+| `conversation_view_test.php` | Lesson grouping, message order, navigation targets, finished history, legacy keys, escaped saved titles, overview settings and saved reply context |
 | `lib_test.php` | Settings form save paths, file upload and re-upload, gradebook item and grade writing, deletion cleanup |
 
 ## After you change something
@@ -95,13 +96,16 @@ rather than against any real question set.
 
 ## Browser regression checks
 
-`browser/runner.html` runs 26 DOM-level regression scenarios against the shipped
+`browser/runner.html` runs 37 DOM-level regression scenarios against the shipped
 AMD bundle, with mocked `core/ajax` and filter-event modules. Serve the plugin
 directory locally, then open `tests/browser/runner.html`. The runner contains
 only synthetic test data and never contacts an AI provider or Moodle server.
-All 26 scenarios passed in headless Microsoft Edge during 0.4.3 packaging.
+All 37 scenarios passed in headless Microsoft Edge during 0.4.4 packaging.
 They cover reply, pause, confirmation, draft recovery, browser history, conversation
 navigation, preserved reading focus, new-message announcements and narrow text wrapping.
+The 11 added scenarios cover focus visibility after long replies, announcement
+preferences and unavailable storage, external focus, original-scenario expansion,
+and avoiding duplicate prompt announcements.
 
 A standalone Playwright suite for the original 17 scenarios is also included. With Node.js,
 Playwright, and its Chromium browser available, run:
@@ -111,7 +115,7 @@ node --test tests/browser/conversation.test.cjs
 ```
 
 Set `CHROME_PATH` if using an existing Chromium browser executable. The standalone
-Playwright suite was not run for 0.4.3; the in-browser runner was used instead.
+Playwright suite was not run for 0.4.4; the in-browser runner was used instead.
 The UI checks do not replace the Moodle/PHP suite.
 
 ## Integration checks on a Moodle test site
@@ -182,3 +186,32 @@ Before the demo, validate in your Moodle theme:
 These checks follow the
 [Moodle accessibility checklist](https://moodledev.io/general/development/process/peer-review/accessibility-checklist).
 The automated DOM checks do not certify assistive-technology behavior.
+
+
+## Student orientation and reply context checks (0.4.4)
+
+On a Moodle test site, check the overview with one and several lessons, retries
+enabled and disabled, and provisional assessments enabled and disabled. The
+displayed reply budget, scoring and retry policy must match the activity.
+
+Begin an attempt, send an answer, then expand **Review original scenario** beside
+the reply field. It should show the opening question from that lesson's transcript,
+remain open across another reply in the same lesson, and reset for a new lesson.
+The context should display learner-visible message text only. Repeat with
+JavaScript disabled to check the native disclosure and forms.
+
+With keyboard navigation, submit a reply whose feedback is long enough to move
+the form. Focus must stay visible in the reply field when the update completes.
+While another reply is pending, move to earlier history, the announcement
+preference, or a course navigation link; success must respect that focus choice.
+
+With NVDA/Firefox or VoiceOver/Safari, test both announcement modes. Brief mode
+should announce availability, while full mode should read only new evaluator
+messages, without reading the repeated prompt beside the editor a second time.
+Changing the setting must not replay previous messages. Confirm errors and
+assessment completion are still announced. Reload the tab to check that the
+setting is restored where session storage is available.
+
+Test the overview, preference selector, reply context, and scenario disclosure at
+a narrow viewport and 200-400% zoom in the installed Moodle theme. Browser DOM
+tests cannot establish actual screen-reader behavior or full Moodle compatibility.

@@ -45,15 +45,8 @@ class conversation_view {
         global $OUTPUT;
         $out = '';
         if ($current === null) {
-            $blurb = $sequence->is_multi()
-                ? get_string('introblurbmulti', 'mod_masteryagent', (object) [
-                    'lessons' => $sequence->count(),
-                    'turns' => (int) $instance->maxturns,
-                ])
-                : get_string('introblurb', 'mod_masteryagent', (int) $instance->maxturns);
-
             $out .= $OUTPUT->box(
-                html_writer::tag('p', $blurb)
+                self::render_overview($instance, $sequence)
                 . html_writer::div(
                     self::action_form($cm, $current, 'start', 'begin')
                 ),
@@ -75,7 +68,8 @@ class conversation_view {
             );
         }
 
-        $out .= self::render_transcript($sequence, $current);
+        $messages = $current->messages();
+        $out .= self::render_transcript($sequence, $current, $messages);
 
         if (!$current->is_finished()) {
             $out .= html_writer::tag(
@@ -98,6 +92,7 @@ class conversation_view {
             if ($draftoverride === null && $current->draft_reply() !== '') {
                 $out .= html_writer::tag('p', get_string('draftrestored', 'mod_masteryagent'), ['class' => 'text-muted']);
             }
+            $out .= self::render_reply_context($messages);
             $out .= html_writer::tag('label', get_string('yourreply', 'mod_masteryagent'), ['for' => 'masteryagent-reply']);
             $out .= html_writer::tag('textarea', s($draftoverride ?? $current->draft_reply()), [
                 'name' => 'reply',
@@ -183,13 +178,101 @@ class conversation_view {
     }
 
     /**
+     * Explain the configured assessment before the learner starts it.
+     *
+     * @param \stdClass $instance Activity settings.
+     * @param sequence $sequence Selected lessons.
+     * @return string Public expectations without private rubric content.
+     */
+    private static function render_overview(\stdClass $instance, sequence $sequence): string {
+        $items = [];
+        $items[] = $sequence->is_multi()
+            ? get_string('beforebeginmulti', 'mod_masteryagent', (object) [
+                'lessons' => $sequence->count(), 'turns' => (int) $instance->maxturns,
+            ])
+            : get_string('beforebeginsingle', 'mod_masteryagent', (int) $instance->maxturns);
+        $items[] = get_string($sequence->is_multi() ? 'beforebeginflowmulti' : 'beforebeginflowsingle',
+            'mod_masteryagent');
+        $items[] = get_string('beforebegingrading', 'mod_masteryagent', (object) [
+            'max' => (int) $instance->maxgrade,
+            'threshold' => (int) $instance->threshold,
+            'total' => (int) $instance->maxgrade * $sequence->count(),
+        ]);
+        $items[] = get_string(!empty($instance->allowretry) ? 'beforebeginretry' : 'beforebeginnoretry',
+            'mod_masteryagent');
+        $items[] = get_string('beforebeginpause', 'mod_masteryagent');
+        $items[] = get_string('beforebeginfinish', 'mod_masteryagent');
+        $body = html_writer::tag('h3', get_string('beforebeginheading', 'mod_masteryagent'),
+            ['id' => 'masteryagent-before-begin-title'])
+            . html_writer::tag('p', get_string('beforebeginintro', 'mod_masteryagent'))
+            . html_writer::tag('ul', implode('', array_map(static fn($item) => html_writer::tag('li', $item), $items)));
+        if (!empty($instance->provisional)) {
+            $body .= html_writer::tag('p', get_string('beforebeginprovisional', 'mod_masteryagent'),
+                ['class' => 'masteryagent-overview-provisional']);
+        }
+        return html_writer::tag('section', $body, [
+            'class' => 'masteryagent-overview', 'data-region' => 'before-begin',
+            'aria-labelledby' => 'masteryagent-before-begin-title',
+        ]);
+    }
+
+    /**
+     * Keep the last evaluator message and original scenario beside the reply field.
+     *
+     * Read only the final contiguous lesson group, matching the visible current lesson.
+     * Copies deliberately omit transcript message markers to avoid duplicate announcements.
+     *
+     * @param array $messages Saved messages, oldest first.
+     * @return string Escaped context, or nothing when this group has no evaluator message.
+     */
+    private static function render_reply_context(array $messages): string {
+        $key = null;
+        $opening = null;
+        $latest = null;
+        foreach ($messages as $message) {
+            $messagekey = (string) ($message->lessonkey ?? '');
+            if ($messagekey !== $key) {
+                $key = $messagekey;
+                $opening = null;
+                $latest = null;
+            }
+            if ($message->role === 'agent') {
+                $opening = $opening ?? $message;
+                $latest = $message;
+            }
+        }
+        if ($latest === null) {
+            return '';
+        }
+        $body = html_writer::tag('h3', get_string('latestagentmessage', 'mod_masteryagent'), [
+            'id' => 'masteryagent-reply-context-title', 'tabindex' => '-1',
+        ]) . html_writer::div(nl2br(s($latest->message)), 'masteryagent-context-text');
+        if ($opening->message !== $latest->message) {
+            $id = 'masteryagent-scenario-' . (int) $opening->id;
+            $body .= html_writer::tag('details',
+                html_writer::tag('summary', get_string('revieworiginalscenario', 'mod_masteryagent'), ['id' => $id])
+                . html_writer::div(nl2br(s($opening->message)), 'masteryagent-context-text'), [
+                    'class' => 'masteryagent-original-scenario', 'data-region' => 'original-scenario',
+                    'data-section-key' => $id,
+                ]);
+        }
+        $body .= html_writer::tag('p', self::jump_link('masteryagent-reply',
+            get_string('writemyreply', 'mod_masteryagent'), '-from-context'));
+        return html_writer::tag('section', $body, [
+            'class' => 'masteryagent-reply-context', 'data-region' => 'reply-context',
+            'aria-labelledby' => 'masteryagent-reply-context-title',
+        ]);
+    }
+
+    /**
      * Group adjacent messages without reordering history or dropping legacy messages.
      *
      * @param sequence $sequence Selected lessons.
      * @param attempt $current Learner attempt.
+     * @param array $messages Saved messages, oldest first.
      * @return string Escaped transcript and native navigation.
      */
-    private static function render_transcript(sequence $sequence, attempt $current): string {
+    private static function render_transcript(sequence $sequence, attempt $current, array $messages): string {
         $titles = [];
         foreach ($sequence->all() as $index => $lesson) {
             $titles[$sequence->key_for($index)] = trim($lesson->lesson_id() . ' ' . $lesson->title());
@@ -200,7 +283,7 @@ class conversation_view {
         }
         $groups = [];
         $latestagent = null;
-        foreach ($current->messages() as $message) {
+        foreach ($messages as $message) {
             $key = (string) ($message->lessonkey ?? '');
             $last = count($groups) - 1;
             if ($last < 0 || $groups[$last]['key'] !== $key) {
@@ -221,12 +304,12 @@ class conversation_view {
                 $title = get_string('conversationsection', 'mod_masteryagent', $index + 1);
             }
             $active = !$current->is_finished() && $index === count($groups) - 1;
-            $label = s($title) . ($active ? ' — ' . get_string('currentlesson', 'mod_masteryagent') : '');
+            $label = s($title) . ($active ? ' — ' . get_string('currentconversationlesson', 'mod_masteryagent') : '');
             $links .= html_writer::tag('li', self::jump_link($id, $label));
-            $messages = '';
+            $groupmessages = '';
             foreach ($group['messages'] as $message) {
                 $isagent = $message->role === 'agent';
-                $messages .= html_writer::div(
+                $groupmessages .= html_writer::div(
                     html_writer::div(get_string($isagent ? 'roleagent' : 'rolestudent', 'mod_masteryagent'),
                         'masteryagent-role')
                     . html_writer::div(nl2br(s($message->message)), 'masteryagent-text'),
@@ -238,11 +321,11 @@ class conversation_view {
             }
             if ($active) {
                 $sections .= html_writer::tag('section',
-                    html_writer::tag('h3', $label, ['id' => $id, 'tabindex' => '-1']) . $messages,
+                    html_writer::tag('h3', $label, ['id' => $id, 'tabindex' => '-1']) . $groupmessages,
                     ['data-region' => 'current-lesson', 'aria-labelledby' => $id]);
             } else {
                 $sections .= html_writer::tag('details',
-                    html_writer::tag('summary', $label, ['id' => $id]) . $messages,
+                    html_writer::tag('summary', $label, ['id' => $id]) . $groupmessages,
                     ['class' => 'masteryagent-history', 'data-region' => 'lesson-history', 'data-section-key' => $id]);
             }
         }

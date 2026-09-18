@@ -96,6 +96,63 @@
     width: 100%;
 }
 
+.masteryagent-announcement-settings {
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #d6d9dc;
+    overflow-wrap: anywhere;
+}
+
+.masteryagent-announcement-settings select {
+    width: 100%;
+    max-width: 24rem;
+    margin-bottom: 0.5rem;
+}
+
+.masteryagent-reply-context {
+    border: 1px solid #d6d9dc;
+    border-inline-start: 4px solid #0f6cbf;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    overflow-wrap: anywhere;
+}
+
+.masteryagent-reply-context h3 {
+    font-size: 1.25rem;
+}
+
+.masteryagent-context-text {
+    line-height: 1.5;
+}
+
+.masteryagent-overview li + li {
+    margin-top: 0.5rem;
+}
+
+.masteryagent-overview {
+    overflow-wrap: anywhere;
+}
+
+.masteryagent-original-scenario {
+    margin-top: 0.75rem;
+}
+
+.masteryagent-original-scenario summary {
+    cursor: pointer;
+    font-weight: 600;
+    padding: 0.65rem 0;
+}
+
+.masteryagent-original-scenario[open] summary {
+    margin-bottom: 0.5rem;
+}
+
+.masteryagent-reply-context a[data-conversation-jump] {
+    display: inline-block;
+    padding: 0.65rem 0;
+}
+
 .masteryagent-status {
     min-height: 1.5em;
     margin-bottom: 0.5rem;

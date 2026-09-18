@@ -114,6 +114,36 @@ revised questions and rubrics. Nothing else changes and existing attempts are
 left alone. This is the intended path for keeping the assessment current as
 lessons and educational objectives are revised.
 
+## Student orientation and reply context (0.4.4)
+
+Before beginning, learners see an overview of the activity's lesson count,
+reply limits, scoring and retry policy, together with guidance on explaining
+their reasoning and pausing versus submitting. Provisional assessment wording
+appears only when that setting is enabled. Learners are directed to their course
+instructions for permitted resources.
+
+The latest evaluator message is repeated immediately above the reply field.
+When the conversation has moved beyond the opening question, **Review original
+scenario** reveals the question that was actually shown at the start of the
+current lesson. This reference uses saved transcript text. It is also available
+without JavaScript and does not send a reply or use the reply budget.
+
+After successful AJAX updates, the reply field or results receive focus and are
+scrolled into view together. Reading focus in earlier messages is preserved.
+Moving to the screen-reader preference control or another control outside the
+conversation while waiting does not cause focus to jump back on success.
+
+**Screen-reader updates** offers **Brief notifications** (the default) and
+**Read new feedback in full**. The choice applies to new evaluator feedback;
+errors and completion announcements remain available with either choice.
+The setting is remembered in the current browser tab when session storage is
+available. It is not an account preference and is not saved to Moodle.
+The preference control is hidden when JavaScript is unavailable.
+
+Install the updated ZIP, complete version **2026091800** through Moodle's plugin
+upgrade, purge caches, and reopen activity tabs. This release adds no database
+schema changes.
+
 ## Conversation navigation and accessibility (0.4.3)
 
 Conversations are grouped by lesson. The current lesson stays visible; earlier
@@ -129,8 +159,9 @@ message visible. Otherwise, focus returns to the reply box or results.
 These expansion choices last across replies on the current page, not across a
 full page reload.
 
-A persistent polite live region announces processing and newly added evaluator
-messages without replaying the full transcript. Final completion announces that
+A persistent polite live region announces processing and updates without
+replaying the full transcript. Version 0.4.4 adds a choice of brief notifications
+or reading newly added evaluator messages in full. Final completion announces that
 results are ready. Links, native disclosure controls, visible focus outlines,
 sequential heading levels, and wrapping long text support keyboard use and
 narrow screens. Navigation and disclosures remain available without JavaScript;
@@ -215,11 +246,12 @@ or overturn the agent's judgement.
 
 ## Tests
 
-`tests/` holds 99 PHPUnit tests covering the parser, lesson selection, prompt
+`tests/` holds 105 PHPUnit tests covering the parser, lesson selection, prompt
 construction, the conversation engine, gradebook, and AJAX access and recovery.
 The suite includes 15 AJAX regression tests from 0.4.0, 3 learning-plan tests
 from 0.4.1, 6 pause/final-submission tests from 0.4.2, and 4 transcript/navigation
-tests from 0.4.3.
+tests from 0.4.3. Version 0.4.4 adds 6 tests for the overview, reply context,
+and saved original scenarios.
 The PHP suite has not been executed in this workspace, which has no
 Moodle/PHP runtime.
 No AI provider is called by the tests. See `tests/README.md` for setup, browser
