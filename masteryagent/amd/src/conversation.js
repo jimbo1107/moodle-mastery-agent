@@ -41,8 +41,48 @@ export const init = selector => {
     const limitAnnouncement = root.querySelector('[data-region="reply-limit-announcement"]');
     const error = root.querySelector('[data-region="error"]');
     const recoveredDraft = root.querySelector('[data-region="draft"]');
+    const requestFeedback = root.querySelector('[data-region="request-feedback"]');
+    const requestHelp = root.querySelector('[data-region="request-help"]');
     let busy = false;
+    let slowTimer = null;
+    let waitSerial = 0;
+    let responseSerial = 0;
     const editorState = new WeakMap();
+
+    const clearSlowTimer = () => {
+        waitSerial++;
+        if (slowTimer !== null) {
+            window.clearTimeout(slowTimer);
+            slowTimer = null;
+        }
+    };
+
+    const attachRequestFeedback = () => {
+        if (!requestFeedback) {
+            return;
+        }
+        const slot = content.querySelector('[data-region="request-feedback-slot"]');
+        if (slot) {
+            if (requestFeedback.parentElement !== slot) {
+                slot.append(requestFeedback);
+            }
+        } else if (requestFeedback.parentElement !== root) {
+            // Older fragments and results without controls still need visible recovery instructions.
+            root.insertBefore(requestFeedback, content);
+        }
+    };
+
+    const setRequestHelp = message => {
+        if (requestHelp) {
+            requestHelp.textContent = message || '';
+            requestHelp.hidden = !message;
+        }
+    };
+
+    const processingMessage = action => root.dataset[`processing${action.charAt(0).toUpperCase()}${action.slice(1)}`]
+        || root.dataset.processing;
+
+    attachRequestFeedback();
 
     const updateReplyEditor = (announceLimit = false) => {
         if (!root.isConnected) {
@@ -182,7 +222,33 @@ export const init = selector => {
         target.scrollIntoView({block: 'nearest'});
     });
 
-    const setBusy = value => {
+    const startWaiting = action => {
+        clearSlowTimer();
+        attachRequestFeedback();
+        setRequestHelp('');
+        error.hidden = true;
+        error.textContent = '';
+        if (requestFeedback) {
+            requestFeedback.hidden = false;
+            requestFeedback.dataset.state = 'waiting';
+        }
+        status.textContent = processingMessage(action);
+        announce(status.textContent);
+        const serial = waitSerial;
+        slowTimer = window.setTimeout(() => {
+            if (!busy || !root.isConnected || serial !== waitSerial) {
+                return;
+            }
+            slowTimer = null;
+            const message = root.dataset.processingSlow;
+            if (message) {
+                status.textContent = message;
+                announce(message);
+            }
+        }, 15000);
+    };
+
+    const setBusy = (value, action = '') => {
         busy = value;
         content.setAttribute('aria-busy', String(value));
         content.querySelectorAll('button, input[type="submit"]').forEach(control => {
@@ -192,13 +258,21 @@ export const init = selector => {
             control.readOnly = value;
         });
         if (value) {
-            status.textContent = root.dataset.processing;
-            announce(root.dataset.processing);
+            startWaiting(action);
+        } else {
+            clearSlowTimer();
         }
     };
 
-    const showError = (message, moveFocus = true) => {
+    const showError = (message, moveFocus = true, help = '') => {
         announce('');
+        status.textContent = '';
+        attachRequestFeedback();
+        setRequestHelp(help);
+        if (requestFeedback) {
+            requestFeedback.hidden = false;
+            requestFeedback.dataset.state = 'error';
+        }
         // Neither a provider error nor a transport error is trusted HTML.
         error.textContent = message;
         error.hidden = false;
@@ -208,13 +282,28 @@ export const init = selector => {
         }
     };
 
+    window.addEventListener('pagehide', () => {
+        clearSlowTimer();
+        // A suspended request must not replace a conversation restored by browser Back.
+        responseSerial++;
+    });
+
     window.addEventListener('pageshow', event => {
         if (event.persisted) {
             // Back navigation can restore the page as it was while leaving.
             // Let the server's revision check reconcile any saved draft changes.
+            responseSerial++;
             setBusy(false);
             status.textContent = '';
             announce('');
+            setRequestHelp('');
+            error.hidden = true;
+            error.textContent = '';
+            if (requestFeedback) {
+                requestFeedback.hidden = true;
+                requestFeedback.dataset.state = 'idle';
+            }
+            attachRequestFeedback();
             updateReplyEditor();
         }
     });
@@ -234,8 +323,7 @@ export const init = selector => {
             // Use a normal POST so the server saves the draft and returns to the course.
             // Do not disable form controls: the submitter and reply must be included in the POST.
             busy = true;
-            status.textContent = root.dataset.processing;
-            announce(root.dataset.processing);
+            startWaiting(action);
             return;
         }
         event.preventDefault();
@@ -262,7 +350,8 @@ export const init = selector => {
             node => node.dataset.messageId));
         error.hidden = true;
         error.textContent = '';
-        setBusy(true);
+        setBusy(true, action);
+        const serial = ++responseSerial;
 
         try {
             // core/ajax supplies the Moodle session key and standard authenticated endpoint.
@@ -276,6 +365,9 @@ export const init = selector => {
                     ...(action === 'finish' ? {confirmed} : {}),
                 },
             }])[0];
+            if (serial !== responseSerial || !root.isConnected) {
+                return;
+            }
             if (!response || typeof response.html !== 'string' || typeof response.stale !== 'boolean') {
                 throw new Error(root.dataset.error);
             }
@@ -291,8 +383,13 @@ export const init = selector => {
                 + '[data-region="current-lesson"], [data-region="reply-context"], [data-region="original-scenario"]');
             const browsingId = preserveFocus ? browsing.id : '';
             const browsingTop = preserveFocus ? browsing.getBoundingClientRect().top : 0;
+            if (requestFeedback && content.contains(requestFeedback)) {
+                // Preserve the mounted error/status nodes before replacing their surrounding fragment.
+                root.insertBefore(requestFeedback, content);
+            }
             // HTML comes only from the plugin's escaped, learner-only PHP renderer.
             content.innerHTML = response.html;
+            attachRequestFeedback();
             content.querySelectorAll(expandableSections).forEach(node => {
                 if (historyState.has(sectionKey(node))) {
                     node.open = historyState.get(sectionKey(node));
@@ -311,8 +408,14 @@ export const init = selector => {
             setBusy(false);
             status.textContent = root.dataset.updated;
             if (response.stale) {
-                showError(response.warning || root.dataset.error, !keepExternalFocus);
+                const help = [root.dataset.recoveryStale,
+                    !recoveredDraft.hidden ? root.dataset.recoveryDraft : ''].filter(Boolean).join(' ');
+                showError(response.warning || root.dataset.error, !keepExternalFocus, help);
             } else {
+                setRequestHelp('');
+                if (requestFeedback) {
+                    requestFeedback.dataset.state = 'success';
+                }
                 recoveredDraft.hidden = true;
                 recoveredDraft.querySelector('textarea').value = '';
                 const results = content.querySelector('[data-region="results"]');
@@ -343,13 +446,24 @@ export const init = selector => {
                     }
                 }
             }
-            notifyFilterContentUpdated([content]);
+            // Filter notification failure must not turn a confirmed save into a misleading retry prompt.
+            try {
+                notifyFilterContentUpdated([content]);
+            } catch (exception) {
+                // The escaped transcript and feedback remain readable without optional filters.
+            }
         } catch (exception) {
+            if (serial !== responseSerial || !root.isConnected) {
+                return;
+            }
             // Do not replay mutations automatically: a network error may follow a successful save.
             // Keep the form's old revision so a manual retry cannot submit the same turn twice.
             setBusy(false);
             status.textContent = '';
-            showError(exception && exception.message ? exception.message : root.dataset.error, !preserveExternalFocus());
+            const retainedReply = content.querySelector('textarea[name="reply"]');
+            const help = action === 'reply' && draft && retainedReply && retainedReply.value === draft
+                ? root.dataset.recoveryReply : root.dataset.recoveryAction;
+            showError(exception && exception.message ? exception.message : root.dataset.error, !preserveExternalFocus(), help);
         }
     });
 };

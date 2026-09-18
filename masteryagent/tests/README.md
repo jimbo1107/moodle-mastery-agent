@@ -1,6 +1,6 @@
 # Running the mastery agent tests
 
-129 PHPUnit tests covering the question-set parser, lesson selection, prompt
+134 PHPUnit tests covering the question-set parser, lesson selection, prompt
 construction, the conversation engine, gradebook, AJAX endpoint and learner history. They never call a real
 AI provider — a scripted responder stands in for one — so they cost nothing to
 run and are deterministic.
@@ -43,7 +43,8 @@ The original suite contained 71 tests. The AJAX update added 15 tests in
 `conversation_view_test.php`, and the student overview/reply-context update adds 6 more in that file,
 with 4 further tests for the welcome summary and editor markup in 0.4.5.
 Version 0.4.6 adds 8 history-access tests, 5 history-list tests and 7 saved-review
-tests, for 129 tests in total. The PHP suite has not been
+tests. Version 0.4.7 adds 5 nearby request-feedback tests, for 134 tests in total.
+The PHP suite has not been
 executed in this workspace; run it on a development Moodle site.
 
 ## What each file covers
@@ -59,6 +60,7 @@ executed in this workspace; run it on a development Moodle site.
 | `history_access_test.php` | Learner/activity isolation, older-attempt retrieval, bounded pagination, metadata-only queries, unchanged attempts/messages/grades |
 | `history_view_test.php` | Draft-preserving new-tab entry, paged cards, accessible dates, score empty states and excluded private text |
 | `history_review_test.php` | Saved feedback and transcripts independent of current settings, read-only controls, private-data exclusion, legacy/unfinished/empty attempts, safe markup and native navigation |
+| `request_feedback_test.php` | Nearby feedback slots, escaped errors and associated recovery help, POST draft retention, start/completion states and exclusion from historical reviews |
 | `lib_test.php` | Settings form save paths, file upload and re-upload, gradebook item and grade writing, deletion cleanup |
 
 ## After you change something
@@ -101,11 +103,11 @@ rather than against any real question set.
 
 ## Browser regression checks
 
-`browser/runner.html` runs 48 DOM-level regression scenarios against the shipped
+`browser/runner.html` runs 60 DOM-level regression scenarios against the shipped
 AMD bundle, with mocked `core/ajax` and filter-event modules. Serve the plugin
 directory locally, then open `tests/browser/runner.html`. The runner contains
 only synthetic test data and never contacts an AI provider or Moodle server.
-All 48 scenarios passed in headless Microsoft Edge during 0.4.6 packaging.
+All 60 scenarios passed in headless Microsoft Edge during 0.4.7 packaging.
 They cover reply, pause, confirmation, draft recovery, browser history, conversation
 navigation, preserved reading focus, new-message announcements and narrow text wrapping.
 The 11 scenarios added in 0.4.4 cover focus visibility after long replies, announcement
@@ -114,6 +116,9 @@ and avoiding duplicate prompt announcements. The 11 scenarios added in 0.4.5
 cover draft/editor sizing, narrow widths, character counts and sparse limit
 warnings, error/stale recovery, manual resizing, browser history and the welcome
 shortcut. Layout fixtures use the production form classes.
+The 12 scenarios added in 0.4.7 cover inline feedback, action-specific waiting,
+slow timers, exact-draft manual retries, stale recovery, safe recovery text,
+browser history, fallback layouts and confirmed saves with filter errors.
 
 A standalone Playwright suite for the original 17 scenarios is also included. With Node.js,
 Playwright, and its Chromium browser available, run:
@@ -123,7 +128,7 @@ node --test tests/browser/conversation.test.cjs
 ```
 
 Set `CHROME_PATH` if using an existing Chromium browser executable. The standalone
-Playwright suite was not run for 0.4.6; the in-browser runner was used instead.
+Playwright suite was not run for 0.4.7; the in-browser runner was used instead.
 The UI checks do not replace the Moodle/PHP suite.
 
 ## Integration checks on a Moodle test site
@@ -253,7 +258,7 @@ The new history PHP tests cover scoped retrieval, paging and summary fields,
 saved feedback and transcript rendering, legacy and incomplete attempts,
 escaped content, draft/private-data exclusion and unchanged database records.
 They have not run in this workspace because Moodle and PHP are unavailable.
-The 48 passing browser scenarios protect the existing conversation flow; they
+The browser scenarios protect the conversation flow; they
 do not exercise the server-rendered history route or its Moodle access checks.
 
 Before the demo, verify on a Moodle test site:
@@ -284,3 +289,37 @@ Before the demo, verify on a Moodle test site:
   Submitted messages and existing lesson feedback should remain readable;
   unsent drafts, private rubric/evidence data and assessment action forms must
   be absent. Confirm no grade or attempt data changes when reviewing history.
+
+## Waiting and recovery checks (0.4.7)
+
+The browser runner covers the persistent feedback panel beside the action
+buttons, action-specific waiting messages, the one-time slow notice, timer
+cancellation, manual retry and stale recovery, focus preservation, missing-slot
+fallbacks, and browser Back restoration. Tests control the 15-second timer
+without waiting for a real provider. The PHP tests exercise real server-rendered
+markup and POST-style errors; they require the Moodle/PHP test environment and
+have not run in this workspace.
+
+On a Moodle test site:
+
+- Begin, reply, submit the final assessment, and save a draft. Check the waiting
+  text for each action. On a slow reply, wait at least 15 seconds: one longer-wait
+  message should appear beside the buttons, with no new request or focus jump.
+  The answer should remain selectable/copyable while submission is disabled.
+- Simulate a provider or network failure. Check that the answer remains exact,
+  the error has useful recovery instructions, and **Send reply** allows a manual
+  retry. Test expired-session recovery too, keeping a copy before signing in.
+- Lose a response after the server commits it, then retry. The server should
+  return the latest conversation without consuming an extra reply. The guidance
+  must ask students to review those messages before sending again. Repeat after
+  another tab finishes the attempt: the recovered answer must remain copyable.
+- Move keyboard focus to earlier messages or a course link while waiting. The
+  slow notice must not move it; success must preserve the existing reading-focus
+  behavior. With a screen reader, verify one waiting notice at each transition
+  and access to both the error and its recovery instructions.
+- Navigate away and return with Back during a request or after saving a draft.
+  Controls must become usable; a late response or canceled timer must not replace
+  the restored conversation or show a stale waiting notice.
+- Disable JavaScript and trigger a failed reply. The error/help should appear
+  near the action buttons and the unsent answer should remain in the field.
+  Check the new panel at narrow widths and high zoom in the installed theme.

@@ -194,6 +194,33 @@
     margin-bottom: 0.5rem;
 }
 
+.masteryagent-request-feedback {
+    margin-top: 0.75rem;
+    overflow-wrap: anywhere;
+}
+
+.masteryagent-request-feedback[data-state="waiting"] {
+    border-inline-start: 4px solid #0f6cbf;
+    padding: 0.5rem 0.75rem;
+}
+
+.masteryagent-request-feedback .masteryagent-status {
+    min-height: 0;
+}
+
+.masteryagent-request-feedback[data-state="waiting"] .masteryagent-status {
+    font-weight: 600;
+}
+
+.masteryagent-request-feedback [data-region="request-help"] {
+    line-height: 1.5;
+    margin: 0.5rem 0;
+}
+
+.masteryagent-request-feedback .masteryagent-status:empty {
+    display: none;
+}
+
 .masteryagent-app [aria-busy="true"] {
     cursor: progress;
 }

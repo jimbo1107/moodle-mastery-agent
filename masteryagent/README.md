@@ -114,6 +114,36 @@ revised questions and rubrics. Nothing else changes and existing attempts are
 left alone. This is the intended path for keeping the assessment current as
 lessons and educational objectives are revised.
 
+## Waiting and recovery guidance (0.4.7)
+
+Processing messages and error recovery instructions now appear beside the
+conversation's action buttons. Beginning, replying, saving a draft and submitting
+the final assessment each have their own waiting message. After 15 seconds, a
+single **Still waiting for a response** notice explains that the tab should stay
+open. Students can select and copy their answer while waiting.
+
+A failed reply keeps the answer in its field and explains how to retry with
+**Send reply**, including copying the answer before refreshing or signing in
+again. When a request comes from an older conversation, the latest messages
+appear with guidance to review them before submitting anything again. If the
+attempt has already finished, the recovered answer remains available to copy.
+Retained text is not described as autosaved.
+
+Requests are never retried automatically, and a slow notice does not unlock
+submission or pretend the server timed out. Manual retries retain the previous
+conversation revision so the server can detect a request it already saved.
+Success, errors and browser navigation clear the waiting timer; a response from
+before Back navigation cannot overwrite a restored conversation.
+
+The existing screen-reader announcer remains outside the busy conversation.
+Recovery instructions are associated with the error message; slow notices do
+not move focus. Normal POST errors also show nearby instructions when JavaScript
+is disabled. No extra confirmation or retry control is required.
+
+Install the updated ZIP, complete version **2026091803** through Moodle's plugin
+upgrade, purge caches, and reopen activity tabs. This release adds no database
+schema changes.
+
 ## Previous attempts and feedback (0.4.6)
 
 **My attempts and feedback** opens a learner's history in a clearly labelled
@@ -299,7 +329,7 @@ or overturn the agent's judgement.
 
 ## Tests
 
-`tests/` holds 129 PHPUnit tests covering the parser, lesson selection, prompt
+`tests/` holds 134 PHPUnit tests covering the parser, lesson selection, prompt
 construction, the conversation engine, gradebook, and AJAX access and recovery.
 The suite includes 15 AJAX regression tests from 0.4.0, 3 learning-plan tests
 from 0.4.1, 6 pause/final-submission tests from 0.4.2, and 4 transcript/navigation
@@ -309,6 +339,8 @@ editor guidance and exact draft restoration.
 Version 0.4.6 adds 20 tests for history access, pagination, public feedback and read-only
 renderer tests in `history_access_test.php`, `history_view_test.php` and
 `history_review_test.php`.
+Version 0.4.7 adds 5 tests for nearby waiting/error markup and POST recovery,
+plus 12 browser scenarios for waiting, manual retry and navigation recovery.
 The PHP suite has not been executed in this workspace, which has no
 Moodle/PHP runtime.
 No AI provider is called by the tests. See `tests/README.md` for setup, browser

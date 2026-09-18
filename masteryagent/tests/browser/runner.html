@@ -7,13 +7,17 @@
 <script>
 const pending = [];
 let filterUpdates = 0;
+let filterFailure = false;
 window.define = (name, deps, factory) => {
     const exports = {};
     const modules = {require: () => {}, exports,
         'core/ajax': {call: requests => requests.map(request => new Promise((resolve, reject) => {
             pending.push({request, resolve, reject});
         }))},
-        'core_filters/events': {notifyFilterContentUpdated: () => filterUpdates++},
+        'core_filters/events': {notifyFilterContentUpdated: () => {
+            filterUpdates++;
+            if(filterFailure)throw Error('Optional filter unavailable');
+        }},
     };
     factory(...deps.map(dep => modules[dep]));
     window.conversation = exports;
@@ -22,8 +26,9 @@ window.define = (name, deps, factory) => {
 const q = selector => document.querySelector('#fixture ' + selector);
 const assert = (condition, message) => {if (!condition) throw Error(message);};
 const settle = () => new Promise(resolve => setTimeout(resolve, 0));
+const feedbackSlot = '<div data-region="request-feedback-slot"></div>';
 const form = (action, state, extra = '') => `<form data-action="${action}" method="post" action="unexpected-navigation.html">
-<input name="state" type="hidden" value="${state}">${extra}<button type="submit">${action}</button></form>`;
+<input name="state" type="hidden" value="${state}">${extra}<button type="submit">${action}</button>${feedbackSlot}</form>`;
 const escapeText = value => value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const active = (state = 'state1', id = 1, draft = '') => `<div class="masteryagent-agent" data-message-id="${id}">Question ${id}</div>
 <form class="masteryagent-form" data-action="reply" method="post" action="unexpected-navigation.html">
@@ -33,6 +38,7 @@ const active = (state = 'state1', id = 1, draft = '') => `<div class="masteryage
 <p class="masteryagent-reply-counter" id="reply-counter" data-region="reply-counter" data-remaining="Characters remaining: {remaining}" data-nearlimit="You are close to the character limit." data-limitreached="Character limit reached." data-overlimit="Your reply is over the character limit. Shorten it before sending." hidden></p>
 <button name="action" value="reply">Send reply</button>
 <button name="action" value="pause" formnovalidate>Save and leave</button>
+${feedbackSlot}
 <details><summary>Submit final assessment</summary><p>Unanswered lessons contribute zero.</p>
 <button name="action" value="finish" formnovalidate>Yes, submit and score</button></details></form>`;
 const finished = () => `<div data-region="results" tabindex="-1">Score: 3 of 4</div>${form('start', 'finished')}`;
@@ -48,13 +54,17 @@ const chooseMode = mode => {
     const select=q('[data-region="announcement-mode"]');select.value=mode;select.dispatchEvent(new Event('change'));
 };
 const mount = (html = form('start','new'), {preservePreference = false, includePreference = true} = {}) => {
-    pending.length = 0; filterUpdates = 0;
+    pending.length = 0; filterUpdates = 0; filterFailure = false;
     if (!preservePreference) {
         try {window.sessionStorage.removeItem('masteryagent-announcement-mode');} catch (error) {}
     }
     document.querySelector('#fixture').innerHTML = `<a id="outside-app" href="#summary">Course navigation</a>
-<div id="masteryagent-app" class="masteryagent-app" data-cmid="42" data-processing="Working" data-updated="Updated" data-error="Request failed" data-unsent="Send or clear your draft first" data-confirmrequired="Confirm final submission" data-resultsready="Results and feedback are ready" data-newfeedback="New evaluator feedback is available beside your reply box.">
-<div data-region="error" role="alert" tabindex="-1" hidden></div><div data-region="status" aria-hidden="true"></div>
+<div id="masteryagent-app" class="masteryagent-app" data-cmid="42" data-processing="Working" data-updated="Updated" data-error="Request failed" data-unsent="Send or clear your draft first" data-confirmrequired="Confirm final submission" data-resultsready="Results and feedback are ready" data-newfeedback="New evaluator feedback is available beside your reply box."
+data-processing-start="Working" data-processing-reply="Working" data-processing-finish="Working" data-processing-pause="Working" data-processing-slow="Still working; please wait."
+data-recovery-reply="Your answer is still here. Retry sending it when ready." data-recovery-action="Check the latest conversation before trying again." data-recovery-stale="Review the latest conversation before sending anything else." data-recovery-draft="Copy the recovered draft before continuing.">
+<div data-region="request-feedback" class="masteryagent-request-feedback" data-state="idle" hidden>
+<div data-region="error" role="alert" tabindex="-1" aria-describedby="masteryagent-request-help" hidden></div><div data-region="status" aria-hidden="true"></div>
+<p data-region="request-help" id="masteryagent-request-help" hidden></p></div>
 <div data-region="announcements" class="masteryagent-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 <div data-region="reply-limit-announcement" class="masteryagent-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 ${includePreference ? `<div class="masteryagent-announcement-settings" data-region="announcement-settings" hidden><label for="announcement-mode">Screen-reader updates</label>
@@ -77,7 +87,174 @@ const inputReply = value => {
     editor.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText'}));
     return editor;
 };
+let nextSlowTimerId=1000000;
+const withSlowClock = async run => {
+    const originalSet=window.setTimeout;const originalClear=window.clearTimeout;const timers=[];
+    window.setTimeout=(callback,delay,...args)=>{
+        if(Number(delay)!==15000)return originalSet(callback,delay,...args);
+        const timer={id:nextSlowTimerId++,callback:()=>callback(...args),cleared:false,fired:false};
+        timers.push(timer);return timer.id;
+    };
+    window.clearTimeout=id=>{
+        const timer=timers.find(item=>item.id===id);
+        if(timer)timer.cleared=true;else originalClear(id);
+    };
+    const clock={timers,active:()=>timers.filter(timer=>!timer.cleared&&!timer.fired),
+        fire:(timer,evenIfCancelled=false)=>{
+            if(timer && (!timer.cleared&&!timer.fired || evenIfCancelled)){timer.fired=true;timer.callback();}
+        }};
+    try{await run(clock);}finally{window.setTimeout=originalSet;window.clearTimeout=originalClear;}
+};
 const tests = [
+['Waiting and recovery feedback stays beside the action controls with persistent accessible elements', async () => {
+    mount();const panel=q('[data-region="request-feedback"]');const error=q('[data-region="error"]');
+    const status=q('[data-region="status"]');const help=q('[data-region="request-help"]');
+    assert(q('[data-region="request-feedback-slot"]').contains(panel),'Feedback did not move beside Begin');
+    assert(panel.hidden,'Idle feedback was visible');
+    assert(error.getAttribute('aria-describedby')===help.id,'Recovery help is not associated with the alert');
+    submit('start');assert(!panel.hidden,'Processing panel stayed hidden');await respond(active());
+    assert(q('[data-region="request-feedback-slot"]').contains(panel),'Feedback did not move beside Send after starting');
+    submit('finish');await respond(finished());
+    assert(q('[data-region="request-feedback-slot"]').contains(panel),'Feedback did not survive final results');
+    assert(q('[data-region="error"]')===error && q('[data-region="status"]')===status && q('[data-region="request-help"]')===help,'Fragment replacement discarded persistent feedback nodes');
+    for(const region of ['request-feedback','error','status','request-help'])assert(document.querySelectorAll(`#fixture [data-region="${region}"]`).length===1,`Duplicated ${region} after replacement`);
+}],
+['Each action explains what is processing without changing native pause submission', async () => {
+    for(const action of ['start','reply','finish','pause']) {
+        mount(action==='start'?form('start','new'):active());const root=q('#masteryagent-app');
+        root.dataset.processingStart='Preparing your conversation';root.dataset.processingReply='Reviewing your answer';
+        root.dataset.processingFinish='Preparing your final feedback';root.dataset.processingPause='Saving your draft';
+        const labels={start:'Preparing your conversation',reply:'Reviewing your answer',finish:'Preparing your final feedback',pause:'Saving your draft'};
+        let pausePost;
+        if(action==='pause')root.addEventListener('submit',event=>{pausePost=new FormData(event.target,event.submitter);event.preventDefault();},{once:true});
+        submit(action,action==='reply'||action==='pause'?'My answer':undefined);
+        assert(q('[data-region="status"]').textContent===labels[action],`${action} used an unrelated waiting message`);
+        assert(q('[data-region="announcements"]').textContent===labels[action],`${action} waiting state was not announced`);
+        if(action==='pause') {
+            assert(pausePost.get('action')==='pause' && pausePost.get('reply')==='My answer','Pause fields changed');
+            assert(pending.length===0,'Pause sent an AJAX request');
+            window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));
+        } else await respond(action==='finish'?finished():active('state2',3));
+    }
+}],
+['A slow response is announced once while the same request stays locked and keeps reading focus', async () => {
+    await withSlowClock(async clock=>{
+        mount(navigable());submit('reply','My answer');q('#review-old').click();
+        const focus=document.activeElement;const scroll=window.scrollY;
+        assert(clock.active().length===1,'Slow feedback timer was not scheduled once');clock.fire(clock.active()[0]);
+        assert(q('[data-region="status"]').textContent==='Still working; please wait.','Slow request did not explain the wait');
+        assert(q('[data-region="announcements"]').textContent==='Still working; please wait.','Slow status was not announced');
+        assert(clock.active().length===0,'Slow feedback rescheduled itself');
+        assert(pending.length===1,'Slow response replayed a write');
+        assert(q('[name="reply"]').readOnly && q('button[value="reply"]').disabled && q('button[value="finish"]').disabled,'Slow response unlocked the assessment');
+        assert(q('[data-region="content"]').getAttribute('aria-busy')==='true','Slow response cleared busy state');
+        assert(document.activeElement===focus && Math.abs(window.scrollY-scroll)<=1,'Slow feedback moved focus or scroll');
+        await respond(navigable('state2',3));
+    });
+}],
+['A completed request cancels its slow timer and its old callback cannot affect a later reply', async () => {
+    await withSlowClock(async clock=>{
+        mount(active());submit('reply','First answer');const first=clock.active()[0];await respond(active('state2',3));
+        assert(first.cleared,'Success did not cancel its slow timer');
+        submit('reply','Second answer');const second=clock.active()[0];clock.fire(first,true);
+        assert(q('[data-region="status"]').textContent==='Working','Old request timer changed the later request');
+        assert(clock.active().length===1 && clock.active()[0]===second,'Old callback canceled the later request timer');
+        clock.fire(second);assert(q('[data-region="status"]').textContent==='Still working; please wait.','Later request lost its own slow update');
+        await respond(active('state3',5));
+    });
+}],
+['Failed replies retain exact text and revision and show recovery instructions before a manual retry', async () => {
+    await withSlowClock(async clock=>{
+        mount(active());const draft='  My answer\nwith exact spacing  ';submit('reply',draft);const timer=clock.active()[0];
+        pending.at(-1).reject(Error('Offline'));await settle();const help=q('[data-region="request-help"]');
+        assert(timer.cleared,'Failure left the slow timer active');
+        assert(!help.hidden && help.textContent==='Your answer is still here. Retry sending it when ready.','Reply recovery instructions missing');
+        assert(q('[name="reply"]').value===draft && q('[name="state"]').value==='state1','Failure changed the draft or revision');
+        assert(pending.length===1,'Failure retried automatically');clock.fire(timer,true);
+        assert(q('[data-region="status"]').textContent!=='Still working; please wait.','Failed request announced a later slow status');
+        submit('reply');assert(pending.length===2 && pending[1].request.args.state==='state1','Manual retry changed the old revision');
+        assert(pending[1].request.args.reply===draft,'Manual retry changed the draft');
+        assert(q('[data-region="request-help"]').hidden,'Old recovery help remained while retrying');
+        await respond(active('state2',3));
+        assert(q('[data-region="request-help"]').hidden && q('[data-region="request-help"]').textContent==='','Successful retry kept stale recovery text');
+    });
+}],
+['Recovery instructions never claim that a missing answer is still present', async () => {
+    for(const action of ['start','finish','reply']) {
+        mount(action==='start'?form('start','new'):active());submit(action,action==='reply'?'Sent answer':undefined);
+        if(action==='reply')q('[name="reply"]').value='';
+        pending.at(-1).reject(Error('Connection lost'));await settle();
+        assert(q('[data-region="request-help"]').textContent==='Check the latest conversation before trying again.',`${action} incorrectly claimed an answer was preserved`);
+    }
+}],
+['Stale responses give review guidance and explain a separately recovered draft after completion', async () => {
+    for(const complete of [false,true]) {
+        mount(active());submit('reply','Keep this draft');await respond(complete?finished():active('state9',9),true,'Changed elsewhere');
+        const help=q('[data-region="request-help"]');
+        assert(!help.hidden && help.textContent.includes('Review the latest conversation before sending anything else.'),'Stale state has no review guidance');
+        assert(!help.textContent.includes('Retry sending'),'Stale state blindly encouraged resubmission');
+        assert(help.textContent.includes('Copy the recovered draft before continuing.')===complete,'Recovered-draft guidance does not match the displayed draft');
+        const draft=complete?q('[data-region="draft"] textarea'):q('[name="reply"]');
+        assert(draft.value==='Keep this draft','Stale state lost the answer');
+    }
+}],
+['Recovery text is safe HTML and does not steal outside focus', async () => {
+    mount(active());q('#masteryagent-app').dataset.recoveryReply='<img src=x onerror=unsafe()> Your answer remains.';
+    submit('reply','Keep my answer');q('#outside-app').focus();pending.at(-1).reject(Error('<script>unsafe()<\/script>'));await settle();
+    assert(document.activeElement===q('#outside-app'),'Inline recovery stole course navigation focus');
+    assert(q('[data-region="request-help"]').textContent==='<img src=x onerror=unsafe()> Your answer remains.','Recovery text was altered');
+    assert(!q('[data-region="request-feedback"] img') && !q('[data-region="request-feedback"] script'),'Recovery panel interpreted text as HTML');
+    assert(!q('[data-region="request-feedback"]').hidden,'Recovery panel stayed hidden when focus remained outside');
+}],
+['Leaving or restoring browser history cancels slow updates and clears stale waiting feedback', async () => {
+    await withSlowClock(async clock=>{
+        for(const leave of [false,true]) {
+            mount(active());q('#masteryagent-app').addEventListener('submit',event=>event.preventDefault(),{once:true});
+            submit('pause','Saved draft');const timer=clock.active()[0];
+            assert(timer,'Native pause did not start its waiting timer');
+            if(leave)window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));
+            else window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));
+            assert(timer.cleared,'Page lifecycle did not cancel the slow timer');clock.fire(timer,true);
+            assert(q('[data-region="status"]').textContent!=='Still working; please wait.','Canceled page lifecycle timer updated the page');
+            window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));
+            assert(q('[data-region="status"]').textContent==='' && q('[data-region="request-help"]').hidden,'Restored history kept stale waiting or recovery information');
+            assert(q('[name="reply"]').value==='Saved draft','Browser history recovery changed the saved draft');
+        }
+    });
+}],
+['Older fragments without an inline slot retain usable waiting and error feedback', async () => {
+    mount(active().replace(feedbackSlot,''));const panel=q('[data-region="request-feedback"]');
+    assert(panel.isConnected && !q('[data-region="content"]').contains(panel),'Missing slot removed the feedback panel');
+    submit('reply','My answer');assert(!panel.hidden && q('[data-region="status"]').textContent==='Working','Fallback waiting feedback is unavailable');
+    await respond(active('state2',3).replace(feedbackSlot,''));
+    assert(q('[data-region="request-feedback"]')===panel && panel.isConnected,'Replacement without a slot lost the persistent feedback');
+    submit('reply','Another answer');pending.at(-1).reject(Error('Offline'));await settle();
+    assert(!q('[data-region="error"]').hidden && !q('[data-region="request-help"]').hidden,'Fallback recovery feedback is unavailable');
+}],
+['Responses from before browser Back cannot overwrite or unlock a newer request', async () => {
+    await withSlowClock(async clock=>{
+        for(const outcome of ['success','error']) {
+            mount(active());submit('reply','Earlier answer');const old=pending[0];
+            window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));
+            window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));
+            submit('reply','Newer answer');const currentTimer=clock.active()[0];
+            if(outcome==='success')old.resolve({html:active('obsolete',99),stale:false,warning:''});
+            else old.reject(Error('Old request failed'));
+            await settle();
+            assert(q('[name="state"]').value==='state1' && q('[name="reply"]').value==='Newer answer','Old response replaced the restored conversation');
+            assert(q('[name="reply"]').readOnly && q('[data-region="content"]').getAttribute('aria-busy')==='true','Old response unlocked the newer request');
+            assert(q('[data-region="error"]').hidden && q('[data-region="status"]').textContent==='Working','Old response replaced newer waiting feedback');
+            assert(clock.active().length===1 && clock.active()[0]===currentTimer,'Old response cleared the newer timer');
+            await respond(active('state2',3));
+        }
+    });
+}],
+['An optional filter failure after a saved reply never suggests resubmitting it', async () => {
+    mount(active());filterFailure=true;submit('reply','Saved answer');await respond(active('state2',3));
+    assert(q('[name="state"]').value==='state2' && q('[name="reply"]').value==='','Saved response was not retained');
+    assert(q('[data-region="error"]').hidden && q('[data-region="request-help"]').hidden,'Filter failure was presented as a failed save');
+    assert(pending.length===1 && !q('button[value="reply"]').disabled,'Filter failure replayed a write or left controls locked');
+}],
 ['Saved drafts load with the correct count and height without announcing a limit warning', async () => {
     const draft=('A long saved response.\n'.repeat(350)).slice(0,7900);
     mount(active('state1',1,draft));const editor=q('[name="reply"]');

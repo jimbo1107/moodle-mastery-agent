@@ -39,17 +39,21 @@ class conversation_view {
      * @param attempt|null $current Current user's attempt.
      * @param string|null $draftoverride Unsent text from a failed normal POST, if any.
      * @param bool $showresume Show a welcome summary when opening an unfinished attempt.
+     * @param string $feedback Trusted internal request-feedback markup for the initial page.
      * @return string Escaped HTML.
      */
     public static function render(\stdClass $instance, \stdClass $cm, sequence $sequence, ?attempt $current,
-            ?string $draftoverride = null, bool $showresume = false): string {
+            ?string $draftoverride = null, bool $showresume = false, string $feedback = ''): string {
         global $OUTPUT;
         $out = '';
+        $feedbackslot = html_writer::div($feedback, 'masteryagent-request-feedback-slot', [
+            'data-region' => 'request-feedback-slot',
+        ]);
         if ($current === null) {
             $out .= $OUTPUT->box(
                 self::render_overview($instance, $sequence)
                 . html_writer::div(
-                    self::action_form($cm, $current, 'start', 'begin')
+                    self::action_form($cm, $current, 'start', 'begin') . $feedbackslot
                 ),
                 'generalbox'
             );
@@ -133,6 +137,7 @@ class conversation_view {
                 ]),
                 'masteryagent-attempt-actions mt-2'
             );
+            $out .= $feedbackslot;
             $out .= html_writer::tag('p', get_string('pausehelp', 'mod_masteryagent'), ['class' => 'text-muted mt-2']);
 
             $unanswered = max(0, $sequence->count() - $current->lesson_index()
@@ -191,9 +196,34 @@ class conversation_view {
                     'mt-2'
                 );
             }
+            $out .= $feedbackslot;
         }
 
         return $out;
+    }
+
+    /**
+     * Build request feedback that JavaScript can retain when replacing conversation fragments.
+     *
+     * @param string|null $error Initial plain-text error, if any.
+     * @param string $help Plain-text recovery guidance matching the rendered state.
+     * @return string Escaped error and guidance in a single, initially idle or error wrapper.
+     */
+    public static function request_feedback(?string $error = null, string $help = ''): string {
+        $haserror = $error !== null && $error !== '';
+        $body = html_writer::div($haserror ? s($error) : '', 'alert alert-danger', [
+            'data-region' => 'error', 'role' => 'alert', 'tabindex' => '-1',
+            'aria-describedby' => 'masteryagent-request-help',
+        ] + ($haserror ? [] : ['hidden' => 'hidden']));
+        $body .= html_writer::div('', 'masteryagent-status text-muted', [
+            'data-region' => 'status', 'aria-hidden' => 'true',
+        ]);
+        $body .= html_writer::tag('p', s($help), [
+            'data-region' => 'request-help', 'id' => 'masteryagent-request-help',
+        ] + ($help === '' ? ['hidden' => 'hidden'] : []));
+        return html_writer::div($body, 'masteryagent-request-feedback', [
+            'data-region' => 'request-feedback', 'data-state' => $haserror ? 'error' : 'idle',
+        ] + ($haserror ? [] : ['hidden' => 'hidden']));
     }
 
     /**
