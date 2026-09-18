@@ -67,9 +67,9 @@ final class conversation_view_test extends \advanced_testcase {
     }
 
     /** Render the learner fragment for XPath assertions. */
-    private function fragment(?attempt $current = null): \DOMXPath {
+    private function fragment(?attempt $current = null, bool $showresume = false, ?string $draftoverride = null): \DOMXPath {
         $html = conversation_view::render($this->instance, $this->cm,
-            sequence::from_instance($this->instance), $current);
+            sequence::from_instance($this->instance), $current, $draftoverride, $showresume);
         $dom = new \DOMDocument();
         $dom->loadHTML('<!doctype html><html><head><meta charset="utf-8"></head><body>' . $html . '</body></html>',
             LIBXML_NOERROR | LIBXML_NOWARNING);
@@ -189,6 +189,87 @@ final class conversation_view_test extends \advanced_testcase {
         $this->assertSame(count($current->messages()), $xpath->query('//*[@data-message-id]')->length);
     }
 
+    public function test_resume_summary_requires_an_unfinished_attempt_and_an_explicit_opening_request(): void {
+        $xpath = $this->fragment(null, true);
+        $this->assertSame(0, $xpath->query('//*[@data-region="resume-summary"]')->length);
+        $this->assertSame(1, $xpath->query('//*[@data-region="before-begin"]')->length);
+        $current = $this->start_sample();
+        $xpath = $this->fragment($current);
+        $this->assertSame(0, $xpath->query('//*[@data-region="resume-summary"]')->length);
+        $xpath = $this->fragment($current, true);
+        $this->assertSame(1, $xpath->query('//*[@data-region="resume-summary"]')->length);
+        $this->assertSame(1, $xpath->query('//*[@data-region="resume-summary"]/following-sibling::nav'
+            . '[@data-region="conversation-navigation"]')->length);
+        $this->assertSame(1, $xpath->query('//*[@data-region="resume-summary"]//a'
+            . '[@href="#masteryagent-reply" and @data-conversation-jump="masteryagent-reply"]')->length);
+        $this->assertSame(1, $xpath->query('//*[@id="masteryagent-reply"]')->length);
+    }
+
+    public function test_resume_summary_reports_actual_progress_and_saved_draft_without_copying_private_text(): void {
+        $current = $this->start_sample();
+        update_conversation::execute((int) $this->cm->id, 'reply', conversation::state($current), 'First answer.');
+        $current = attempt::get_latest($this->instance, (int) $this->student->id);
+        $draft = 'My private unfinished explanation <script>unsafe()</script>.';
+        $current->save_draft($draft);
+        $records = json_decode($this->instance->sequencejson, true);
+        $records[1]['lesson_title'] = '<img src=x onerror=alert(1)> Lesson title';
+        $this->instance->sequencejson = json_encode($records);
+        $xpath = $this->fragment($current, true);
+        $summary = $xpath->query('//*[@data-region="resume-summary"]')->item(0);
+        $this->assertStringContainsString('Welcome back', $summary->textContent);
+        $this->assertStringContainsString('Lesson 2 of 2:', $summary->textContent);
+        $this->assertStringContainsString('<img src=x onerror=alert(1)> Lesson title', $summary->textContent);
+        $this->assertStringContainsString('Lessons completed: 1 of 2.', $summary->textContent);
+        $this->assertStringContainsString('Replies remaining: ' . $current->turns_left(), $summary->textContent);
+        $this->assertStringContainsString('Your saved draft is available in the reply box.', $summary->textContent);
+        $this->assertStringNotContainsString($draft, $summary->textContent);
+        $this->assertSame($draft, $xpath->query('//textarea[@id="masteryagent-reply"]')->item(0)->textContent);
+        $this->assertSame(0, $xpath->query('//img | //script')->length);
+        $this->assertSame(1, substr_count($xpath->document->textContent, 'Lesson 2 of 2:'));
+        $ids = [];
+        foreach ($xpath->query('//*[@id]') as $node) {
+            $ids[] = $node->getAttribute('id');
+        }
+        $this->assertSame($ids, array_values(array_unique($ids)));
+    }
+
+    public function test_resume_summary_does_not_claim_an_unsaved_answer_has_been_saved(): void {
+        $current = $this->start_sample();
+        $unsaved = 'Text restored from a failed request has not been saved.';
+        $xpath = $this->fragment($current, true, $unsaved);
+        $status = $xpath->query('//*[@data-region="resume-draft-status"]')->item(0)->textContent;
+        $this->assertSame(get_string('resumenodraft', 'mod_masteryagent'), $status);
+        $this->assertStringContainsString('Choose Save and leave', $status);
+        $this->assertStringNotContainsString('Your saved draft is available', $status);
+        $this->assertSame($unsaved, $xpath->query('//textarea[@id="masteryagent-reply"]')->item(0)->textContent);
+    }
+
+    public function test_reply_guidance_and_limit_work_without_javascript_and_do_not_truncate_restored_text(): void {
+        $current = $this->start_sample();
+        $draft = str_repeat('A', attempt::MAX_REPLY_CHARS + 1) . '<script>unsafe()</script>';
+        $xpath = $this->fragment($current, false, $draft);
+        $editor = $xpath->query('//textarea[@id="masteryagent-reply"]')->item(0);
+        $this->assertSame((string) attempt::MAX_REPLY_CHARS, $editor->getAttribute('maxlength'));
+        $this->assertSame($draft, $editor->textContent);
+        $this->assertSame(0, $xpath->query('//script')->length);
+        $describedby = explode(' ', $editor->getAttribute('aria-describedby'));
+        $this->assertSame(['masteryagent-reply-guidance', 'masteryagent-reply-limit'], $describedby);
+        foreach ($describedby as $id) {
+            $this->assertSame(1, $xpath->query('//*[@id="' . $id . '" and not(@hidden)]')->length);
+        }
+        $this->assertStringContainsString('explain your reasoning',
+            $xpath->query('//*[@id="masteryagent-reply-guidance"]')->item(0)->textContent);
+        $this->assertStringContainsString('Maximum: ' . attempt::MAX_REPLY_CHARS . ' characters',
+            $xpath->query('//*[@id="masteryagent-reply-limit"]')->item(0)->textContent);
+        $counter = $xpath->query('//*[@data-region="reply-counter" and @hidden]')->item(0);
+        $this->assertNotNull($counter);
+        $this->assertSame('', $counter->textContent);
+        $this->assertFalse($counter->hasAttribute('aria-live'));
+        $this->assertFalse($counter->hasAttribute('role'));
+        $this->assertStringContainsString('{remaining}', $counter->getAttribute('data-remaining'));
+        $this->assertNotSame('', $counter->getAttribute('data-overlimit'));
+    }
+
     public function test_previous_lesson_collapses_and_current_lesson_and_all_messages_remain_available(): void {
         $current = $this->start_sample();
         update_conversation::execute((int) $this->cm->id, 'reply', conversation::state($current), 'First answer.');
@@ -225,6 +306,8 @@ final class conversation_view_test extends \advanced_testcase {
         $this->assertSame(1, $xpath->query('//*[@id="masteryagent-results" and @tabindex="-1"]')->length);
         $this->assertSame(0, $xpath->query('//details//*[@data-region="results"]')->length);
         $this->assertSame(0, $xpath->query('//*[@data-region="reply-context"] | //*[@data-region="before-begin"]')->length);
+        $xpath = $this->fragment($current, true);
+        $this->assertSame(0, $xpath->query('//*[@data-region="resume-summary"]')->length);
     }
 
     public function test_legacy_and_repeated_keys_preserve_every_message_in_chronological_order(): void {

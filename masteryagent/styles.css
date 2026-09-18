@@ -96,6 +96,40 @@
     width: 100%;
 }
 
+.masteryagent-form .masteryagent-reply-editor {
+    box-sizing: border-box;
+    resize: vertical;
+}
+
+.masteryagent-reply-guidance,
+.masteryagent-reply-counter {
+    overflow-wrap: anywhere;
+}
+
+.masteryagent-reply-counter {
+    margin: 0.5rem 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.masteryagent-reply-counter[data-limit-state="near"],
+.masteryagent-reply-counter[data-limit-state="reached"],
+.masteryagent-reply-counter[data-limit-state="over"] {
+    font-weight: 600;
+}
+
+.masteryagent-resume-summary {
+    border: 1px solid #d6d9dc;
+    border-inline-start: 4px solid #0f6cbf;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    overflow-wrap: anywhere;
+}
+
+.masteryagent-resume-summary .btn {
+    white-space: normal;
+}
+
 .masteryagent-announcement-settings {
     margin-bottom: 1rem;
     padding-bottom: 1rem;

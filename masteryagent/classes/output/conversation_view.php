@@ -38,10 +38,11 @@ class conversation_view {
      * @param sequence $sequence Selected lessons.
      * @param attempt|null $current Current user's attempt.
      * @param string|null $draftoverride Unsent text from a failed normal POST, if any.
+     * @param bool $showresume Show a welcome summary when opening an unfinished attempt.
      * @return string Escaped HTML.
      */
     public static function render(\stdClass $instance, \stdClass $cm, sequence $sequence, ?attempt $current,
-            ?string $draftoverride = null): string {
+            ?string $draftoverride = null, bool $showresume = false): string {
         global $OUTPUT;
         $out = '';
         if ($current === null) {
@@ -55,8 +56,10 @@ class conversation_view {
             return $out;
         }
 
-        // Progress through the sequence.
-        if (!$current->is_finished() && $sequence->is_multi()) {
+        // A returning learner gets one overview of their saved place before the transcript.
+        if ($showresume && !$current->is_finished()) {
+            $out .= self::render_resume($sequence, $current);
+        } else if (!$current->is_finished() && $sequence->is_multi()) {
             $lesson = $sequence->get($current->lesson_index());
             $out .= $OUTPUT->box(
                 html_writer::tag('strong', get_string('progress', 'mod_masteryagent', (object) [
@@ -94,14 +97,30 @@ class conversation_view {
             }
             $out .= self::render_reply_context($messages);
             $out .= html_writer::tag('label', get_string('yourreply', 'mod_masteryagent'), ['for' => 'masteryagent-reply']);
+            $out .= html_writer::tag('p', get_string('replyguidance', 'mod_masteryagent'), [
+                'id' => 'masteryagent-reply-guidance', 'class' => 'masteryagent-reply-guidance',
+            ]);
+            $out .= html_writer::tag('p', get_string('replylimit', 'mod_masteryagent', attempt::MAX_REPLY_CHARS), [
+                'id' => 'masteryagent-reply-limit', 'class' => 'text-muted',
+            ]);
             $out .= html_writer::tag('textarea', s($draftoverride ?? $current->draft_reply()), [
                 'name' => 'reply',
                 'id' => 'masteryagent-reply',
                 'maxlength' => attempt::MAX_REPLY_CHARS,
                 'rows' => 8,
-                'class' => 'form-control',
+                'class' => 'form-control masteryagent-reply-editor',
+                'aria-describedby' => 'masteryagent-reply-guidance masteryagent-reply-limit',
                 'required' => 'required',
                 'placeholder' => get_string('replyplaceholder', 'mod_masteryagent'),
+            ]);
+            // Static limit text remains available without JavaScript; live counters are progressive enhancement.
+            $out .= html_writer::tag('p', '', [
+                'id' => 'masteryagent-reply-counter', 'data-region' => 'reply-counter',
+                'class' => 'masteryagent-reply-counter text-muted', 'hidden' => 'hidden',
+                'data-remaining' => get_string('replyremaining', 'mod_masteryagent', '{remaining}'),
+                'data-nearlimit' => get_string('replynearlimit', 'mod_masteryagent'),
+                'data-limitreached' => get_string('replylimitreached', 'mod_masteryagent'),
+                'data-overlimit' => get_string('replyoverlimit', 'mod_masteryagent'),
             ]);
             $out .= html_writer::div(
                 html_writer::tag('button', get_string('sendreply', 'mod_masteryagent'), [
@@ -175,6 +194,40 @@ class conversation_view {
         }
 
         return $out;
+    }
+
+    /**
+     * Help a returning learner find their saved place without revealing their draft in the summary.
+     *
+     * @param sequence $sequence Selected lessons.
+     * @param attempt $current Unfinished attempt.
+     * @return string Escaped welcome summary and a native reply link.
+     */
+    private static function render_resume(sequence $sequence, attempt $current): string {
+        $lesson = $sequence->get($current->lesson_index());
+        $body = html_writer::tag('h3', get_string('resumeheading', 'mod_masteryagent'),
+            ['id' => 'masteryagent-resume-title']);
+        $body .= html_writer::tag('p',
+            html_writer::tag('strong', get_string('progress', 'mod_masteryagent', (object) [
+                'position' => $current->lesson_index() + 1, 'total' => $sequence->count(),
+            ]))
+            . ' ' . s($lesson === null ? '' : trim($lesson->lesson_id() . ' ' . $lesson->title())));
+        $body .= html_writer::tag('ul',
+            html_writer::tag('li', get_string('finishprogress', 'mod_masteryagent', (object) [
+                'done' => count($current->lesson_results()), 'total' => $sequence->count(),
+            ]))
+            . html_writer::tag('li', get_string('turnsleft', 'mod_masteryagent', $current->turns_left())));
+        $body .= html_writer::tag('p', get_string($current->draft_reply() !== '' ? 'resumesaveddraft' : 'resumenodraft',
+            'mod_masteryagent'), ['data-region' => 'resume-draft-status']);
+        $body .= html_writer::tag('p', html_writer::link('#masteryagent-reply',
+            get_string('resumecontinue', 'mod_masteryagent'), [
+                'class' => 'btn btn-primary', 'data-conversation-jump' => 'masteryagent-reply',
+                'id' => 'jump-masteryagent-reply-from-resume',
+            ]));
+        return html_writer::tag('section', $body, [
+            'class' => 'generalbox masteryagent-resume-summary', 'data-region' => 'resume-summary',
+            'aria-labelledby' => 'masteryagent-resume-title',
+        ]);
     }
 
     /**

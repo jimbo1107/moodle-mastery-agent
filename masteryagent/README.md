@@ -114,6 +114,29 @@ revised questions and rubrics. Nothing else changes and existing attempts are
 left alone. This is the intended path for keeping the assessment current as
 lessons and educational objectives are revised.
 
+## Returning students and answer editor (0.4.5)
+
+Opening an unfinished attempt shows **Welcome back**, the current lesson,
+completed lesson count, replies remaining, and whether a saved draft is available.
+**Continue where I left off** jumps to the reply field without sending an answer.
+The summary is shown on a normal page opening, including the normal POST
+redirect when JavaScript is unavailable; it is not repeated after every AJAX reply.
+
+The reply field includes visible writing guidance and the existing
+8,000-character limit. With JavaScript enabled, it expands to fit typed, pasted,
+or restored text, and a counter shows how many characters remain. The counter
+follows the browser's native character-limit counting, so some characters such
+as emoji use two units. Text is not changed by the counter or automatic resizing.
+
+Screen-reader limit notifications are separate from evaluator feedback and are
+announced when approaching or reaching the limit, rather than on every keystroke.
+Without JavaScript, the guidance, static limit, native textarea and forms remain
+available. Drafts are still saved only by **Save and leave**; typing is not autosaved.
+
+Install the updated ZIP, complete version **2026091801** through Moodle's plugin
+upgrade, purge caches, and reopen activity tabs. This release adds no database
+schema changes.
+
 ## Student orientation and reply context (0.4.4)
 
 Before beginning, learners see an overview of the activity's lesson count,
@@ -246,12 +269,13 @@ or overturn the agent's judgement.
 
 ## Tests
 
-`tests/` holds 105 PHPUnit tests covering the parser, lesson selection, prompt
+`tests/` holds 109 PHPUnit tests covering the parser, lesson selection, prompt
 construction, the conversation engine, gradebook, and AJAX access and recovery.
 The suite includes 15 AJAX regression tests from 0.4.0, 3 learning-plan tests
 from 0.4.1, 6 pause/final-submission tests from 0.4.2, and 4 transcript/navigation
 tests from 0.4.3. Version 0.4.4 adds 6 tests for the overview, reply context,
-and saved original scenarios.
+and saved original scenarios. Version 0.4.5 adds 4 tests for returning learners,
+editor guidance and exact draft restoration.
 The PHP suite has not been executed in this workspace, which has no
 Moodle/PHP runtime.
 No AI provider is called by the tests. See `tests/README.md` for setup, browser

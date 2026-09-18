@@ -171,6 +171,9 @@ echo html_writer::div('', 'masteryagent-status text-muted', [
 echo html_writer::div('', 'masteryagent-sr-only', [
     'data-region' => 'announcements', 'role' => 'status', 'aria-live' => 'polite', 'aria-atomic' => 'true',
 ]);
+echo html_writer::div('', 'masteryagent-sr-only', [
+    'data-region' => 'reply-limit-announcement', 'role' => 'status', 'aria-live' => 'polite', 'aria-atomic' => 'true',
+]);
 $showdraft = $draft !== '' && ($current === null || $current->is_finished());
 echo html_writer::div(
     html_writer::tag('label', get_string('recovereddraft', 'mod_masteryagent'), ['for' => 'masteryagent-draft'])
@@ -179,7 +182,8 @@ echo html_writer::div(
     ]),
     'mb-3', ['data-region' => 'draft'] + ($showdraft ? [] : ['hidden' => 'hidden'])
 );
-$html = \mod_masteryagent\output\conversation_view::render($instance, $cm, $sequence, $current, $draftoverride);
+$showresume = $action === '' && $current !== null && !$current->is_finished();
+$html = \mod_masteryagent\output\conversation_view::render($instance, $cm, $sequence, $current, $draftoverride, $showresume);
 echo html_writer::div($html, '', ['data-region' => 'content', 'aria-busy' => 'false']);
 echo html_writer::end_div();
 echo $OUTPUT->footer();

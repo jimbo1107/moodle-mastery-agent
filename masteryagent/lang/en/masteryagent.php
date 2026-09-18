@@ -96,6 +96,10 @@ $string['saveandleave'] = 'Save and leave';
 $string['pausehelp'] = 'Save your place and any unsent answer, then return to the course. You can continue this attempt later without submitting a final grade.';
 $string['pausesaved'] = 'Your place and draft have been saved. Open this activity again to continue your assessment.';
 $string['draftrestored'] = 'Your saved draft is below. It has not been sent to the evaluator.';
+$string['resumeheading'] = 'Welcome back';
+$string['resumesaveddraft'] = 'Your saved draft is available in the reply box. It has not been sent to the evaluator.';
+$string['resumenodraft'] = 'No saved draft is available. Choose Save and leave to save an unfinished answer.';
+$string['resumecontinue'] = 'Continue where I left off';
 $string['finishassessment'] = 'Submit final assessment…';
 $string['finishprogress'] = 'Lessons completed: {$a->done} of {$a->total}.';
 $string['finishconsequences'] = 'This ends your attempt and scores only the answers you have already sent. You cannot resume this attempt after submitting. Choose Save and leave if you want to continue later.';
@@ -152,6 +156,12 @@ $string['errorbadresponse'] = 'The AI provider returned something this activity 
 
 // AJAX conversation.
 $string['yourreply'] = 'Your reply';
+$string['replyguidance'] = 'Answer the current question in your own words and explain your reasoning.';
+$string['replylimit'] = 'Maximum: {$a} characters. Some symbols and emoji count as more than one character.';
+$string['replyremaining'] = 'Characters remaining: {$a}';
+$string['replynearlimit'] = 'You are close to the character limit.';
+$string['replylimitreached'] = 'Character limit reached.';
+$string['replyoverlimit'] = 'Your reply is over the character limit. Shorten it before sending.';
 $string['processing'] = 'The evaluator is working. Please wait…';
 $string['conversationupdated'] = 'Conversation updated.';
 $string['ajaxerror'] = 'The request could not be completed. Your draft is still here. Check your connection and try again.';

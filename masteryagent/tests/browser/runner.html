@@ -24,10 +24,13 @@ const assert = (condition, message) => {if (!condition) throw Error(message);};
 const settle = () => new Promise(resolve => setTimeout(resolve, 0));
 const form = (action, state, extra = '') => `<form data-action="${action}" method="post" action="unexpected-navigation.html">
 <input name="state" type="hidden" value="${state}">${extra}<button type="submit">${action}</button></form>`;
-const active = (state = 'state1', id = 1) => `<div class="masteryagent-agent" data-message-id="${id}">Question ${id}</div>
-<form data-action="reply" method="post" action="unexpected-navigation.html">
+const escapeText = value => value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const active = (state = 'state1', id = 1, draft = '') => `<div class="masteryagent-agent" data-message-id="${id}">Question ${id}</div>
+<form class="masteryagent-form" data-action="reply" method="post" action="unexpected-navigation.html">
 <input name="state" type="hidden" value="${state}"><input name="confirmed" type="hidden" value="1">
-<label for="reply">Reply</label><textarea id="reply" name="reply" required maxlength="8000"></textarea>
+<label for="reply">Reply</label><p id="reply-guidance">Explain your reasoning.</p><p id="reply-limit">Maximum: 8000 characters.</p>
+<textarea class="masteryagent-reply-editor" id="reply" name="reply" rows="8" required maxlength="8000" aria-describedby="reply-guidance reply-limit">${escapeText(draft)}</textarea>
+<p class="masteryagent-reply-counter" id="reply-counter" data-region="reply-counter" data-remaining="Characters remaining: {remaining}" data-nearlimit="You are close to the character limit." data-limitreached="Character limit reached." data-overlimit="Your reply is over the character limit. Shorten it before sending." hidden></p>
 <button name="action" value="reply">Send reply</button>
 <button name="action" value="pause" formnovalidate>Save and leave</button>
 <details><summary>Submit final assessment</summary><p>Unanswered lessons contribute zero.</p>
@@ -53,6 +56,7 @@ const mount = (html = form('start','new'), {preservePreference = false, includeP
 <div id="masteryagent-app" class="masteryagent-app" data-cmid="42" data-processing="Working" data-updated="Updated" data-error="Request failed" data-unsent="Send or clear your draft first" data-confirmrequired="Confirm final submission" data-resultsready="Results and feedback are ready" data-newfeedback="New evaluator feedback is available beside your reply box.">
 <div data-region="error" role="alert" tabindex="-1" hidden></div><div data-region="status" aria-hidden="true"></div>
 <div data-region="announcements" class="masteryagent-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+<div data-region="reply-limit-announcement" class="masteryagent-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 ${includePreference ? `<div class="masteryagent-announcement-settings" data-region="announcement-settings" hidden><label for="announcement-mode">Screen-reader updates</label>
 <select id="announcement-mode" data-region="announcement-mode"><option value="brief">Brief notifications</option>
 <option value="full">Read full feedback</option></select></div>` : ''}
@@ -68,7 +72,122 @@ const submit = (action, reply) => {
 const respond = async (html, stale = false, warning = '') => {
     pending.at(-1).resolve({html, stale, warning}); await settle();
 };
+const inputReply = value => {
+    const editor=q('[name="reply"]');editor.value=value;
+    editor.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText'}));
+    return editor;
+};
 const tests = [
+['Saved drafts load with the correct count and height without announcing a limit warning', async () => {
+    const draft=('A long saved response.\n'.repeat(350)).slice(0,7900);
+    mount(active('state1',1,draft));const editor=q('[name="reply"]');
+    assert(editor.value===draft,'Saved draft text changed');
+    assert(!q('[data-region="reply-counter"]').hidden,'Counter stayed hidden');
+    assert(q('[data-region="reply-counter"]').textContent===`Characters remaining: ${8000-draft.length}`,'Saved draft count is incorrect');
+    assert(editor.scrollHeight<=editor.clientHeight+1,
+        `Saved draft still needed internal scrolling: scroll=${editor.scrollHeight}, client=${editor.clientHeight}, height=${editor.getBoundingClientRect().height}, width=${editor.getBoundingClientRect().width}`);
+    assert(q('[data-region="reply-limit-announcement"]').textContent==='','Loading a saved draft announced a warning');
+    assert(editor.getAttribute('aria-describedby')==='reply-guidance reply-limit','Dynamic count replaced static answer guidance');
+}],
+['Typing and pasted text grow the editor while deletion restores its original minimum', async () => {
+    mount(active());const editor=q('[name="reply"]');const initial=editor.getBoundingClientRect().height;
+    editor.focus();const draft='A pasted line of reasoning.\n'.repeat(35);editor.value=draft;editor.setSelectionRange(10,17);
+    const scroll=window.scrollY;
+    editor.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertFromPaste'}));
+    assert(editor.getBoundingClientRect().height>initial,'Pasted answer did not grow the editor');
+    assert(editor.scrollHeight<=editor.clientHeight+1,'Pasted answer required internal scrolling');
+    assert(editor.value===draft && editor.selectionStart===10 && editor.selectionEnd===17,'Growing changed text or selection');
+    assert(document.activeElement===editor && Math.abs(window.scrollY-scroll)<=1,'Measuring growth moved focus or the viewport');
+    assert(q('[data-region="reply-counter"]').textContent===`Characters remaining: ${8000-draft.length}`,'Paste did not update the counter');
+    inputReply('Short answer');
+    assert(Math.abs(editor.getBoundingClientRect().height-initial)<=1,'Deletion did not restore the minimum height');
+    assert(q('[data-region="reply-counter"]').textContent==='Characters remaining: 7988','Deletion did not update the counter');
+}],
+['Character counts follow native UTF-16 maxlength units', async () => {
+    mount(active());inputReply('😀');
+    assert(q('[data-region="reply-counter"]').textContent==='Characters remaining: 7998','Surrogate pair did not match native maxlength counting');
+    assert(q('[name="reply"]').maxLength===8000,'The native character limit changed');
+}],
+['Limit announcements occur at threshold transitions rather than every keystroke', async () => {
+    mount(active());const live=q('[data-region="reply-limit-announcement"]');
+    inputReply('a'.repeat(7799));assert(live.textContent==='','Ordinary typing was announced');
+    inputReply('a'.repeat(7800));assert(live.textContent==='You are close to the character limit. Characters remaining: 200','Near-limit transition was not announced');
+    assert(q('[data-region="reply-counter"]').dataset.limitState==='near','Visible near-limit styling state was not updated');
+    inputReply('a'.repeat(7801));assert(live.textContent.endsWith('200'),'Every near-limit keystroke was announced');
+    inputReply('a'.repeat(8000));assert(live.textContent==='Character limit reached.','Reaching the limit was not announced');
+    assert(q('[data-region="reply-counter"]').dataset.limitState==='reached','Visible reached-limit styling state was not updated');
+    assert(q('[data-region="reply-counter"]').textContent==='Characters remaining: 0','Limit count is incorrect');
+    inputReply('a'.repeat(8001));assert(live.textContent==='Your reply is over the character limit. Shorten it before sending.','Over-limit transition was not announced');
+    assert(q('[data-region="reply-counter"]').dataset.limitState==='over','Visible over-limit styling state was not updated');
+    inputReply('Short');assert(live.textContent==='','Old limit warning remained after shortening the answer');
+}],
+['Over-limit restored drafts remain intact and cannot be sent until shortened', async () => {
+    const draft='a'.repeat(8001);mount(active('state1',1,draft));const editor=q('[name="reply"]');
+    assert(editor.value===draft,'Over-limit restored draft was truncated');
+    assert(editor.validity.customError,'Over-limit draft has no actionable validity message');
+    submit('reply');assert(pending.length===0,'Over-limit draft was submitted');
+    inputReply('A shorter answer');assert(editor.checkValidity(),'Shortening the answer did not clear validity');
+    submit('reply');await respond(active('state2',3));
+    assert(q('[data-region="reply-counter"]').textContent==='Characters remaining: 8000','Fresh reply did not reset count');
+    assert(q('[data-region="reply-limit-announcement"]').textContent==='','Fragment replacement replayed a limit warning');
+}],
+['A provider error and stale response preserve draft text, count and fitted height', async () => {
+    const draft='My answer contains another line.\n'.repeat(30);mount(active());inputReply(draft);submit('reply');
+    pending.at(-1).reject(Error('Offline'));await settle();
+    assert(q('[name="reply"]').value===draft,'Provider error lost the draft');
+    assert(q('[data-region="reply-counter"]').textContent===`Characters remaining: ${8000-draft.length}`,'Provider error changed the count');
+    submit('reply');await respond(active('state2',3),true,'Changed in another tab');
+    const editor=q('[name="reply"]');
+    assert(editor.value===draft,'Stale response lost the draft');
+    assert(q('[data-region="reply-counter"]').textContent===`Characters remaining: ${8000-draft.length}`,'Counter updated before the stale draft was restored');
+    assert(editor.scrollHeight<=editor.clientHeight+1,'Stale draft height was not restored');
+}],
+['Save and leave retains the full over-limit draft for the server to validate', async () => {
+    const draft='a'.repeat(8001);mount(active('state1',1,draft));let captured;
+    q('#masteryagent-app').addEventListener('submit',event=>{
+        captured={blocked:event.defaultPrevented,data:new FormData(event.target,event.submitter)};event.preventDefault();
+    },{once:true});
+    submit('pause');assert(captured && !captured.blocked,'Editor validity blocked native Save and leave');
+    assert(captured.data.get('reply')===draft,'Save and leave silently truncated the draft');
+    assert(pending.length===0,'Pause called the conversation AJAX service');
+}],
+['Manual vertical resizing is preserved through later typing', async () => {
+    mount(active());const editor=q('[name="reply"]');const requested=editor.getBoundingClientRect().height+150;
+    editor.style.height=`${requested}px`;editor.dispatchEvent(new Event('pointerup',{bubbles:true}));
+    inputReply('Some text');assert(editor.getBoundingClientRect().height>=requested-1,'Typing discarded a manual resize');
+}],
+['Changing viewport width recalculates wrapping without changing the draft', async () => {
+    mount(active());const panel=q('[data-region="content"]');panel.style.width='700px';window.dispatchEvent(new Event('resize'));
+    const editor=inputReply('A complete thought with evidence. '.repeat(45));const wide=editor.getBoundingClientRect().height;
+    panel.style.width='240px';window.dispatchEvent(new Event('resize'));
+    assert(editor.getBoundingClientRect().height>wide,
+        `Narrow layout did not grow the editor: wideHeight=${wide}, narrowHeight=${editor.getBoundingClientRect().height}, narrowWidth=${editor.getBoundingClientRect().width}, scroll=${editor.scrollHeight}, client=${editor.clientHeight}`);
+    assert(editor.scrollHeight<=editor.clientHeight+1,
+        `Narrow editor needed internal scrolling: scroll=${editor.scrollHeight}, client=${editor.clientHeight}, height=${editor.getBoundingClientRect().height}, width=${editor.getBoundingClientRect().width}`);
+    assert(editor.value==='A complete thought with evidence. '.repeat(45),'Resizing changed the draft');
+    for(const width of [168,220,239,241,320]) {
+        panel.style.width=`${width}px`;window.dispatchEvent(new Event('resize'));
+        assert(editor.scrollHeight<=editor.clientHeight+1,`Editor overflowed at width ${width}`);
+    }
+    mount('<div style="width:168px">'+active('restored',1,'A long saved response.\n'.repeat(250))+'</div>');
+    const restored=q('[name="reply"]');
+    assert(restored.scrollHeight<=restored.clientHeight+1,'Restored draft overflowed at a scrollbar wrapping boundary');
+}],
+['Back-forward cache restoration updates the editor silently and initialization stays idempotent', async () => {
+    mount(active());window.conversation.init('#masteryagent-app');
+    const editor=q('[name="reply"]');editor.value='Saved line.\n'.repeat(400);
+    window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));
+    assert(q('[data-region="reply-counter"]').textContent===`Characters remaining: ${8000-editor.value.length}`,'History restoration left the old count');
+    assert(editor.scrollHeight<=editor.clientHeight+1,'History restoration left the old height');
+    assert(q('[data-region="reply-limit-announcement"]').textContent==='','History restoration announced an unnecessary warning');
+    assert(q('[data-region="content"]').querySelectorAll('textarea').length===1,'Measurement left duplicate fields behind');
+}],
+['Continue where I left off focuses the restored reply without submitting', async () => {
+    mount('<section data-region="resume-summary"><a id="continue-reply" href="#reply" data-conversation-jump="reply">Continue where I left off</a></section>'+active('state1',1,'Saved answer'));
+    q('#continue-reply').click();
+    assert(document.activeElement===q('[name="reply"]'),'Continue did not focus the reply');
+    assert(q('[name="reply"]').value==='Saved answer' && pending.length===0,'Continue changed or submitted the draft');
+}],
 ['Navigation reveals collapsed feedback and moves focus to the destination', async () => {
     mount(navigable());q('#review-old').focus();q('#review-old').click();
     assert(q('[data-region="lesson-history"]').open,'History stayed hidden');
