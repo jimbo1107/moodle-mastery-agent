@@ -1,6 +1,6 @@
 # Running the mastery agent tests
 
-154 PHPUnit tests covering the question-set parser, lesson selection, prompt
+155 PHPUnit tests covering the question-set parser, lesson selection, prompt
 construction, the conversation engine, gradebook, AJAX endpoint and learner history. They never call a real
 AI provider — a scripted responder stands in for one — so they cost nothing to
 run and are deterministic.
@@ -44,7 +44,8 @@ The original suite contained 71 tests. The AJAX update added 15 tests in
 with 4 further tests for the welcome summary and editor markup in 0.4.5.
 Version 0.4.6 adds 8 history-access tests, 5 history-list tests and 7 saved-review
 tests. Version 0.4.7 adds 5 nearby request-feedback tests. Version 0.4.8 adds
-14 clarification service/prompt tests and 6 clarification-view tests, for 154 tests in total.
+14 clarification service/prompt tests and 6 clarification-view tests. Version 0.4.9
+adds one shared skill-card rendering test, for 155 tests in total.
 The PHP suite has not been
 executed in this workspace; run it on a development Moodle site.
 
@@ -55,6 +56,7 @@ executed in this workspace; run it on a development Moodle site.
 | `lesson_test.php` | Reading a question set: wrapper and bare-array forms, missing fields, source metadata |
 | `sequence_test.php` | Lesson selection by id, ordering, unknown ids, legacy single-lesson instances |
 | `agent_test.php` | Prompt contents, scoring bands across scale widths, corrected-misconception handling, JSON parsing (fenced, prose-wrapped, malformed), score clamping, course summary |
+| `learning_plan_test.php` | Saved public feedback, safe reading links, legacy fallbacks and semantic skill cards shared by finished and historical attempts |
 | `attempt_test.php` | Turns, budget exhaustion, automatic lesson advance, totals, early finish, provider failure recovery |
 | `external_test.php` | Authenticated AJAX access, ownership and hidden activities, duplicate/stale requests, progression, grades, retry settings, input limits, escaped output and atomic provider/scoring failures |
 | `conversation_view_test.php` | Lesson grouping, message order, navigation targets, finished history, legacy keys, escaped saved titles, overview settings, saved reply context, welcome summaries and editor guidance |
@@ -106,11 +108,11 @@ rather than against any real question set.
 
 ## Browser regression checks
 
-`browser/runner.html` runs 70 DOM-level regression scenarios against the shipped
-AMD bundle, with mocked `core/ajax` and filter-event modules. Serve the plugin
+`browser/runner.html` runs 73 DOM and layout regression scenarios against the shipped
+AMD bundle and stylesheet, with mocked `core/ajax` and filter-event modules. Serve the plugin
 directory locally, then open `tests/browser/runner.html`. The runner contains
 only synthetic test data and never contacts an AI provider or Moodle server.
-All 70 scenarios passed in headless Microsoft Edge during 0.4.8 packaging.
+All 73 scenarios passed in headless Microsoft Edge during 0.4.9 packaging.
 They cover reply, pause, confirmation, draft recovery, browser history, conversation
 navigation, preserved reading focus, new-message announcements and narrow text wrapping.
 The 11 scenarios added in 0.4.4 cover focus visibility after long replies, announcement
@@ -125,6 +127,8 @@ browser history, fallback layouts and confirmed saves with filter errors.
 The 10 scenarios added in 0.4.8 cover clarification with empty/over-limit drafts,
 exact draft and selection preservation, request isolation, brief/full announcements,
 reading focus, manual retry, stale recovery and the next assessed reply.
+The 3 scenarios added in 0.4.9 cover skill cards in narrow containers, enlarged
+text and resizing from wide to narrow layouts, using the production stylesheet.
 
 A standalone Playwright suite for the original 17 scenarios is also included. With Node.js,
 Playwright, and its Chromium browser available, run:
@@ -134,7 +138,7 @@ node --test tests/browser/conversation.test.cjs
 ```
 
 Set `CHROME_PATH` if using an existing Chromium browser executable. The standalone
-Playwright suite was not run for 0.4.8; the in-browser runner was used instead.
+Playwright suite was not run for 0.4.9; the in-browser runner was used instead.
 The UI checks do not replace the Moodle/PHP suite.
 
 ## Integration checks on a Moodle test site
@@ -364,3 +368,28 @@ On a Moodle test site:
 - With the configured live provider, spot-check both initial scenarios and
   short follow-up questions. Rewording should preserve meaning, avoid solutions
   and additional hints, and acknowledge missing context instead of inventing it.
+
+## Small-screen feedback checks (0.4.9)
+
+The learning-plan regression checks preserve the saved public skill names,
+judgement labels, comments, escaping and source order in finished and historical
+feedback. The added PHP check requires Moodle/PHP and has not run in this workspace.
+Browser checks exercise narrow containers, long unbroken text, enlarged text and
+wide-to-narrow layout changes using the production styles with synthetic cards.
+Enlarging text in the browser runner does not replace testing actual browser zoom
+or assistive technology in the installed Moodle theme.
+
+On a Moodle test site, complete an assessment and open an earlier attempt too:
+
+- At a 320 CSS-pixel viewport, check that each skill card, long skill name and
+  comment fits without horizontal scrolling or clipped text. Repeat inside a
+  narrow activity column on a wider page.
+- Check 200% and 400% browser zoom and enlarged browser text. Each judgement
+  and comment should stay beside its label in the reading order, and cards should
+  stack as space shrinks.
+- With NVDA/Firefox or VoiceOver/Safari, navigate from the lesson heading to
+  the skills group, skill headings and their judgement/comment labels. Each item
+  should appear once. Missing public labels should remain neutral fallbacks.
+- Disable JavaScript and review both current results and saved history. All
+  feedback should remain readable. On a wide page, cards may sit side by side;
+  narrowing the page must preserve the same content and order.

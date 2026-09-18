@@ -114,6 +114,23 @@ revised questions and rubrics. Nothing else changes and existing attempts are
 left alone. This is the intended path for keeping the assessment current as
 lessons and educational objectives are revised.
 
+## Feedback on small screens (0.4.9)
+
+Skill-level feedback now uses cards with a skill heading and explicit
+**Judgement** and **Comment** labels. Cards stack when the available space is
+narrow and sit side by side when there is enough room. Long skill names and
+comments wrap within the card, without truncation or a horizontal table scroller.
+
+Finished assessments and previous-attempt reviews share the same presentation.
+The saved skill names, judgements and comments stay in their original order;
+missing names or feedback use the existing fallback labels. One semantic list
+serves every screen size, with no duplicated mobile/desktop content and no
+JavaScript dependency.
+
+Install the updated ZIP, complete version **2026091805** through Moodle's plugin
+upgrade, purge caches, and reopen activity tabs. This release adds no database
+schema changes.
+
 ## Question clarification (0.4.8)
 
 During an active attempt, **Clarify this question** asks for a plain-language
@@ -367,7 +384,7 @@ or overturn the agent's judgement.
 
 ## Tests
 
-`tests/` holds 154 PHPUnit tests covering the parser, lesson selection, prompt
+`tests/` holds 155 PHPUnit tests covering the parser, lesson selection, prompt
 construction, the conversation engine, gradebook, and AJAX access and recovery.
 The suite includes 15 AJAX regression tests from 0.4.0, 3 learning-plan tests
 from 0.4.1, 6 pause/final-submission tests from 0.4.2, and 4 transcript/navigation
@@ -381,6 +398,9 @@ Version 0.4.7 adds 5 tests for nearby waiting/error markup and POST recovery,
 plus 12 browser scenarios for waiting, manual retry and navigation recovery.
 Version 0.4.8 adds 14 clarification service/prompt tests, 6 clarification-view
 tests and 10 browser scenarios for draft preservation and accessible help.
+Version 0.4.9 adds a shared skill-card rendering test and 3 browser scenarios for
+narrow layouts, enlarged text and resizing. All 73 browser scenarios passed in
+headless Microsoft Edge during packaging.
 The PHP suite has not been executed in this workspace, which has no
 Moodle/PHP runtime.
 No AI provider is called by the tests. See `tests/README.md` for setup, browser

@@ -24,8 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026091804;
+$plugin->version   = 2026091805;
 $plugin->requires  = 2024100700; // Moodle 4.5 (core AI subsystem).
 $plugin->component = 'mod_masteryagent';
 $plugin->maturity  = MATURITY_ALPHA;
-$plugin->release   = '0.4.8';
+$plugin->release   = '0.4.9';

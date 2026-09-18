@@ -334,8 +334,53 @@
     margin-top: 0.5rem;
 }
 
-.masteryagent-learning-plan caption {
-    caption-side: top;
+.masteryagent-learning-plan {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.masteryagent-learning-plan .masteryagent-skill-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    gap: 1rem;
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem;
+}
+
+.masteryagent-skill-cards > .masteryagent-skill-card {
+    box-sizing: border-box;
+    min-width: 0;
+    border: 1px solid #d6d9dc;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.masteryagent-skill-card h6 {
+    font-size: 1em;
+    font-weight: 600;
+    line-height: 1.5;
+    margin: 0 0 0.75rem;
+}
+
+.masteryagent-skill-card dl {
+    min-width: 0;
+    margin: 0;
+}
+
+.masteryagent-skill-card dt {
+    font-weight: 600;
+}
+
+.masteryagent-skill-card dd {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.masteryagent-skill-card dd + dt {
+    margin-top: 0.75rem;
 }
 
 @media (min-width: 48rem) {

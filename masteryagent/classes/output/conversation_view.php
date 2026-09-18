@@ -605,7 +605,7 @@ class conversation_view {
             'notmet' => 'verdictnotmetshort',
         ];
         $names = is_array($result['dimension_names'] ?? null) ? $result['dimension_names'] : [];
-        $rows = '';
+        $cards = '';
         $position = 0;
         foreach ((array) ($result['dimensions'] ?? []) as $dimension) {
             if (!is_array($dimension)) {
@@ -622,28 +622,22 @@ class conversation_view {
             $label = isset($verdictmap[$raw])
                 ? get_string($verdictmap[$raw], 'mod_masteryagent')
                 : get_string('learningverdictunknown', 'mod_masteryagent');
-            $rows .= html_writer::tag(
-                'tr',
-                html_writer::tag('th', s($name), ['scope' => 'row'])
-                . html_writer::tag('td', $label)
-                . html_writer::tag('td', s((string) ($dimension['comment'] ?? '')))
-            );
+            $comment = (string) ($dimension['comment'] ?? '');
+            $cards .= html_writer::tag('li',
+                html_writer::tag('h6', s($name))
+                . html_writer::tag('dl',
+                    html_writer::tag('dt', get_string('verdict', 'mod_masteryagent'))
+                    . html_writer::tag('dd', $label)
+                    . html_writer::tag('dt', get_string('comment', 'mod_masteryagent'))
+                    . html_writer::tag('dd', trim($comment) !== '' ? nl2br(s($comment))
+                        : get_string('learningverdictunknown', 'mod_masteryagent'))
+                ), ['class' => 'masteryagent-skill-card']);
         }
-        if ($rows !== '') {
-            $out .= html_writer::div(html_writer::tag(
-                'table',
-                html_writer::tag('caption', get_string('learningbreakdown', 'mod_masteryagent'))
-                . html_writer::tag(
-                    'thead',
-                    html_writer::tag(
-                        'tr',
-                        html_writer::tag('th', get_string('learningskill', 'mod_masteryagent'), ['scope' => 'col'])
-                        . html_writer::tag('th', get_string('verdict', 'mod_masteryagent'), ['scope' => 'col'])
-                        . html_writer::tag('th', get_string('comment', 'mod_masteryagent'), ['scope' => 'col'])
-                    )
-                ) . html_writer::tag('tbody', $rows),
-                ['class' => 'table table-sm']
-            ), 'table-responsive');
+        if ($cards !== '') {
+            $out .= html_writer::div(
+                html_writer::tag('h5', get_string('learningbreakdown', 'mod_masteryagent'))
+                . html_writer::tag('ul', $cards, ['class' => 'masteryagent-skill-cards', 'role' => 'list']),
+                'masteryagent-skill-feedback');
         }
 
         return html_writer::div($out, 'masteryagent-learning-plan');

@@ -173,4 +173,74 @@ final class learning_plan_test extends \advanced_testcase {
         $this->assertStringContainsString('Printed reading', $html);
         $this->assertStringContainsString('Chapter 2', $html);
     }
+
+    public function test_skill_cards_keep_accessible_labels_escaped_feedback_and_fallbacks_in_finished_and_historical_views(): void {
+        $this->finish_sample();
+        $current = attempt::get_latest($this->instance, (int) $this->student->id);
+        $record = $current->get_record();
+        $results = $current->lesson_results();
+        $results[0]['dimension_names'] = [
+            'PRIVATE_MET' => '<em>Explaining mechanisms</em>',
+            'PRIVATE_PARTIAL' => 'Comparing evidence',
+            'PRIVATE_NOTMET' => 'Applying the concept',
+            'PRIVATE_UNASSESSED' => 'Unassessed skill label',
+        ];
+        $comment = "<img src=x onerror=unsafe()> Specific feedback.\nA second line of guidance.";
+        $results[0]['dimensions'] = [
+            'invalid record',
+            ['id' => 'PRIVATE_MET', 'verdict' => ' MeT! ', 'comment' => $comment],
+            null,
+            ['id' => 'PRIVATE_PARTIAL', 'verdict' => 'PARTIAL', 'comment' => 'Compare both examples.'],
+            ['id' => 'PRIVATE_NOTMET', 'verdict' => 'not-met', 'comment' => 'Explain the application.'],
+            ['id' => 'PRIVATE_UNKNOWN', 'verdict' => 'unexpected', 'comment' => '   '],
+        ];
+        $results[1]['dimensions'] = [];
+        $record->lessonscores = json_encode($results);
+        $review = new attempt($record, $this->instance);
+        $fragments = [
+            conversation_view::render($this->instance, $this->cm, sequence::from_instance($this->instance), $review),
+            conversation_view::render_review($review),
+        ];
+        $savedmarkup = null;
+        foreach ($fragments as $html) {
+            $dom = new \DOMDocument();
+            $dom->loadHTML('<!doctype html><html><head><meta charset="utf-8"></head><body>' . $html . '</body></html>',
+                LIBXML_NOERROR | LIBXML_NOWARNING);
+            $xpath = new \DOMXPath($dom);
+            $sections = $xpath->query('//div[@class="masteryagent-skill-feedback"]');
+            $this->assertSame(1, $sections->length);
+            $section = $sections->item(0);
+            $this->assertSame(get_string('learningbreakdown', 'mod_masteryagent'),
+                $xpath->query('./h5', $section)->item(0)->textContent);
+            $lists = $xpath->query('./ul[@class="masteryagent-skill-cards" and @role="list"]', $section);
+            $this->assertSame(1, $lists->length);
+            $cards = $xpath->query('./li[@class="masteryagent-skill-card"]', $lists->item(0));
+            $this->assertSame(4, $cards->length);
+            $names = ['<em>Explaining mechanisms</em>', 'Comparing evidence', 'Applying the concept',
+                get_string('learningdimensionfallback', 'mod_masteryagent', 4)];
+            $verdicts = ['verdictmetshort', 'verdictpartial', 'verdictnotmetshort', 'learningverdictunknown'];
+            foreach ($cards as $index => $card) {
+                $this->assertSame($names[$index], $xpath->query('./h6', $card)->item(0)->textContent);
+                $terms = $xpath->query('./dl/dt', $card);
+                $descriptions = $xpath->query('./dl/dd', $card);
+                $this->assertSame(2, $terms->length);
+                $this->assertSame(2, $descriptions->length);
+                $this->assertSame(get_string('verdict', 'mod_masteryagent'), $terms->item(0)->textContent);
+                $this->assertSame(get_string('comment', 'mod_masteryagent'), $terms->item(1)->textContent);
+                $this->assertSame(get_string($verdicts[$index], 'mod_masteryagent'), $descriptions->item(0)->textContent);
+            }
+            $this->assertSame($comment, $xpath->query('./dl/dd[2]', $cards->item(0))->item(0)->textContent);
+            $this->assertSame(1, $xpath->query('./dl/dd[2]/br', $cards->item(0))->length);
+            $this->assertSame(get_string('learningverdictunknown', 'mod_masteryagent'),
+                $xpath->query('./dl/dd[2]', $cards->item(3))->item(0)->textContent);
+            $this->assertSame(0, $xpath->query('//table | //img | //em')->length);
+            $this->assertStringNotContainsString('PRIVATE_', $section->textContent);
+            $this->assertStringNotContainsString('Unassessed skill label', $section->textContent);
+            $markup = $dom->saveHTML($section);
+            if ($savedmarkup !== null) {
+                $this->assertSame($savedmarkup, $markup);
+            }
+            $savedmarkup = $markup;
+        }
+    }
 }

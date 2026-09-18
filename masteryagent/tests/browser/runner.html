@@ -63,6 +63,50 @@ const clarified = (state = 'state2', questionId = 1, messageId = 2, draft = '', 
             '<section data-region="question-clarification" aria-labelledby="masteryagent-clarification-title">'
             +'<h3 id="masteryagent-clarification-title" tabindex="-1">Question clarification</h3>'
             +'<div class="masteryagent-context-text">'+escapeText(text)+'</div></section><label for="reply">');
+const skillExamples = [
+    {name:'Explaining'+ 'Mechanism'.repeat(32),verdict:'Met',
+        comment:'Explain the connection to this reference: https://example.test/'+ 'UnbrokenReferenceSegment'.repeat(24)},
+    {name:'Comparing evidence',verdict:'Partial',comment:'Connect each source to the reason it supports your conclusion. '.repeat(8)},
+    {name:'Assessed skill 3',verdict:'Not met',comment:'Describe the missing connection in your own words.'},
+];
+const skillFeedback = () => '<div class="masteryagent-learning-plan"><div class="masteryagent-skill-feedback">'
+    +'<h5>Feedback on assessed skills</h5>'
+    +'<ul class="masteryagent-skill-cards" role="list">'+skillExamples.map(skill=>
+        '<li class="masteryagent-skill-card"><h6>'+escapeText(skill.name)+'</h6><dl>'
+        +'<dt>Judgement</dt><dd>'+escapeText(skill.verdict)+'</dd><dt>Comment</dt><dd>'
+        +escapeText(skill.comment)+'</dd></dl></li>').join('')+'</ul></div></div>';
+const assertSkillContent = cards => {
+    assert(cards.length===skillExamples.length,'A skill card is missing or duplicated');
+    cards.forEach((card,index)=>{
+        assert(card.querySelector('h6').textContent===skillExamples[index].name,'Skill names changed order');
+        assert(Array.from(card.querySelectorAll('dt')).map(node=>node.textContent).join('|')==='Judgement|Comment',
+            'Visible skill labels were removed or reordered');
+        assert(Array.from(card.querySelectorAll('dd')).map(node=>node.textContent).join('|')
+            ===skillExamples[index].verdict+'|'+skillExamples[index].comment,'A verdict or comment changed');
+        for(const node of card.querySelectorAll('h6,dt,dd')) {
+            const style=getComputedStyle(node);const bounds=node.getBoundingClientRect();
+            assert(style.display!=='none' && style.visibility==='visible' && bounds.width>0 && bounds.height>0,
+                'A skill value was hidden');
+        }
+    });
+};
+const assertSkillCardsFit = panel => {
+    const cards=Array.from(panel.querySelectorAll('.masteryagent-skill-card'));
+    const bounds=panel.getBoundingClientRect();
+    assert(panel.scrollWidth<=panel.clientWidth+1,'Skill feedback overflowed its parent horizontally');
+    for(const card of cards) {
+        const box=card.getBoundingClientRect();
+        assert(box.left>=bounds.left-1 && box.right<=bounds.right+1,'A skill card extended outside the parent');
+        for(const node of [card,...card.querySelectorAll('h6,dl,dt,dd')]) {
+            const style=getComputedStyle(node);
+            assert(!['hidden','clip'].includes(style.overflowX) && !['hidden','clip'].includes(style.overflowY),
+                'Skill text was clipped instead of wrapped');
+            assert(node.scrollWidth<=node.clientWidth+1 && node.scrollHeight<=node.clientHeight+1,
+                'Skill text overflowed its content box');
+        }
+    }
+    return cards;
+};
 const chooseMode = mode => {
     const select=q('[data-region="announcement-mode"]');select.value=mode;select.dispatchEvent(new Event('change'));
 };
@@ -119,6 +163,46 @@ const withSlowClock = async run => {
     try{await run(clock);}finally{window.setTimeout=originalSet;window.clearTimeout=originalClear;}
 };
 const tests = [
+['Skill cards stack inside narrow 320px and 240px parents without overflowing long text', async () => {
+    mount(skillFeedback());const panel=q('[data-region="content"]');
+    for(const width of [320,240]) {
+        panel.style.width=width+'px';
+        const cards=assertSkillCardsFit(panel);assertSkillContent(cards);
+        for(let index=1;index<cards.length;index++) {
+            const previous=cards[index-1].getBoundingClientRect();const current=cards[index].getBoundingClientRect();
+            assert(Math.abs(current.left-previous.left)<=1 && current.top>=previous.bottom-1,
+                `Cards did not stack at ${width}px parent width`);
+        }
+    }
+}],
+['Skill cards retain visible wrapping with 200 percent text size in a 320px parent', async () => {
+    mount(skillFeedback());const panel=q('[data-region="content"]');panel.style.width='320px';
+    const oldRootSize=document.documentElement.style.fontSize;const oldPanelSize=panel.style.fontSize;
+    const nodes=Array.from(panel.querySelectorAll('h6,dt,dd'));
+    const fontSizes=nodes.map(node=>parseFloat(getComputedStyle(node).fontSize));
+    const initialHeight=q('.masteryagent-skill-card').getBoundingClientRect().height;
+    try {
+        document.documentElement.style.fontSize='32px';panel.style.fontSize='32px';
+        const cards=assertSkillCardsFit(panel);assertSkillContent(cards);
+        nodes.forEach((node,index)=>assert(parseFloat(getComputedStyle(node).fontSize)>=fontSizes[index]*1.99,
+            'Fixture text did not enlarge to 200 percent'));
+        assert(cards[0].getBoundingClientRect().height>initialHeight,'Larger text did not grow the card');
+        const range=document.createRange();range.selectNodeContents(cards[0].querySelectorAll('dd')[1]);
+        assert(range.getClientRects().length>1,'Long feedback did not wrap onto multiple visible lines');
+    } finally {document.documentElement.style.fontSize=oldRootSize;panel.style.fontSize=oldPanelSize;}
+}],
+['Skill cards use available wide space and stack again after resizing with labels and order preserved', async () => {
+    mount(skillFeedback());const panel=q('[data-region="content"]');panel.style.width='1000px';
+    let cards=assertSkillCardsFit(panel);assertSkillContent(cards);
+    const first=cards[0].getBoundingClientRect();const second=cards[1].getBoundingClientRect();
+    assert(Math.abs(first.top-second.top)<=1 && second.left>=first.right-1,'Wide cards were not side by side');
+    panel.style.width='320px';window.dispatchEvent(new Event('resize'));await settle();
+    cards=assertSkillCardsFit(panel);assertSkillContent(cards);
+    for(let index=1;index<cards.length;index++) {
+        const previous=cards[index-1].getBoundingClientRect();const current=cards[index].getBoundingClientRect();
+        assert(Math.abs(current.left-previous.left)<=1 && current.top>=previous.bottom-1,'Resized cards did not stack');
+    }
+}],
 ['Clarification accepts empty and oversized drafts without sending an answer to the service', async () => {
     for(const draft of ['', 'x'.repeat(8001)]) {
         mount(clarifiable());inputReply(draft);const button=q('button[value="clarify"]');
