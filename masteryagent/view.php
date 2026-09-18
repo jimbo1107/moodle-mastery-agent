@@ -51,12 +51,15 @@ $completion->set_module_viewed($cm);
 $canattempt = has_capability('mod/masteryagent:attempt', $context);
 $canreport = has_capability('mod/masteryagent:viewreports', $context);
 $error = null;
+$historylink = $canattempt || attempt::count_for_user($instance, (int) $USER->id) > 0
+    ? \mod_masteryagent\output\history_view::activity_link($cm) : '';
 
 $sequence = sequence::from_instance($instance);
 
 if ($sequence->count() === 0) {
     echo $OUTPUT->header();
     echo $OUTPUT->heading(format_string($instance->name));
+    echo $historylink;
     echo $OUTPUT->notification(get_string('nolessonloaded', 'mod_masteryagent'), 'error');
     echo $OUTPUT->footer();
     exit;
@@ -97,6 +100,7 @@ if ($canattempt) {
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(format_string($instance->name));
+echo $historylink;
 
 if (!empty($instance->intro)) {
     echo $OUTPUT->box(format_module_intro('masteryagent', $instance, $cm->id), 'generalbox', 'intro');

@@ -1,7 +1,7 @@
 # Running the mastery agent tests
 
-109 PHPUnit tests covering the question-set parser, lesson selection, prompt
-construction, the conversation engine, gradebook, and AJAX endpoint. They never call a real
+129 PHPUnit tests covering the question-set parser, lesson selection, prompt
+construction, the conversation engine, gradebook, AJAX endpoint and learner history. They never call a real
 AI provider — a scripted responder stands in for one — so they cost nothing to
 run and are deterministic.
 
@@ -41,8 +41,9 @@ The original suite contained 71 tests. The AJAX update added 15 tests in
 `learning_plan_test.php`. Pausing and final submission add 6 more tests in
 `external_test.php`. Conversation navigation adds 4 tests in
 `conversation_view_test.php`, and the student overview/reply-context update adds 6 more in that file,
-with 4 further tests for the welcome summary and editor markup in 0.4.5,
-for 109 tests in total. The PHP suite has not been
+with 4 further tests for the welcome summary and editor markup in 0.4.5.
+Version 0.4.6 adds 8 history-access tests, 5 history-list tests and 7 saved-review
+tests, for 129 tests in total. The PHP suite has not been
 executed in this workspace; run it on a development Moodle site.
 
 ## What each file covers
@@ -55,6 +56,9 @@ executed in this workspace; run it on a development Moodle site.
 | `attempt_test.php` | Turns, budget exhaustion, automatic lesson advance, totals, early finish, provider failure recovery |
 | `external_test.php` | Authenticated AJAX access, ownership and hidden activities, duplicate/stale requests, progression, grades, retry settings, input limits, escaped output and atomic provider/scoring failures |
 | `conversation_view_test.php` | Lesson grouping, message order, navigation targets, finished history, legacy keys, escaped saved titles, overview settings, saved reply context, welcome summaries and editor guidance |
+| `history_access_test.php` | Learner/activity isolation, older-attempt retrieval, bounded pagination, metadata-only queries, unchanged attempts/messages/grades |
+| `history_view_test.php` | Draft-preserving new-tab entry, paged cards, accessible dates, score empty states and excluded private text |
+| `history_review_test.php` | Saved feedback and transcripts independent of current settings, read-only controls, private-data exclusion, legacy/unfinished/empty attempts, safe markup and native navigation |
 | `lib_test.php` | Settings form save paths, file upload and re-upload, gradebook item and grade writing, deletion cleanup |
 
 ## After you change something
@@ -101,7 +105,7 @@ rather than against any real question set.
 AMD bundle, with mocked `core/ajax` and filter-event modules. Serve the plugin
 directory locally, then open `tests/browser/runner.html`. The runner contains
 only synthetic test data and never contacts an AI provider or Moodle server.
-All 48 scenarios passed in headless Microsoft Edge during 0.4.5 packaging.
+All 48 scenarios passed in headless Microsoft Edge during 0.4.6 packaging.
 They cover reply, pause, confirmation, draft recovery, browser history, conversation
 navigation, preserved reading focus, new-message announcements and narrow text wrapping.
 The 11 scenarios added in 0.4.4 cover focus visibility after long replies, announcement
@@ -119,7 +123,7 @@ node --test tests/browser/conversation.test.cjs
 ```
 
 Set `CHROME_PATH` if using an existing Chromium browser executable. The standalone
-Playwright suite was not run for 0.4.5; the in-browser runner was used instead.
+Playwright suite was not run for 0.4.6; the in-browser runner was used instead.
 The UI checks do not replace the Moodle/PHP suite.
 
 ## Integration checks on a Moodle test site
@@ -242,3 +246,41 @@ Check that the field's guidance and limit are available through its description.
 Repeat at high zoom and in a narrow viewport using the installed Moodle theme.
 With JavaScript disabled, the static guidance, limit, jump link and native forms
 must still work. These checks do not replace the automated Moodle/PHP suite.
+
+## Previous attempts and feedback checks (0.4.6)
+
+The new history PHP tests cover scoped retrieval, paging and summary fields,
+saved feedback and transcript rendering, legacy and incomplete attempts,
+escaped content, draft/private-data exclusion and unchanged database records.
+They have not run in this workspace because Moodle and PHP are unavailable.
+The 48 passing browser scenarios protect the existing conversation flow; they
+do not exercise the server-rendered history route or its Moodle access checks.
+
+Before the demo, verify on a Moodle test site:
+
+- Sign in as a learner with no attempts. **My attempts and feedback** opens an
+  empty history in a new tab, with a return link.
+- Complete two attempts, then start another and type an unsent answer. Open
+  history and review both completed attempts. Switch back to the original
+  activity tab: the answer and current conversation must remain untouched.
+  Repeat with JavaScript disabled.
+- Check attempt dates in the user's timezone, newest-first ordering, a zero
+  score versus an unsubmitted attempt, and paging after more than ten attempts.
+  An excessive or negative page number should resolve to an available page.
+- Read saved strengths, gaps, next steps and readings, and expand lesson
+  transcripts using only the keyboard. With NVDA/Firefox or VoiceOver/Safari,
+  check headings, labelled links, dates and native disclosure controls. Test a
+  narrow viewport and 200-400% zoom in the installed Moodle theme.
+- Replace or remove the current lesson configuration and change grading
+  settings. Historical titles, feedback, recorded points and saved per-lesson
+  maxima must remain unchanged. No overall maximum or mastery verdict should
+  be inferred from the new activity settings.
+- Try another learner's attempt ID, your own attempt ID from a different
+  activity, and a missing ID. Each must show the same unavailable message.
+  Confirm a user without module view permission or access to a hidden activity
+  cannot read the history route. History must use the signed-in identity even
+  for instructors/managers, and remain available when retries are disabled.
+- Review an unfinished attempt and an old record with missing feedback.
+  Submitted messages and existing lesson feedback should remain readable;
+  unsent drafts, private rubric/evidence data and assessment action forms must
+  be absent. Confirm no grade or attempt data changes when reviewing history.

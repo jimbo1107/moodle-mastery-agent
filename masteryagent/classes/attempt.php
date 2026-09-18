@@ -79,6 +79,64 @@ class attempt {
     }
 
     /**
+     * Fetch one attempt owned by a learner in this activity.
+     *
+     * The same missing-record failure covers unknown IDs and attempts outside this scope.
+     * Callers must establish course access before supplying the current learner's user ID.
+     *
+     * @param \stdClass $instance Activity instance record.
+     * @param int $userid Learner user ID.
+     * @param int $attemptid Attempt ID.
+     * @return self
+     * @throws \dml_missing_record_exception When no attempt matches all three identifiers.
+     */
+    public static function get_for_user(\stdClass $instance, int $userid, int $attemptid): self {
+        global $DB;
+        $record = $DB->get_record('masteryagent_attempt', [
+            'id' => $attemptid, 'masteryagentid' => $instance->id, 'userid' => $userid,
+        ], '*', MUST_EXIST);
+        return new self($record, $instance);
+    }
+
+    /**
+     * Count a learner's attempts in this activity, including unfinished attempts.
+     *
+     * @param \stdClass $instance Activity instance record.
+     * @param int $userid Learner user ID.
+     * @return int
+     */
+    public static function count_for_user(\stdClass $instance, int $userid): int {
+        global $DB;
+        return $DB->count_records('masteryagent_attempt', [
+            'masteryagentid' => $instance->id, 'userid' => $userid,
+        ]);
+    }
+
+    /**
+     * Fetch a bounded page of a learner's attempt metadata, newest ID first.
+     *
+     * Listing history does not load drafts, feedback, evidence or lesson result payloads.
+     * Negative pages start at the first page; page size is restricted to 1 through 100.
+     *
+     * @param \stdClass $instance Activity instance record.
+     * @param int $userid Learner user ID.
+     * @param int $page Zero-based page number.
+     * @param int $perpage Requested page size (default 10).
+     * @return \stdClass[] Summary records keyed by attempt ID.
+     */
+    public static function page_for_user(\stdClass $instance, int $userid, int $page = 0, int $perpage = 10): array {
+        global $DB;
+        $page = max(0, $page);
+        $perpage = max(1, min(100, $perpage));
+        if ($page > intdiv(PHP_INT_MAX, $perpage)) {
+            return [];
+        }
+        return $DB->get_records('masteryagent_attempt', [
+            'masteryagentid' => $instance->id, 'userid' => $userid,
+        ], 'id DESC', 'id, status, lessonindex, turnsused, score, timestarted, timefinished', $page * $perpage, $perpage);
+    }
+
+    /**
      * Fetch every attempt for an activity.
      *
      * @param \stdClass $instance Activity instance record.

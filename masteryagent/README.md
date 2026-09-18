@@ -114,6 +114,36 @@ revised questions and rubrics. Nothing else changes and existing attempts are
 left alone. This is the intended path for keeping the assessment current as
 lessons and educational objectives are revised.
 
+## Previous attempts and feedback (0.4.6)
+
+**My attempts and feedback** opens a learner's history in a clearly labelled
+new tab, keeping the current activity and unsent answer in the original tab.
+Keep that original tab open and switch back to it to continue writing.
+
+History lists ten attempts per page, newest first, with start/submission dates,
+status and recorded points. Open an attempt to revisit its saved summary,
+lesson feedback, strengths, gaps, next steps, readings and conversation.
+Feedback appears before the conversation, which has keyboard-accessible lesson
+disclosures and links. History works without JavaScript and includes empty
+states when an older attempt has no saved feedback.
+
+Reviewing an attempt does not resume it, submit work, call AI or change grades.
+Only the signed-in learner's attempts in the current activity can be opened;
+private evidence, rubrics and unsent drafts are excluded. Access requires course
+and activity view permission, but not permission to start another attempt.
+An unfinished attempt shows submitted messages and feedback from closed lessons.
+
+Historical views use saved titles, feedback and lesson scoring maxima, including
+after questions are replaced or removed. Older records do not preserve the
+original overall maximum, mastery threshold or provisional setting, so history
+shows the recorded total points without recalculating an overall percentage or
+mastery verdict using current settings. Saved per-lesson results keep their
+original score and maximum.
+
+Install the updated ZIP, complete version **2026091802** through Moodle's plugin
+upgrade, purge caches, and reopen activity tabs. This release adds no database
+schema changes.
+
 ## Returning students and answer editor (0.4.5)
 
 Opening an unfinished attempt shows **Welcome back**, the current lesson,
@@ -269,13 +299,16 @@ or overturn the agent's judgement.
 
 ## Tests
 
-`tests/` holds 109 PHPUnit tests covering the parser, lesson selection, prompt
+`tests/` holds 129 PHPUnit tests covering the parser, lesson selection, prompt
 construction, the conversation engine, gradebook, and AJAX access and recovery.
 The suite includes 15 AJAX regression tests from 0.4.0, 3 learning-plan tests
 from 0.4.1, 6 pause/final-submission tests from 0.4.2, and 4 transcript/navigation
 tests from 0.4.3. Version 0.4.4 adds 6 tests for the overview, reply context,
 and saved original scenarios. Version 0.4.5 adds 4 tests for returning learners,
 editor guidance and exact draft restoration.
+Version 0.4.6 adds 20 tests for history access, pagination, public feedback and read-only
+renderer tests in `history_access_test.php`, `history_view_test.php` and
+`history_review_test.php`.
 The PHP suite has not been executed in this workspace, which has no
 Moodle/PHP runtime.
 No AI provider is called by the tests. See `tests/README.md` for setup, browser

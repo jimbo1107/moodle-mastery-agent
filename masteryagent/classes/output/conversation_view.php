@@ -197,6 +197,54 @@ class conversation_view {
     }
 
     /**
+     * Review only public information saved with an attempt, independently of current activity settings.
+     *
+     * The caller must establish ownership before passing an attempt. This renderer never resumes,
+     * scores or changes it, and deliberately excludes unsent drafts and private evaluation data.
+     *
+     * @param attempt $review Attempt the learner is allowed to review.
+     * @return string Escaped, read-only feedback and transcript without JavaScript dependencies.
+     */
+    public static function render_review(attempt $review): string {
+        $record = $review->get_record();
+        $feedback = html_writer::tag('h3', get_string('historyreviewfeedback', 'mod_masteryagent'),
+            ['id' => 'masteryagent-history-feedback-title']);
+        if ($review->is_finished()) {
+            if ($record->score !== null) {
+                $feedback .= html_writer::tag('p', get_string('historyreviewscore', 'mod_masteryagent',
+                    format_float((float) $record->score, 2)), ['class' => 'lead', 'data-region' => 'history-review-score']);
+                $feedback .= html_writer::tag('p', get_string('historyreviewscorenote', 'mod_masteryagent'),
+                    ['class' => 'text-muted']);
+            } else {
+                $feedback .= html_writer::tag('p', get_string('historyreviewnoscore', 'mod_masteryagent'));
+            }
+            $summary = trim((string) ($record->summary ?? ''));
+            $feedback .= html_writer::tag('p', $summary !== '' ? nl2br(s($summary))
+                : get_string('historyreviewsummarymissing', 'mod_masteryagent'));
+        } else {
+            $feedback .= html_writer::tag('p', get_string('historyreviewunfinished', 'mod_masteryagent'));
+        }
+        $results = array_filter($review->lesson_results(), 'is_array');
+        foreach ($results as $result) {
+            $feedback .= html_writer::div(self::render_lesson_result($result), 'generalbox');
+        }
+        if (!$results) {
+            $feedback .= html_writer::tag('p', get_string('historyreviewlessonfeedbackmissing', 'mod_masteryagent'));
+        }
+        $out = html_writer::tag('section', $feedback, [
+            'data-region' => 'history-review-results', 'aria-labelledby' => 'masteryagent-history-feedback-title',
+        ]);
+        $messages = $review->messages();
+        $transcript = html_writer::tag('h3', get_string('historyreviewtranscript', 'mod_masteryagent'),
+            ['id' => 'masteryagent-history-transcript-title']);
+        $transcript .= $messages ? self::render_transcript(new sequence([]), $review, $messages, true)
+            : html_writer::tag('p', get_string('historyreviewnomessages', 'mod_masteryagent'));
+        return $out . html_writer::tag('section', $transcript, [
+            'data-region' => 'history-review-transcript', 'aria-labelledby' => 'masteryagent-history-transcript-title',
+        ]);
+    }
+
+    /**
      * Help a returning learner find their saved place without revealing their draft in the summary.
      *
      * @param sequence $sequence Selected lessons.
@@ -323,14 +371,19 @@ class conversation_view {
      * @param sequence $sequence Selected lessons.
      * @param attempt $current Learner attempt.
      * @param array $messages Saved messages, oldest first.
+     * @param bool $readonly Use saved conversation groups without active controls or JavaScript shortcuts.
      * @return string Escaped transcript and native navigation.
      */
-    private static function render_transcript(sequence $sequence, attempt $current, array $messages): string {
+    private static function render_transcript(sequence $sequence, attempt $current, array $messages,
+            bool $readonly = false): string {
         $titles = [];
         foreach ($sequence->all() as $index => $lesson) {
             $titles[$sequence->key_for($index)] = trim($lesson->lesson_id() . ' ' . $lesson->title());
         }
         foreach ($current->lesson_results() as $result) {
+            if (!is_array($result)) {
+                continue;
+            }
             // Prefer the saved public title when the instructor has since replaced the content.
             $titles[$result['key'] ?? ''] = trim(($result['lesson_id'] ?? '') . ' ' . ($result['title'] ?? ''));
         }
@@ -356,9 +409,10 @@ class conversation_view {
             if ($title === '') {
                 $title = get_string('conversationsection', 'mod_masteryagent', $index + 1);
             }
-            $active = !$current->is_finished() && $index === count($groups) - 1;
+            $active = !$readonly && !$current->is_finished() && $index === count($groups) - 1;
             $label = s($title) . ($active ? ' — ' . get_string('currentconversationlesson', 'mod_masteryagent') : '');
-            $links .= html_writer::tag('li', self::jump_link($id, $label));
+            $links .= html_writer::tag('li', $readonly ? html_writer::link('#' . $id, $label)
+                : self::jump_link($id, $label));
             $groupmessages = '';
             foreach ($group['messages'] as $message) {
                 $isagent = $message->role === 'agent';
@@ -383,19 +437,21 @@ class conversation_view {
             }
         }
         $shortcuts = '';
-        if ($latestagent !== null) {
+        if (!$readonly && $latestagent !== null) {
             $shortcuts .= self::jump_link('masteryagent-message-' . (int) $latestagent,
                 get_string('latestagentmessage', 'mod_masteryagent'));
         }
-        $shortcuts .= self::jump_link($current->is_finished() ? 'masteryagent-results' : 'masteryagent-reply',
-            get_string($current->is_finished() ? 'jumptoresults' : 'jumptoreply', 'mod_masteryagent'));
+        if (!$readonly) {
+            $shortcuts .= self::jump_link($current->is_finished() ? 'masteryagent-results' : 'masteryagent-reply',
+                get_string($current->is_finished() ? 'jumptoresults' : 'jumptoreply', 'mod_masteryagent'));
+        }
         return html_writer::tag('nav',
-            html_writer::div($shortcuts, 'masteryagent-shortcuts')
+            ($shortcuts !== '' ? html_writer::div($shortcuts, 'masteryagent-shortcuts') : '')
             . html_writer::tag('ul', $links, ['class' => 'masteryagent-lesson-links']), [
                 'aria-label' => get_string('conversationnavigation', 'mod_masteryagent'),
                 'data-region' => 'conversation-navigation', 'class' => 'masteryagent-navigation',
             ]) . html_writer::div($sections, 'masteryagent-conversation')
-            . (!$current->is_finished() && $latestagent !== null ? html_writer::tag('p',
+            . (!$readonly && !$current->is_finished() && $latestagent !== null ? html_writer::tag('p',
                 self::jump_link('masteryagent-message-' . (int) $latestagent,
                     get_string('latestagentmessage', 'mod_masteryagent'), '-by-reply')) : '');
     }

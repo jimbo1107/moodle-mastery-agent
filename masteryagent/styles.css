@@ -48,6 +48,8 @@
 }
 
 .masteryagent-app :focus-visible,
+.masteryagent-attempt-history :focus-visible,
+.masteryagent-history-entry :focus-visible,
 .masteryagent-message:focus,
 .masteryagent-app [data-region="current-lesson"] h3:focus {
     outline: 3px solid #0f6cbf;
@@ -206,6 +208,39 @@
     gap: 0.75rem;
 }
 
+.masteryagent-attempt-history,
+.masteryagent-history-entry {
+    overflow-wrap: anywhere;
+}
+
+.masteryagent-attempt-history .btn,
+.masteryagent-history-entry .btn {
+    white-space: normal;
+}
+
+.masteryagent-attempt-list {
+    list-style: none;
+    padding: 0;
+}
+
+.masteryagent-attempt-card {
+    border: 1px solid #d6d9dc;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.masteryagent-attempt-meta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem 1.5rem;
+}
+
+.masteryagent-attempt-meta dd {
+    margin-inline-start: 0;
+    margin-bottom: 0;
+}
+
 .masteryagent-finish-confirmation {
     border-top: 1px solid #d6d9dc;
     padding-top: 1rem;
@@ -250,6 +285,10 @@
 }
 
 @media (min-width: 48rem) {
+    .masteryagent-attempt-meta {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .masteryagent-feedback-grid {
         grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }

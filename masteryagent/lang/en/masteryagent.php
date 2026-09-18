@@ -121,6 +121,38 @@ $string['verdictpartial'] = 'Partial';
 $string['verdictnotmetshort'] = 'Not met';
 $string['nextstep'] = 'Next step:';
 
+// Learner attempt history.
+$string['historytitle'] = 'My attempts and feedback';
+$string['historyopen'] = 'My attempts and feedback (opens in a new tab)';
+$string['historyopenhelp'] = 'Keep this activity tab open to preserve the answer you are writing.';
+$string['historyreturnhelp'] = 'If you opened this page while writing an answer, switch back to your original activity tab to continue it.';
+$string['historyintro'] = 'Your attempts are listed newest first. Open an attempt to review your submitted answers and saved learning feedback.';
+$string['historyempty'] = 'You have no attempts yet. Your attempts will appear here after you begin the activity.';
+$string['historyattemptnumber'] = 'Attempt {$a}';
+$string['historyreviewattempt'] = 'Review attempt {$a}';
+$string['historylatest'] = 'Latest attempt';
+$string['historystarted'] = 'Started';
+$string['historysubmitted'] = 'Submitted';
+$string['historynotsubmitted'] = 'Not submitted';
+$string['historynotrecorded'] = 'Not recorded';
+$string['historyrecordedscore'] = 'Recorded score';
+$string['historypoints'] = '{$a} points';
+$string['historyreviewtitle'] = 'Review your attempt';
+$string['historybackactivity'] = 'Back to activity';
+$string['historybacklist'] = 'Back to my attempts';
+$string['historynavigation'] = 'Attempt history navigation';
+$string['historyreadonly'] = 'You are reviewing a saved attempt. Your current attempt and grade stay unchanged.';
+$string['historynotavailable'] = 'This attempt is not available in your history.';
+$string['historyreviewfeedback'] = 'Saved feedback';
+$string['historyreviewscore'] = 'Recorded score: {$a} points';
+$string['historyreviewscorenote'] = 'This score was recorded when you submitted the attempt. The activity settings may have changed since then.';
+$string['historyreviewnoscore'] = 'No final score was saved for this attempt.';
+$string['historyreviewunfinished'] = 'This attempt is unfinished. Only submitted messages and feedback from completed lessons are shown.';
+$string['historyreviewsummarymissing'] = 'No overall feedback was saved for this attempt.';
+$string['historyreviewlessonfeedbackmissing'] = 'No lesson feedback was saved for this attempt.';
+$string['historyreviewtranscript'] = 'Saved conversation';
+$string['historyreviewnomessages'] = 'No submitted messages were saved for this attempt.';
+
 // Report.
 $string['viewreport'] = 'View attempts';
 $string['viewtranscript'] = 'View transcript';
