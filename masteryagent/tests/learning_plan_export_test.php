@@ -113,6 +113,8 @@ final class learning_plan_export_test extends \advanced_testcase {
         $this->assertSame(1, $xpath->query('//*[@data-region="results"]/following-sibling::*[1]'
             . '[contains(concat(" ", @class, " "), " masteryagent-learning-plan-entry ")]/a')->length);
         $this->assertSame(1, $xpath->query('//*[contains(concat(" ", @class, " "), " masteryagent-learning-plan-entry ")]'
+            . '/following-sibling::*[1][@class="masteryagent-feedback-navigation"]')->length);
+        $this->assertSame(1, $xpath->query('//nav[@class="masteryagent-feedback-navigation"]'
             . '/following-sibling::*[1]/*[@class="masteryagent-learning-plan"]')->length);
     }
 
@@ -133,7 +135,8 @@ final class learning_plan_export_test extends \advanced_testcase {
         $this->assertSame(0, $xpath->query('//script | //img | //form | //button | //textarea | //details'
             . ' | //*[@data-message-id] | //*[@data-region="history-review-transcript"]')->length);
         $this->assertStringContainsString(conversation_view::render_feedback($review), $html);
-        $text = html_to_text($html, 0);
+        $text = html_to_text(conversation_view::render_learning_plan($review, $activityname, false), 0);
+        $this->assertStringNotContainsString('#masteryagent-feedback-', $text);
         foreach (['Saved overall guidance.', 'Original lesson', 'Saved lesson feedback.',
                 'You explained the relationship.', 'Show how the mechanism works.',
                 'Compare two examples and explain the difference.', 'Explaining mechanisms',
@@ -166,7 +169,7 @@ final class learning_plan_export_test extends \advanced_testcase {
         $this->assertSame($html, conversation_view::render_learning_plan($changedreview, 'Activity label'));
         $this->assertSame($html, conversation_view::render_learning_plan(
             new attempt($review->get_record(), (object) ['id' => $changed->id]), 'Activity label'));
-        $this->assertStringContainsString('2.5/4', $html);
+        $this->assertStringContainsString(format_float(2.5, 2) . '/4', $html);
         $this->assertStringNotContainsString('AI-provisional', $html);
     }
 

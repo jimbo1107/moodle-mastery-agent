@@ -30,11 +30,12 @@ const feedbackSlot = '<div data-region="request-feedback-slot"></div>';
 const form = (action, state, extra = '') => `<form data-action="${action}" method="post" action="unexpected-navigation.html">
 <input name="state" type="hidden" value="${state}">${extra}<button type="submit">${action}</button>${feedbackSlot}</form>`;
 const escapeText = value => value.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-const active = (state = 'state1', id = 1, draft = '') => `<div class="masteryagent-agent" data-message-id="${id}">Question ${id}</div>
+const escapeAttribute = value => escapeText(value).replace(/"/g,'&quot;');
+const active = (state = 'state1', id = 1, draft = '', savedDraft = draft) => `<div class="masteryagent-agent" data-message-id="${id}">Question ${id}</div>
 <form class="masteryagent-form" data-action="reply" method="post" action="unexpected-navigation.html">
 <input name="state" type="hidden" value="${state}"><input name="confirmed" type="hidden" value="1">
 <label for="reply">Reply</label><p id="reply-guidance">Explain your reasoning.</p><p id="reply-limit">Maximum: 8000 characters.</p>
-<textarea class="masteryagent-reply-editor" id="reply" name="reply" rows="8" required maxlength="8000" aria-describedby="reply-guidance reply-limit">${escapeText(draft)}</textarea>
+<textarea class="masteryagent-reply-editor" id="reply" name="reply" rows="8" required maxlength="8000" data-saved-draft="${escapeAttribute(savedDraft)}" aria-describedby="reply-guidance reply-limit">${escapeText(draft)}</textarea>
 <p class="masteryagent-reply-counter" id="reply-counter" data-region="reply-counter" data-remaining="Characters remaining: {remaining}" data-nearlimit="You are close to the character limit." data-limitreached="Character limit reached." data-overlimit="Your reply is over the character limit. Shorten it before sending." hidden></p>
 <button name="action" value="reply">Send reply</button>
 <button name="action" value="pause" formnovalidate>Save and leave</button>
@@ -110,7 +111,7 @@ const assertSkillCardsFit = panel => {
 const chooseMode = mode => {
     const select=q('[data-region="announcement-mode"]');select.value=mode;select.dispatchEvent(new Event('change'));
 };
-const mount = (html = form('start','new'), {preservePreference = false, includePreference = true} = {}) => {
+const mount = (html = form('start','new'), {preservePreference = false, includePreference = true, recoveredText = ''} = {}) => {
     pending.length = 0; filterUpdates = 0; filterFailure = false;
     if (!preservePreference) {
         try {window.sessionStorage.removeItem('masteryagent-announcement-mode');} catch (error) {}
@@ -127,7 +128,7 @@ data-recovery-reply="Your answer is still here. Retry sending it when ready." da
 ${includePreference ? `<div class="masteryagent-announcement-settings" data-region="announcement-settings" hidden><label for="announcement-mode">Screen-reader updates</label>
 <select id="announcement-mode" data-region="announcement-mode"><option value="brief">Brief notifications</option>
 <option value="full">Read full feedback</option></select></div>` : ''}
-<div data-region="draft" hidden><textarea readonly></textarea></div><div data-region="content" aria-busy="false">${html}</div></div>`;
+<div data-region="draft" ${recoveredText ? '' : 'hidden'}><textarea readonly>${escapeText(recoveredText)}</textarea></div><div data-region="content" aria-busy="false">${html}</div></div>`;
     window.conversation.init('#masteryagent-app');
 };
 const submit = (action, reply) => {
@@ -143,6 +144,22 @@ const inputReply = value => {
     const editor=q('[name="reply"]');editor.value=value;
     editor.dispatchEvent(new InputEvent('input',{bubbles:true,inputType:'insertText'}));
     return editor;
+};
+const navigationWouldWarn = () => {
+    // Dispatch the cancelable event only; do not open an actual browser navigation dialog in the harness.
+    const event=new Event('beforeunload',{cancelable:true});window.dispatchEvent(event);return event.defaultPrevented;
+};
+const withUnloadListeners = async run => {
+    const originalAdd=window.addEventListener;const originalRemove=window.removeEventListener;const attached=new Set();
+    window.addEventListener=function(type,handler,...args){
+        if(type==='beforeunload')attached.add(handler);
+        return originalAdd.call(this,type,handler,...args);
+    };
+    window.removeEventListener=function(type,handler,...args){
+        if(type==='beforeunload')attached.delete(handler);
+        return originalRemove.call(this,type,handler,...args);
+    };
+    try{await run(attached);}finally{window.addEventListener=originalAdd;window.removeEventListener=originalRemove;}
 };
 let nextSlowTimerId=1000000;
 const withSlowClock = async run => {
@@ -163,6 +180,87 @@ const withSlowClock = async run => {
     try{await run(clock);}finally{window.setTimeout=originalSet;window.clearTimeout=originalClear;}
 };
 const tests = [
+['Navigation warnings attach only for unsaved edits and disappear when the answer is reverted', async () => {
+    await withUnloadListeners(async attached=>{
+        mount(active());assert(!navigationWouldWarn() && attached.size===0,'Blank initial reply attached a warning');
+        inputReply('Unsaved answer');assert(navigationWouldWarn() && attached.size===1,'Unsaved typing was not protected');
+        window.conversation.init('#masteryagent-app');inputReply('Unsaved answer with more detail');
+        assert(attached.size===1,'Repeated initialization or typing added duplicate warning listeners');
+        inputReply('');assert(!navigationWouldWarn() && attached.size===0,'Reverting all edits left a warning listener');
+    });
+}],
+['Unchanged saved drafts are clean while deleting or editing them warns until an exact restoration', async () => {
+    const saved='Saved "answer" & details\nSecond line.';
+    mount(active('state1',1,saved,saved.replace(/\n/g,'\r\n')));
+    assert(!navigationWouldWarn(),'An unchanged saved draft or normalized newline triggered a warning');
+    inputReply('');assert(navigationWouldWarn(),'Deleting a saved answer was treated as already saved');
+    inputReply(saved);assert(!navigationWouldWarn(),'Restoring the exact saved answer remained dirty');
+    inputReply(saved+' ');assert(navigationWouldWarn(),'Unsaved trailing whitespace was silently ignored');
+    inputReply(saved);assert(!navigationWouldWarn(),'Returning to the saved text did not clear the warning');
+    mount(active('legacy',1,'Older saved draft').replace(' data-saved-draft="Older saved draft"',''));
+    assert(!navigationWouldWarn(),'An older fragment without the baseline attribute lost defaultValue fallback');
+}],
+['Server-rendered unsaved overrides use the saved baseline instead of the textarea default value', async () => {
+    mount(active('state1',1,'Restored unsent override','Previously saved answer'));
+    assert(navigationWouldWarn(),'Initial failed-POST override was incorrectly considered saved');
+    inputReply('Previously saved answer');assert(!navigationWouldWarn(),'Saved baseline was not recognized');
+    mount(active('state2',1,'','Previously saved answer'));
+    assert(navigationWouldWarn(),'An explicitly cleared override lost its unsaved deletion');
+}],
+['Pending and failed replies retain navigation protection until a confirmed successful response', async () => {
+    mount(active());inputReply('My new answer');submit('reply');
+    assert(navigationWouldWarn(),'Pending AJAX was assumed to have saved the answer');
+    pending.at(-1).reject(Error('Connection lost'));await settle();
+    assert(navigationWouldWarn(),'Failed request removed protection from the retained answer');
+    submit('reply');await respond(active('state2',3));
+    assert(!navigationWouldWarn(),'Successfully sent answer left an unnecessary navigation warning');
+    mount(active('state3',3,'Saved answer'));inputReply('');submit('finish');
+    assert(navigationWouldWarn(),'Pending final submission prematurely accepted deletion of the saved answer');
+    await respond(finished());assert(!navigationWouldWarn(),'Confirmed final submission retained the warning');
+}],
+['Stale responses preserve unsaved text and intentional saved-draft deletions against the new baseline', async () => {
+    for(const draft of ['Unsent local answer','']) {
+        mount(active('state1',1,'Saved answer'));inputReply(draft);submit(draft ? 'reply' : 'finish');
+        await respond(active('state2',3,'Other-tab saved answer'),true,'Review the latest conversation');
+        assert(q('[name="reply"]').value===draft,'A stale response changed the unsaved answer or deletion');
+        assert(navigationWouldWarn(),'Stale preservation was incorrectly considered saved');
+        inputReply('Other-tab saved answer');assert(!navigationWouldWarn(),'Latest server baseline was not recognized');
+    }
+}],
+['Clarification preserves dirty answers and deletions without making an untouched saved answer dirty', async () => {
+    for(const draft of ['New unsaved answer','','Saved answer']) {
+        mount(clarifiable('state1',1,'Saved answer'));inputReply(draft);submit('clarify');
+        await respond(clarified('state2',1,2,'Saved answer'));
+        assert(q('[name="reply"]').value===draft,'Clarification changed the working answer');
+        assert(navigationWouldWarn()===(draft!=='Saved answer'),'Clarification changed whether the answer was saved');
+    }
+}],
+['Visible recovered text warns on navigation until an accepted action clears it', async () => {
+    mount(finished(),{recoveredText:'Initial recovered answer'});
+    assert(navigationWouldWarn(),'Initially visible recovered text was unprotected');
+    q('[data-region="draft"]').hidden=true;assert(!navigationWouldWarn(),'Hidden recovered text unnecessarily warned');
+    mount(active());inputReply('Keep the unsent answer');submit('reply');await respond(finished(),true,'Already finished');
+    assert(navigationWouldWarn(),'A recovered draft from a stale finished response was unprotected');
+    submit('start');await respond(active('newattempt',10));
+    assert(q('[data-region="draft"]').hidden && !navigationWouldWarn(),'Accepted restart did not clear recovered-text warning');
+}],
+['Explicit Save and leave suppresses its navigation warning and browser Back restores protection', async () => {
+    mount(active());inputReply('Draft being saved');assert(navigationWouldWarn(),'Draft was not dirty before pausing');
+    q('#masteryagent-app').addEventListener('submit',event=>event.preventDefault(),{once:true});
+    submit('pause');assert(!navigationWouldWarn(),'The explicit Save and leave POST triggered an unnecessary warning');
+    window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));
+    window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));
+    assert(navigationWouldWarn(),'Back navigation kept the pause exemption for the restored draft');
+    mount(active('saved',1,'Draft being saved'));assert(!navigationWouldWarn(),'A freshly loaded saved draft warned');
+}],
+['Detached conversation roots remove their warning listeners and do not affect later clean pages', async () => {
+    await withUnloadListeners(async attached=>{
+        mount(active());inputReply('Detached answer');assert(attached.size===1,'Dirty root did not install a warning');
+        q('#masteryagent-app').remove();assert(!navigationWouldWarn() && attached.size===0,'Removed root warned or leaked its listener');
+        mount(active());inputReply('Another detached answer');assert(attached.size===1,'New dirty root was not protected');
+        mount(active());assert(!navigationWouldWarn() && attached.size===0,'Initializing the next page retained an old warning');
+    });
+}],
 ['Skill cards stack inside narrow 320px and 240px parents without overflowing long text', async () => {
     mount(skillFeedback());const panel=q('[data-region="content"]');
     for(const width of [320,240]) {

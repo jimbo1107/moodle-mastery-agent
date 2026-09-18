@@ -58,9 +58,10 @@ $PAGE->set_cacheable(false);
 $PAGE->add_body_class('masteryagent-print-page');
 $PAGE->requires->js_call_amd('mod_masteryagent/learning_plan', 'init', ['#masteryagent-export']);
 
-$document = conversation_view::render_learning_plan($review, html_to_text(format_string($instance->name), 0, false));
-// Derive both formats from the same allowlisted, escaped public feedback.
-$text = html_to_text($document, 0);
+$activityname = html_to_text(format_string($instance->name), 0, false);
+$document = conversation_view::render_learning_plan($review, $activityname);
+// Keep the same public feedback in both formats; omit navigation-only links from copied text.
+$text = html_to_text(conversation_view::render_learning_plan($review, $activityname, false), 0);
 
 echo $OUTPUT->header();
 echo html_writer::start_div('masteryagent-export', [

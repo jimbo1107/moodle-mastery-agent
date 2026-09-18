@@ -210,7 +210,8 @@ class agent {
         }
 
         $score = (float) $decoded['score'];
-        $score = (float) max(0, min($max, $score));
+        // Match the attempt score column before saving lesson feedback or comparing mastery thresholds.
+        $score = round((float) max(0, min($max, $score)), 2);
 
         return [
             'score' => $score,
@@ -230,6 +231,11 @@ class agent {
      * @throws \moodle_exception On provider failure.
      */
     public function course_summary(array $results): string {
+        $results = array_values(array_filter($results, static fn($result) =>
+            is_array($result) && ($result['status'] ?? 'assessed') !== 'notassessed'));
+        if (!$results) {
+            return '';
+        }
         $threshold = (int) $this->instance->threshold;
         $lines = [];
         $total = 0;
@@ -243,7 +249,7 @@ class agent {
                 "%s %s - scored %s of %d\n  strengths: %s\n  gaps: %s",
                 (string) ($result['lesson_id'] ?? ''),
                 (string) ($result['title'] ?? ''),
-                rtrim(rtrim(number_format($score, 1, '.', ''), '0'), '.'),
+                rtrim(rtrim(number_format($score, 2, '.', ''), '0'), '.'),
                 $lessonmax,
                 empty($result['strengths']) ? '(none recorded)' : implode('; ', (array) $result['strengths']),
                 empty($result['gaps']) ? '(none recorded)' : implode('; ', (array) $result['gaps'])
@@ -252,13 +258,14 @@ class agent {
 
         $prompt = "=== ROLE ===\n"
             . "You are a Marine Corps professional military education mastery evaluator writing the "
-            . "closing assessment after a Marine completed a sequence of lesson assessments.\n\n"
+            . "closing assessment of the lesson results actually assessed below. Do not imply that other lessons "
+            . "were assessed.\n\n"
             . "=== LESSON RESULTS ===\n" . implode("\n\n", $lines) . "\n\n"
-            . "Total: " . rtrim(rtrim(number_format($total, 1, '.', ''), '0'), '.') . " of {$max}. "
+            . "Total: " . rtrim(rtrim(number_format($total, 2, '.', ''), '0'), '.') . " of {$max}. "
             . "The per-lesson mastery threshold was {$threshold}.\n\n"
             . "=== YOUR TASK ===\n"
             . "Write one closing assessment addressed to the Marine, under 200 words. Say what held up "
-            . "across the whole course, name the pattern in what did not, and give one concrete next step. "
+            . "across the assessed lessons, name the pattern in what did not, and give one concrete next step. "
             . "Judge the body of work, not each lesson in turn: do not simply restate the list above. "
             . "Plain language, second person, no headings, no bullet lists.\n\n"
             . "=== OUTPUT FORMAT ===\n"

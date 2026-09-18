@@ -23,12 +23,21 @@
 import {call as ajaxCall} from 'core/ajax';
 import {notifyFilterContentUpdated} from 'core_filters/events';
 
+// Keep only mounted, dirty conversations subscribed to the browser's native navigation warning.
+const draftUnloadHandlers = new Map();
+
 /**
  * Attach a delegated handler that survives conversation fragment replacement.
  *
  * @param {string} selector The persistent application wrapper.
  */
 export const init = selector => {
+    draftUnloadHandlers.forEach((handler, previousRoot) => {
+        if (!previousRoot.isConnected) {
+            window.removeEventListener('beforeunload', handler);
+            draftUnloadHandlers.delete(previousRoot);
+        }
+    });
     const root = document.querySelector(selector);
     if (!root || root.dataset.initialized === 'true') {
         return;
@@ -47,7 +56,53 @@ export const init = selector => {
     let slowTimer = null;
     let waitSerial = 0;
     let responseSerial = 0;
+    let pausing = false;
     const editorState = new WeakMap();
+
+    const hasUnsavedDraft = () => {
+        if (!root.isConnected || pausing) {
+            return false;
+        }
+        const editor = content.querySelector('textarea[name="reply"]');
+        if (editor) {
+            // Failed POSTs can render an unsaved override, distinct from the stored draft.
+            // Normalize line endings to the textarea value convention, without trimming learner text.
+            const saved = (editor.dataset.savedDraft ?? editor.defaultValue).replace(/\r\n?/g, '\n');
+            if (editor.value !== saved) {
+                return true;
+            }
+        }
+        return Boolean(recoveredDraft && !recoveredDraft.hidden && recoveredDraft.querySelector('textarea')?.value);
+    };
+
+    const removeDraftWarning = () => {
+        const handler = draftUnloadHandlers.get(root);
+        if (handler) {
+            window.removeEventListener('beforeunload', handler);
+            draftUnloadHandlers.delete(root);
+        }
+    };
+
+    const beforeUnload = event => {
+        if (!hasUnsavedDraft()) {
+            removeDraftWarning();
+            return;
+        }
+        // The browser supplies the prompt wording and decides whether user activation permits showing it.
+        event.preventDefault();
+        event.returnValue = '';
+    };
+
+    const updateDraftWarning = () => {
+        if (hasUnsavedDraft()) {
+            if (!draftUnloadHandlers.has(root)) {
+                window.addEventListener('beforeunload', beforeUnload);
+                draftUnloadHandlers.set(root, beforeUnload);
+            }
+        } else {
+            removeDraftWarning();
+        }
+    };
 
     const clearSlowTimer = () => {
         waitSerial++;
@@ -156,9 +211,16 @@ export const init = selector => {
     };
 
     updateReplyEditor();
+    updateDraftWarning();
     root.addEventListener('input', event => {
         if (event.target.matches('textarea[name="reply"]') && content.contains(event.target)) {
             updateReplyEditor(true);
+            updateDraftWarning();
+        }
+    });
+    root.addEventListener('change', event => {
+        if (event.target.matches('textarea[name="reply"]') && content.contains(event.target)) {
+            updateDraftWarning();
         }
     });
     root.addEventListener('pointerup', event => {
@@ -284,15 +346,21 @@ export const init = selector => {
 
     window.addEventListener('pagehide', () => {
         clearSlowTimer();
+        removeDraftWarning();
         // A suspended request must not replace a conversation restored by browser Back.
         responseSerial++;
     });
 
     window.addEventListener('pageshow', event => {
+        if (!root.isConnected) {
+            removeDraftWarning();
+            return;
+        }
         if (event.persisted) {
             // Back navigation can restore the page as it was while leaving.
             // Let the server's revision check reconcile any saved draft changes.
             responseSerial++;
+            pausing = false;
             setBusy(false);
             status.textContent = '';
             announce('');
@@ -306,6 +374,7 @@ export const init = selector => {
             attachRequestFeedback();
             updateReplyEditor();
         }
+        updateDraftWarning();
     });
 
     root.addEventListener('submit', async event => {
@@ -313,6 +382,7 @@ export const init = selector => {
         if (!form || !content.contains(form)) {
             return;
         }
+        updateDraftWarning();
         if (busy) {
             event.preventDefault();
             return;
@@ -323,6 +393,8 @@ export const init = selector => {
             // Use a normal POST so the server saves the draft and returns to the course.
             // Do not disable form controls: the submitter and reply must be included in the POST.
             busy = true;
+            pausing = true;
+            updateDraftWarning();
             startWaiting(action);
             return;
         }
@@ -400,7 +472,7 @@ export const init = selector => {
                 }
             });
             const newReplyBox = content.querySelector('textarea[name="reply"]');
-            if ((response.stale && draft) || action === 'clarify') {
+            if ((response.stale && replyBox) || action === 'clarify') {
                 if (newReplyBox) {
                     // Also restore an explicitly cleared answer instead of reviving an older saved draft.
                     newReplyBox.value = draft;
@@ -467,6 +539,7 @@ export const init = selector => {
             } catch (exception) {
                 // The escaped transcript and feedback remain readable without optional filters.
             }
+            updateDraftWarning();
         } catch (exception) {
             if (serial !== responseSerial || !root.isConnected) {
                 return;
@@ -485,6 +558,7 @@ export const init = selector => {
                 }
             }
             showError(exception && exception.message ? exception.message : root.dataset.error, !preserveExternalFocus(), help);
+            updateDraftWarning();
         }
     });
 };

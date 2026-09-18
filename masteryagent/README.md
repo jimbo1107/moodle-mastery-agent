@@ -114,6 +114,38 @@ revised questions and rubrics. Nothing else changes and existing attempts are
 left alone. This is the intended path for keeping the assessment current as
 lessons and educational objectives are revised.
 
+## Student experience update (0.5.0)
+
+This release improves submission, answer protection and results review:
+
+- Early submission scores the current answered lesson and ends the attempt
+  without presenting another question. Unanswered lessons are saved as **Not
+  assessed**, with zero contribution and their public lesson titles/readings.
+  They appear consistently in results, history, learning plans and grade feedback.
+- New assessment scores are rounded to two decimal places before they are saved
+  or compared with the mastery threshold. Scores use consistent decimal formatting;
+  existing historical records are not rewritten or regraded.
+- The browser warns before leaving an unsaved answer, including changes to a
+  restored draft or deletion of saved text. Successful replies clear the warning;
+  clarification and failed requests preserve it. **Save and leave** remains the
+  explicit way to save a draft. This is navigation protection, not autosave; native
+  dialogs depend on browser support and may not appear when a mobile app is closed.
+- A notice beside **Send reply** explains when the final allowed reply will close
+  the lesson or finish the assessment.
+- A lesson-feedback index links directly to individual results, including skipped
+  lessons, in completed results, history and the learning-plan view.
+- Results and history distinguish the current attempt from the highest completed
+  attempt score. The activity keeps the highest score; a course-grade link is shown
+  when the learner can view grades. Instructor adjustments remain in the gradebook.
+
+New completion snapshots explicitly record assessed and unassessed lessons.
+Older attempts retain their saved feedback; the interface does not infer missing
+historical lessons from a replacement question set. Exports remain snapshots of
+the selected attempt and do not include the learner's changing best score.
+
+Install the updated ZIP, complete version **2026091807** through Moodle's plugin
+upgrade, purge caches, and reopen activity tabs. There are no database schema changes.
+
 ## Keep a learning plan (0.4.10)
 
 Completed results and completed previous-attempt reviews offer **Print or copy
@@ -409,7 +441,7 @@ or overturn the agent's judgement.
 
 ## Tests
 
-`tests/` holds 159 PHPUnit tests covering the parser, lesson selection, prompt
+`tests/` holds 175 PHPUnit tests covering the parser, lesson selection, prompt
 construction, the conversation engine, gradebook, and AJAX access and recovery.
 The suite includes 15 AJAX regression tests from 0.4.0, 3 learning-plan tests
 from 0.4.1, 6 pause/final-submission tests from 0.4.2, and 4 transcript/navigation
@@ -429,6 +461,12 @@ headless Microsoft Edge during 0.4.9 packaging.
 Version 0.4.10 adds 4 PHP export tests and a separate 6-case print/copy browser
 runner. All 79 browser scenarios across both runners passed in headless Edge
 during 0.4.10 packaging.
+Version 0.5.0 adds 16 PHP regression tests across assessment completion,
+score precision, grade retention and student-facing views, plus 9 draft-warning
+browser cases. All 88 browser cases passed in Edge. A separate browser check
+verified a real leave-page prompt, cancellation preserving the answer, and no
+prompt after a confirmed reply. Feedback links, narrow layouts and print output
+were also checked with synthetic content.
 The PHP suite has not been executed in this workspace, which has no
 Moodle/PHP runtime.
 No AI provider is called by the tests. See `tests/README.md` for setup, browser

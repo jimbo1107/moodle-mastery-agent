@@ -133,7 +133,9 @@ final class external_test extends \advanced_testcase {
         $this->act('reply', 'First lesson answer.');
         $response = $this->act('reply', 'Second lesson answer.');
         $this->assertTrue($this->current()->is_finished());
-        $this->assertStringContainsString('Score: 7 of 8', $response['html']);
+        $this->assertStringContainsString(get_string('attemptscoreline', 'mod_masteryagent', (object) [
+            'score' => format_float(7, 2), 'max' => 8,
+        ]), $response['html']);
         $item = $DB->get_record('grade_items', [
             'itemtype' => 'mod', 'itemmodule' => 'masteryagent', 'iteminstance' => $this->instance->id,
         ], '*', MUST_EXIST);
@@ -253,6 +255,50 @@ final class external_test extends \advanced_testcase {
         $this->assertCount(1, $this->current()->messages());
     }
 
+    public function test_early_finish_summary_failure_rolls_back_assessed_and_skipped_results_and_allows_retry(): void {
+        global $DB;
+        $this->stub_ai(['closeafter' => 99]);
+        $this->act('start');
+        $this->act('reply', 'An answer already submitted.');
+        $this->act('pause', 'A saved draft that must survive a failed final submission.');
+        $before = $this->current();
+        $state = conversation::state($before);
+        $record = clone $before->get_record();
+        $messages = serialize($before->messages());
+        $grades = serialize($DB->get_records('grade_grades', [], 'id ASC'));
+        $assessmentcalls = 0;
+        agent::set_test_responder(static function(string $prompt) use (&$assessmentcalls): string {
+            if (str_contains($prompt, '=== FULL CONVERSATION ===')) {
+                $assessmentcalls++;
+                return json_encode(['score' => 3, 'summary' => 'Saved only if all finalization succeeds.']);
+            }
+            throw new \moodle_exception('errorprovider', 'mod_masteryagent');
+        });
+        try {
+            $this->act('finish', '', $state);
+            $this->fail('The unavailable course summary must fail final submission.');
+        } catch (\moodle_exception $e) {
+            $this->assertSame('errorprovider', $e->errorcode);
+        }
+        $after = $this->current();
+        $this->assertSame(1, $assessmentcalls);
+        $this->assertEquals($record, $after->get_record());
+        $this->assertSame($state, conversation::state($after));
+        $this->assertSame($messages, serialize($after->messages()));
+        $this->assertSame($grades, serialize($DB->get_records('grade_grades', [], 'id ASC')));
+        $this->assertSame([], $after->lesson_results());
+        $this->assertFalse($after->is_finished());
+
+        $this->stub_ai(['closeafter' => 99, 'scores' => ['S01' => 3]]);
+        $response = $this->act('finish', '', $state);
+        $this->assertFalse($response['stale']);
+        $this->assertTrue($this->current()->is_finished());
+        $this->assertSame(['assessed', 'notassessed'], array_column($this->current()->lesson_results(), 'status'));
+        $this->assertSame($messages, serialize($this->current()->messages()));
+        $this->assertSame('', $this->current()->draft_reply());
+        $this->assertSame(3.0, (float) $this->current()->get_record()->score);
+    }
+
     public function test_html_is_escaped_and_private_evidence_is_not_returned(): void {
         $this->stub_ai(['closeafter' => 99, 'covered' => ['PRIVATE_LEDGER_SENTINEL'],
             'reply' => '<script>window.attack=true</script>']);
@@ -347,7 +393,7 @@ final class external_test extends \advanced_testcase {
         $this->act('finish', '');
         $this->assertTrue($this->current()->is_finished());
         $this->assertSame('', $this->current()->draft_reply());
-        $this->assertCount(1, $this->current()->lesson_results());
+        $this->assertSame(['assessed', 'notassessed'], array_column($this->current()->lesson_results(), 'status'));
         $this->assertCount(1, array_filter($this->current()->messages(), fn($m) => $m->role === 'student'));
     }
 

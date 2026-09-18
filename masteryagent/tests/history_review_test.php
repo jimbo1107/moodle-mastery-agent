@@ -133,7 +133,7 @@ final class history_review_test extends \advanced_testcase {
         $this->assertSame('OLD01 Original lesson title', $xpath->query('//details/summary')->item(0)->textContent);
         $this->assertSame(get_string('historyreviewscore', 'mod_masteryagent', format_float(2.5, 2)),
             $xpath->query('//*[@data-region="history-review-score"]')->item(0)->textContent);
-        $this->assertStringContainsString('2/4', $xpath->query('//h4')->item(0)->textContent);
+        $this->assertStringContainsString(format_float(2, 2) . '/4', $xpath->query('//h4')->item(0)->textContent);
         $this->assertStringNotContainsString('AI-provisional', $xpath->document->textContent);
     }
 

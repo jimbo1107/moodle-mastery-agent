@@ -133,7 +133,9 @@ final class learning_plan_test extends \advanced_testcase {
         $DB->update_record('masteryagent_attempt', $record);
         $html = conversation_view::render($this->instance, $this->cm,
             sequence::from_instance($this->instance), new attempt($record, $this->instance));
-        $this->assertStringContainsString('Score: 6 of 8', $html);
+        $this->assertStringContainsString(get_string('attemptscoreline', 'mod_masteryagent', (object) [
+            'score' => format_float(6, 2), 'max' => 8,
+        ]), $html);
         $this->assertStringContainsString('Closing feedback for S01.', $html);
         $this->assertStringContainsString('Assessed skill 1', $html);
         $this->assertStringContainsString('No specific strengths were recorded', $html);

@@ -48,6 +48,8 @@
 }
 
 .masteryagent-export :focus-visible,
+.masteryagent-feedback-navigation :focus-visible,
+.masteryagent-learning-plan h4:focus,
 .masteryagent-app :focus-visible,
 .masteryagent-attempt-history :focus-visible,
 .masteryagent-history-entry :focus-visible,
@@ -384,6 +386,52 @@
     margin-top: 0.75rem;
 }
 
+.masteryagent-feedback-navigation {
+    border: 1px solid #d6d9dc;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+    overflow-wrap: anywhere;
+}
+
+.masteryagent-feedback-navigation p {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.masteryagent-feedback-navigation ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    column-gap: 1.5rem;
+    padding-inline-start: 1.25rem;
+    margin: 0;
+}
+
+.masteryagent-feedback-navigation li {
+    min-width: 0;
+}
+
+.masteryagent-feedback-navigation a {
+    display: block;
+    padding: 0.65rem 0;
+}
+
+.masteryagent-last-reply,
+.masteryagent-retained-score {
+    border-inline-start: 3px solid #0f6cbf;
+    padding: 0.75rem 1rem;
+    margin: 1rem 0;
+    overflow-wrap: anywhere;
+}
+
+.masteryagent-last-reply {
+    font-weight: 600;
+}
+
+.masteryagent-retained-score p:last-child {
+    margin-bottom: 0;
+}
+
 .masteryagent-export {
     max-width: 70rem;
     margin: 0 auto;
@@ -418,6 +466,10 @@
 }
 
 @media print {
+    .masteryagent-feedback-navigation {
+        display: none !important;
+    }
+
     body.masteryagent-print-page #page-header,
     body.masteryagent-print-page #page-footer,
     body.masteryagent-print-page nav,

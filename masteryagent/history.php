@@ -85,6 +85,7 @@ echo html_writer::tag('nav', $links, [
     'aria-label' => get_string('historynavigation', 'mod_masteryagent'),
 ]);
 echo html_writer::tag('p', get_string('historyreturnhelp', 'mod_masteryagent'), ['class' => 'text-muted']);
+echo history_view::retained_score($instance, $cm, $userid);
 if ($review !== null) {
     echo html_writer::tag('p', get_string('historyreadonly', 'mod_masteryagent'));
     echo history_view::metadata($review->get_record());

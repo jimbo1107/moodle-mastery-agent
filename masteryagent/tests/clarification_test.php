@@ -205,7 +205,7 @@ final class clarification_test extends \advanced_testcase {
         $this->act('clarify');
         $this->act('finish');
         $this->assertTrue($this->current()->is_finished());
-        $this->assertSame([], $this->current()->lesson_results());
+        $this->assertSame(['notassessed', 'notassessed'], array_column($this->current()->lesson_results(), 'status'));
         $this->assertSame(0.0, (float) $this->current()->get_record()->score);
         $this->assertCount(1, $this->sentprompts);
         $this->assertNull($this->current()->current_clarification());

@@ -1,6 +1,6 @@
 # Running the mastery agent tests
 
-159 PHPUnit tests covering the question-set parser, lesson selection, prompt
+175 PHPUnit tests covering the question-set parser, lesson selection, prompt
 construction, the conversation engine, gradebook, AJAX endpoint and learner history. They never call a real
 AI provider — a scripted responder stands in for one — so they cost nothing to
 run and are deterministic.
@@ -46,7 +46,8 @@ Version 0.4.6 adds 8 history-access tests, 5 history-list tests and 7 saved-revi
 tests. Version 0.4.7 adds 5 nearby request-feedback tests. Version 0.4.8 adds
 14 clarification service/prompt tests and 6 clarification-view tests. Version 0.4.9
 adds one shared skill-card rendering test. Version 0.4.10 adds 4 learning-plan
-export tests, for 159 tests in total.
+export tests. Version 0.5.0 adds 6 backend tests, 9 student-view tests and one
+gradebook regression test, for 175 tests in total.
 The PHP suite has not been
 executed in this workspace; run it on a development Moodle site.
 
@@ -59,6 +60,7 @@ executed in this workspace; run it on a development Moodle site.
 | `agent_test.php` | Prompt contents, scoring bands across scale widths, corrected-misconception handling, JSON parsing (fenced, prose-wrapped, malformed), score clamping, course summary |
 | `learning_plan_test.php` | Saved public feedback, safe reading links, legacy fallbacks and semantic skill cards shared by finished and historical attempts |
 | `learning_plan_export_test.php` | Completed-attempt export links, HTML/plain-text feedback, safe reading URLs, private-data exclusion, unchanged records and historical consistency |
+| `student_experience_view_test.php` | Decimal results, final-reply notices, saved draft baselines, assessed/unassessed coverage, native feedback targets and highest-score clarity |
 | `attempt_test.php` | Turns, budget exhaustion, automatic lesson advance, totals, early finish, provider failure recovery |
 | `external_test.php` | Authenticated AJAX access, ownership and hidden activities, duplicate/stale requests, progression, grades, retry settings, input limits, escaped output and atomic provider/scoring failures |
 | `conversation_view_test.php` | Lesson grouping, message order, navigation targets, finished history, legacy keys, escaped saved titles, overview settings, saved reply context, welcome summaries and editor guidance |
@@ -110,11 +112,11 @@ rather than against any real question set.
 
 ## Browser regression checks
 
-`browser/runner.html` runs 73 DOM and layout regression scenarios against the shipped
+`browser/runner.html` runs 82 DOM and layout regression scenarios against the shipped
 AMD bundle and stylesheet, with mocked `core/ajax` and filter-event modules. Serve the plugin
 directory locally, then open `tests/browser/runner.html`. The runner contains
 only synthetic test data and never contacts an AI provider or Moodle server.
-All 73 scenarios passed in headless Microsoft Edge during 0.4.10 packaging.
+All 82 scenarios passed in headless Microsoft Edge during 0.5.0 packaging.
 They cover reply, pause, confirmation, draft recovery, browser history, conversation
 navigation, preserved reading focus, new-message announcements and narrow text wrapping.
 The 11 scenarios added in 0.4.4 cover focus visibility after long replies, announcement
@@ -131,6 +133,9 @@ exact draft and selection preservation, request isolation, brief/full announceme
 reading focus, manual retry, stale recovery and the next assessed reply.
 The 3 scenarios added in 0.4.9 cover skill cards in narrow containers, enlarged
 text and resizing from wide to narrow layouts, using the production stylesheet.
+The 9 scenarios added in 0.5.0 cover native navigation-warning events, exact saved
+draft comparison, deletion/reversion, in-flight and failed replies, clarification,
+stale recovery, recovered text and browser Back after pausing.
 
 A standalone Playwright suite for the original 17 scenarios is also included. With Node.js,
 Playwright, and its Chromium browser available, run:
@@ -140,7 +145,7 @@ node --test tests/browser/conversation.test.cjs
 ```
 
 Set `CHROME_PATH` if using an existing Chromium browser executable. The standalone
-Playwright suite was not run for 0.4.10; the in-browser runners were used instead.
+Playwright suite was not run for 0.5.0; the in-browser runners were used instead.
 The UI checks do not replace the Moodle/PHP suite.
 
 ## Integration checks on a Moodle test site
@@ -435,3 +440,45 @@ On a Moodle test site:
   should still review their own completed plans when retries are disabled.
 - Verify that grades, attempts and messages are unchanged by opening, printing
   or copying a plan. No AI-provider request should occur.
+
+## Student experience checks (0.5.0)
+
+The PHP regression coverage exercises early submission without a new question,
+saved unassessed lesson entries, zero-answer and clarification-only submissions,
+decimal scores and threshold comparisons, rollback after scoring failures,
+weaker retries, final-reply notices and feedback navigation. The gradebook test
+also checks that a lower retry preserves the earlier decimal score and its feedback.
+These tests require Moodle and have not been executed in this workspace.
+
+Browser coverage checks unsaved-answer warnings against the exact server-saved
+draft, including deleting saved text, reverting edits, pending/failed requests,
+clarification, stale responses, recovered drafts and returning with browser Back.
+Automated events exercise the warning handler; a native browser confirmation is
+still subject to user activation and browser support. This does not provide autosave
+or guarantee a prompt when a mobile app is closed.
+All 88 cases across the two browser runners passed in Edge. A separate Edge check
+using real user input verified the native before-unload dialog, cancellation
+preserving the answer, and navigation without a prompt after a confirmed reply.
+Native feedback links also focused their target headings without a custom script;
+the updated export fitted 320 pixels and printed a seven-page synthetic plan.
+
+Before using the release on a Moodle site:
+
+- In a three-lesson activity, submit early after one answer. Confirm no next
+  question is appended, skipped lessons are labelled, and the score denominator
+  includes all lessons. Repeat before answering anything, after clarification
+  only, and after completing a lesson normally.
+- Confirm a 2.60 score displays consistently in the activity, history, export and
+  gradebook. A new 2.999 model score rounds to 3.00 before the threshold comparison;
+  old results are not regraded. Check a lower retry, an instructor-adjusted grade,
+  and a student who cannot view course grades.
+- Type an unsaved answer and navigate away, refresh or use Back; cancel the native
+  warning and confirm the answer remains. Revert edits to the saved text and
+  confirm the warning stops. Try deleting a saved draft, a failed reply, clarification
+  and a stale tab. **Save and leave** should save without an extra warning.
+- With one reply remaining, check the nearby notice and its association with
+  **Send reply**, including the final lesson. Navigate between lesson feedback
+  headings using only a keyboard, with a screen reader and with JavaScript disabled.
+- Review old attempts after replacing the question set. Their saved names and
+  scores should stay unchanged, without invented skipped lessons. Print and copy
+  a new learning plan; navigation controls should not clutter the exported text.

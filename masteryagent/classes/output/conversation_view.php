@@ -135,6 +135,7 @@ class conversation_view {
                 'maxlength' => attempt::MAX_REPLY_CHARS,
                 'rows' => 8,
                 'class' => 'form-control masteryagent-reply-editor',
+                'data-saved-draft' => $current->draft_reply(),
                 'aria-describedby' => 'masteryagent-reply-guidance masteryagent-reply-limit',
                 'required' => 'required',
                 'placeholder' => get_string('replyplaceholder', 'mod_masteryagent'),
@@ -148,11 +149,18 @@ class conversation_view {
                 'data-limitreached' => get_string('replylimitreached', 'mod_masteryagent'),
                 'data-overlimit' => get_string('replyoverlimit', 'mod_masteryagent'),
             ]);
+            $lastreply = $current->turns_left() === 1;
+            if ($lastreply) {
+                $out .= html_writer::tag('p', get_string(
+                    $current->lesson_index() + 1 >= $sequence->count() ? 'lastreplyassessment' : 'lastreplylesson',
+                    'mod_masteryagent'
+                ), ['id' => 'masteryagent-last-reply', 'class' => 'masteryagent-last-reply']);
+            }
             $out .= html_writer::div(
                 html_writer::tag('button', get_string('sendreply', 'mod_masteryagent'), [
                     'type' => 'submit', 'name' => 'action', 'value' => 'reply',
                     'class' => 'btn btn-primary',
-                ])
+                ] + ($lastreply ? ['aria-describedby' => 'masteryagent-last-reply'] : []))
                 . html_writer::tag('button', get_string('saveandleave', 'mod_masteryagent'), [
                     'type' => 'submit', 'name' => 'action', 'value' => 'pause',
                     'class' => 'btn btn-secondary', 'formnovalidate' => 'formnovalidate',
@@ -181,12 +189,15 @@ class conversation_view {
             $out .= html_writer::end_tag('form');
         } else {
             $record = $current->get_record();
-            $results = $current->lesson_results();
+            $results = array_values(array_filter($current->lesson_results(), 'is_array'));
 
-            $body = html_writer::tag('h3', get_string('scoreline', 'mod_masteryagent', (object) [
-                'score' => format_float((float) $record->score, 0),
-                'max' => masteryagent_total_grade($instance),
+            $body = html_writer::tag('h3', get_string('attemptscoreline', 'mod_masteryagent', (object) [
+                'score' => is_numeric($record->score) ? format_float((float) $record->score, 2)
+                    : get_string('historynotrecorded', 'mod_masteryagent'),
+                'max' => self::has_complete_inventory($results)
+                    ? array_sum(array_column($results, 'max')) : masteryagent_total_grade($instance),
             ]));
+            $body .= self::render_coverage($results, true);
 
             if ($sequence->is_multi()) {
                 $body .= html_writer::tag('p', get_string('lessonsmastered', 'mod_masteryagent', (object) [
@@ -204,14 +215,13 @@ class conversation_view {
             }
 
             $body .= html_writer::tag('p', nl2br(s((string) $record->summary)));
+            $body .= history_view::retained_score($instance, $cm, (int) $record->userid);
             $out .= html_writer::div($body, 'generalbox', [
                 'data-region' => 'results', 'id' => 'masteryagent-results', 'tabindex' => '-1',
             ]);
             $out .= html_writer::div(self::learning_plan_link($cm, $current), 'masteryagent-learning-plan-entry mb-3');
 
-            foreach ($results as $result) {
-                $out .= $OUTPUT->box(self::render_lesson_result($result), 'generalbox');
-            }
+            $out .= self::render_lesson_results($results, $current->get_id());
 
             if (!empty($instance->allowretry)) {
                 $out .= html_writer::div(
@@ -256,9 +266,10 @@ class conversation_view {
      * scores or changes it, and deliberately excludes unsent drafts and private evaluation data.
      *
      * @param attempt $review Attempt the learner is allowed to review.
+     * @param bool $navigation Include native feedback links; omit for plain-text export.
      * @return string Escaped, read-only feedback without transcript or controls.
      */
-    public static function render_feedback(attempt $review): string {
+    public static function render_feedback(attempt $review, bool $navigation = true): string {
         $record = $review->get_record();
         $feedback = html_writer::tag('h3', get_string('historyreviewfeedback', 'mod_masteryagent'),
             ['id' => 'masteryagent-history-feedback-title']);
@@ -277,10 +288,9 @@ class conversation_view {
         } else {
             $feedback .= html_writer::tag('p', get_string('historyreviewunfinished', 'mod_masteryagent'));
         }
-        $results = array_filter($review->lesson_results(), 'is_array');
-        foreach ($results as $result) {
-            $feedback .= html_writer::div(self::render_lesson_result($result), 'generalbox');
-        }
+        $results = array_values(array_filter($review->lesson_results(), 'is_array'));
+        $feedback .= self::render_coverage($results, $review->is_finished());
+        $feedback .= self::render_lesson_results($results, $review->get_id(), $navigation);
         if (!$results) {
             $feedback .= html_writer::tag('p', get_string('historyreviewlessonfeedbackmissing', 'mod_masteryagent'));
         }
@@ -330,10 +340,11 @@ class conversation_view {
      *
      * @param attempt $review Finished attempt the learner is allowed to review.
      * @param string $activityname Plain-text activity label.
+     * @param bool $navigation Include native feedback links; omit for plain-text export.
      * @return string Escaped document ready for printing or Moodle's plain-text conversion.
      * @throws \moodle_exception When the attempt has not been submitted.
      */
-    public static function render_learning_plan(attempt $review, string $activityname): string {
+    public static function render_learning_plan(attempt $review, string $activityname, bool $navigation = true): string {
         if (!$review->is_finished()) {
             throw new \moodle_exception('learningplannotavailable', 'mod_masteryagent');
         }
@@ -341,7 +352,7 @@ class conversation_view {
             html_writer::tag('h2', get_string('learningplantitle', 'mod_masteryagent'))
             . html_writer::tag('p', s($activityname))
             . history_view::metadata($review->get_record())
-            . self::render_feedback($review), ['class' => 'masteryagent-export-document']);
+            . self::render_feedback($review, $navigation), ['class' => 'masteryagent-export-document']);
     }
 
     /**
@@ -621,15 +632,121 @@ class conversation_view {
     }
 
     /**
-     * Render the public assessment for a lesson.
+     * Whether saved results explicitly account for both assessed and unanswered lessons.
      *
-     * @param array $result Stored per-lesson result.
+     * Older attempts omitted unanswered lessons; never infer their original inventory from current settings.
+     *
+     * @param array $results Saved lesson records.
+     * @return bool
+     */
+    private static function has_complete_inventory(array $results): bool {
+        if (!$results) {
+            return false;
+        }
+        foreach ($results as $result) {
+            if (!in_array($result['status'] ?? '', ['assessed', 'notassessed'], true)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Explain assessment coverage using saved records only.
+     *
+     * @param array $results Saved lesson records.
+     * @param bool $finished Whether these are the final records for the attempt.
      * @return string
      */
-    private static function render_lesson_result(array $result): string {
-        $heading = trim(($result['lesson_id'] ?? '') . ' ' . ($result['title'] ?? ''));
-        $out = html_writer::tag('h4', s($heading) . ' — ' . s((string) ($result['score'] ?? '')) . '/'
-            . (int) ($result['max'] ?? 0));
+    private static function render_coverage(array $results, bool $finished): string {
+        if (!$results) {
+            return '';
+        }
+        $notassessed = count(array_filter($results, static function(array $result): bool {
+            return ($result['status'] ?? '') === 'notassessed';
+        }));
+        $key = !$finished ? 'assessmentcoveragepartial'
+            : (self::has_complete_inventory($results) ? 'assessmentcoverage' : 'assessmentcoveragerecorded');
+        return html_writer::tag('p', get_string($key, 'mod_masteryagent', (object) [
+            'assessed' => count($results) - $notassessed,
+            'notassessed' => $notassessed,
+            'total' => count($results),
+        ]), ['class' => 'masteryagent-assessment-coverage', 'data-region' => 'assessment-coverage']);
+    }
+
+    /**
+     * Get a public saved label without exposing internal lesson keys.
+     *
+     * @param array $result Saved lesson record.
+     * @param int $position One-based saved position.
+     * @return string Plain text.
+     */
+    private static function result_label(array $result, int $position): string {
+        $id = is_string($result['lesson_id'] ?? null) ? trim($result['lesson_id']) : '';
+        $title = is_string($result['title'] ?? null) ? trim($result['title']) : '';
+        $label = trim($id . ' ' . $title);
+        return $label !== '' ? $label : get_string('feedbacklessonfallback', 'mod_masteryagent', $position);
+    }
+
+    /**
+     * Provide a native feedback index and stable positional targets, including for duplicate saved names.
+     *
+     * @param array $results Saved lesson records.
+     * @param int $attemptid Attempt being displayed.
+     * @param bool $navigation Include native feedback links.
+     * @return string
+     */
+    private static function render_lesson_results(array $results, int $attemptid, bool $navigation = true): string {
+        if (!$results) {
+            return '';
+        }
+        $links = '';
+        $lessons = '';
+        foreach (array_values($results) as $index => $result) {
+            $position = $index + 1;
+            $target = 'masteryagent-feedback-' . $attemptid . '-' . $position;
+            $label = self::result_label($result, $position);
+            $linklabel = $label;
+            if (($result['status'] ?? '') === 'notassessed') {
+                $linklabel .= ' — ' . get_string('lessonnotassessedshort', 'mod_masteryagent');
+            }
+            $links .= html_writer::tag('li', html_writer::link('#' . $target, s($linklabel)));
+            $lessons .= html_writer::div(self::render_lesson_result($result, $label, $target), 'generalbox');
+        }
+        $index = html_writer::tag('nav',
+            html_writer::tag('p', get_string('feedbacknavigation', 'mod_masteryagent'))
+            . html_writer::tag('ul', $links), [
+                'class' => 'masteryagent-feedback-navigation',
+                'aria-label' => get_string('feedbacknavigation', 'mod_masteryagent'),
+            ]);
+        return ($navigation ? $index : '') . $lessons;
+    }
+
+    /**
+     * Render the public assessment or explicit not-assessed state for a saved lesson.
+     *
+     * @param array $result Stored per-lesson result.
+     * @param string $label Plain-text saved lesson label.
+     * @param string $target Unique heading target.
+     * @return string
+     */
+    private static function render_lesson_result(array $result, string $label, string $target): string {
+        $notassessed = ($result['status'] ?? '') === 'notassessed';
+        $score = $notassessed ? format_float(0, 2)
+            : (is_numeric($result['score'] ?? null) ? format_float((float) $result['score'], 2)
+                : get_string('historynotrecorded', 'mod_masteryagent'));
+        $max = is_numeric($result['max'] ?? null) ? (int) $result['max']
+            : get_string('historynotrecorded', 'mod_masteryagent');
+        $out = html_writer::tag('h4', s($label) . ' — '
+            . $score . '/' . $max, ['id' => $target, 'tabindex' => '-1']);
+        if ($notassessed) {
+            $out .= html_writer::tag('p', get_string('lessonnotassessed', 'mod_masteryagent'));
+            // Public readings are useful without a submitted answer; do not invent evaluation feedback.
+            $out .= self::render_readings($result['learning_resources'] ?? [], false);
+            return html_writer::div($out, 'masteryagent-learning-plan masteryagent-lesson-notassessed', [
+                'data-assessment-status' => 'notassessed',
+            ]);
+        }
         $out .= html_writer::tag('p', nl2br(s((string) ($result['summary'] ?? ''))));
 
         $out .= html_writer::div(
@@ -720,9 +837,10 @@ class conversation_view {
      * Only HTTP(S) links are allowed. References without usable URLs remain text.
      *
      * @param mixed $readings Stored public reading references.
+     * @param bool $assessed Whether these references accompany assessment feedback.
      * @return string
      */
-    private static function render_readings($readings): string {
+    private static function render_readings($readings, bool $assessed = true): string {
         $list = '';
         foreach (is_array($readings) ? $readings : [] as $reading) {
             if (!is_array($reading) || !is_string($reading['title'] ?? null) || trim($reading['title']) === '') {
@@ -746,7 +864,8 @@ class conversation_view {
         return html_writer::div(
             html_writer::tag('h5', get_string('learningreadings', 'mod_masteryagent'))
             . ($list !== ''
-                ? html_writer::tag('p', get_string('learningreadingshelp', 'mod_masteryagent'))
+                ? html_writer::tag('p', get_string($assessed ? 'learningreadingshelp' : 'learningunassessedreadingshelp',
+                    'mod_masteryagent'))
                     . html_writer::tag('ul', $list)
                 : html_writer::tag('p', get_string('learningreadingsempty', 'mod_masteryagent'), ['class' => 'text-muted'])),
             'masteryagent-readings'

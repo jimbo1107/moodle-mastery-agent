@@ -270,7 +270,7 @@ class attempt {
     }
 
     /**
-     * Results recorded for each lesson closed so far.
+     * Saved lesson results, including explicit unassessed snapshots after final submission.
      *
      * @return array
      */
@@ -452,10 +452,11 @@ class attempt {
      *
      * @param sequence $sequence The lessons being assessed.
      * @param int $contextid Module context id for the AI request.
+     * @param bool $advance Continue automatically after scoring; false when submitting the whole attempt early.
      * @return void
      * @throws \moodle_exception When the AI provider fails.
      */
-    protected function close_lesson(sequence $sequence, int $contextid): void {
+    protected function close_lesson(sequence $sequence, int $contextid, bool $advance = true): void {
         global $DB;
 
         $index = $this->lesson_index();
@@ -470,6 +471,7 @@ class attempt {
 
         $results = $this->lesson_results();
         $results[] = [
+            'status' => 'assessed',
             'key' => $lessonkey,
             'lesson_id' => $lesson->lesson_id(),
             'title' => $lesson->title(),
@@ -489,6 +491,9 @@ class attempt {
         $this->record->lessonscores = json_encode($results);
         $DB->set_field('masteryagent_attempt', 'lessonscores', $this->record->lessonscores, ['id' => $this->record->id]);
 
+        if (!$advance) {
+            return;
+        }
         $next = $index + 1;
         if ($next < $sequence->count()) {
             $this->advance_to($next, $sequence);
@@ -545,24 +550,58 @@ class attempt {
     protected function finalise_attempt(sequence $sequence, int $contextid): void {
         global $CFG, $DB;
 
+        if ($this->is_finished()) {
+            return;
+        }
         $results = $this->lesson_results();
+        foreach ($results as &$result) {
+            if (is_array($result) && !isset($result['status'])) {
+                // Complete the saved inventory for an active attempt begun before explicit lesson statuses existed.
+                $result['status'] = 'assessed';
+            }
+        }
+        unset($result);
+        $assessed = array_values(array_filter($results, static fn($result) =>
+            is_array($result) && ($result['status'] ?? 'assessed') !== 'notassessed'));
         $total = 0.0;
-        foreach ($results as $result) {
+        foreach ($assessed as $result) {
             $total += (float) ($result['score'] ?? 0);
         }
 
+        // Match existing snapshots by occurrence so even repeated question keys retain their sequence positions.
+        $savedkeys = [];
+        foreach ($results as $result) {
+            if (is_array($result)) {
+                $key = (string) ($result['key'] ?? '');
+                $savedkeys[$key] = ($savedkeys[$key] ?? 0) + 1;
+            }
+        }
+        foreach ($sequence->all() as $index => $lesson) {
+            $key = $sequence->key_for($index);
+            if (!empty($savedkeys[$key])) {
+                $savedkeys[$key]--;
+                continue;
+            }
+            $results[] = [
+                'status' => 'notassessed', 'key' => $key, 'lesson_id' => $lesson->lesson_id(),
+                'title' => $lesson->title(), 'score' => 0, 'max' => (int) $this->instance->maxgrade,
+                'learning_resources' => $lesson->learning_resources(),
+            ];
+        }
+
         $summary = '';
-        if ($sequence->is_multi() && !empty($results)) {
+        if ($sequence->is_multi() && !empty($assessed)) {
             $lastlesson = $sequence->get($sequence->count() - 1);
             $agent = new agent($lastlesson, $this->instance, $contextid);
-            $summary = $agent->course_summary($results);
-        } else if (!empty($results)) {
-            $summary = (string) ($results[0]['summary'] ?? '');
+            $summary = $agent->course_summary($assessed);
+        } else if (!empty($assessed)) {
+            $summary = (string) ($assessed[0]['summary'] ?? '');
         }
 
         $this->record->status = self::STATUS_FINISHED;
         $this->record->draftreply = '';
-        $this->record->score = $total;
+        $this->record->score = round($total, 2);
+        $this->record->lessonscores = json_encode($results);
         $this->record->summary = $summary;
         $this->record->timefinished = time();
         $DB->update_record('masteryagent_attempt', $this->record);
@@ -574,8 +613,8 @@ class attempt {
     /**
      * Close the attempt early at the learner's request.
      *
-     * The current lesson is scored on what has been said; lessons never reached
-     * score zero by omission.
+     * An answered current lesson is scored without opening another question. Unanswered lessons
+     * are saved explicitly as not assessed and contribute zero points.
      *
      * @param sequence $sequence The lessons being assessed.
      * @param int $contextid Module context id for the AI request.
@@ -588,15 +627,11 @@ class attempt {
         }
 
         $lessonkey = $sequence->key_for($this->lesson_index());
-        if (count($this->transcript_for($lessonkey)) > 1) {
-            // Something was said about this lesson, so score it.
-            $index = $this->lesson_index();
-            $this->close_lesson($sequence, $contextid);
-            if ($this->lesson_index() !== $index && !$this->is_finished()) {
-                // More lessons remain, but the learner asked to stop.
-                $this->finalise_attempt($sequence, $contextid);
+        foreach ($this->transcript_for($lessonkey) as $message) {
+            if ($this->turns_used() > 0 && $message['role'] === 'student' && trim($message['message']) !== '') {
+                $this->close_lesson($sequence, $contextid, false);
+                break;
             }
-            return;
         }
 
         $this->finalise_attempt($sequence, $contextid);
@@ -610,7 +645,8 @@ class attempt {
     public function lessons_mastered(): int {
         $count = 0;
         foreach ($this->lesson_results() as $result) {
-            if ((float) ($result['score'] ?? 0) >= (float) $this->instance->threshold) {
+            if (is_array($result) && ($result['status'] ?? 'assessed') !== 'notassessed'
+                    && (float) ($result['score'] ?? 0) >= (float) $this->instance->threshold) {
                 $count++;
             }
         }
@@ -618,7 +654,7 @@ class attempt {
     }
 
     /**
-     * Whether every lesson assessed met the mastery threshold.
+     * Whether every lesson was assessed and met the mastery threshold.
      *
      * @return bool
      */
@@ -628,6 +664,11 @@ class attempt {
             // Attempts recorded before sequence mode carry only a total.
             return $this->record->score !== null
                 && (float) $this->record->score >= (float) $this->instance->threshold;
+        }
+        foreach ($results as $result) {
+            if (!is_array($result) || ($result['status'] ?? 'assessed') === 'notassessed') {
+                return false;
+            }
         }
         return $this->lessons_mastered() === count($results);
     }

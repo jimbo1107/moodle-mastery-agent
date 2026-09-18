@@ -52,6 +52,39 @@ class history_view {
     }
 
     /**
+     * Distinguish the learner's best completed score from the score of the attempt being viewed.
+     *
+     * This is a raw attempt score, not a claim about an instructor-adjusted gradebook grade.
+     * The caller must establish that the learner may view this activity and their own attempts.
+     *
+     * @param \stdClass $instance Activity record.
+     * @param \stdClass $cm Course module.
+     * @param int $userid Learner whose own score is being displayed.
+     * @return string
+     */
+    public static function retained_score(\stdClass $instance, \stdClass $cm, int $userid): string {
+        global $DB;
+        $best = attempt::best_score((int) $instance->id, $userid);
+        $out = html_writer::tag('p', html_writer::tag('strong',
+            $best === null ? get_string('highestcompletedscorenone', 'mod_masteryagent')
+                : get_string('highestcompletedscore', 'mod_masteryagent', format_float($best, 2))));
+        if ($best !== null) {
+            $out .= html_writer::tag('p', get_string('highestcompletedscorehelp', 'mod_masteryagent'));
+        }
+        $courseid = (int) ($cm->course ?? $instance->course);
+        $coursecontext = \context_course::instance($courseid);
+        // Match the user grade report's access rules, including the course's grade visibility setting.
+        if (has_capability('gradereport/user:view', $coursecontext, $userid)
+                && (has_capability('moodle/grade:viewall', $coursecontext, $userid)
+                    || (has_capability('moodle/grade:view', $coursecontext, $userid)
+                        && $DB->get_field('course', 'showgrades', ['id' => $courseid], MUST_EXIST)))) {
+            $out .= html_writer::link(new moodle_url('/grade/report/user/index.php', ['id' => $courseid]),
+                get_string('viewmygradebook', 'mod_masteryagent'));
+        }
+        return html_writer::div($out, 'masteryagent-retained-score', ['data-region' => 'retained-score']);
+    }
+
+    /**
      * Render one page of already owner-scoped summary records.
      *
      * @param \stdClass $cm Course module.
