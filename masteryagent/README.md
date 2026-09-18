@@ -114,6 +114,44 @@ revised questions and rubrics. Nothing else changes and existing attempts are
 left alone. This is the intended path for keeping the assessment current as
 lessons and educational objectives are revised.
 
+## Question clarification (0.4.8)
+
+During an active attempt, **Clarify this question** asks for a plain-language
+restatement of the current evaluator message. Students can request it with an
+empty answer field or while writing. The exact unsent answer remains in the
+editor, including an answer the student has deliberately cleared. Clarification
+does not submit an answer, consume a graded reply, change the evidence ledger,
+advance the lesson or update a grade.
+
+The original prompt stays visible. Generated help appears beside it and is
+saved in the conversation as **Question clarification (not assessed)**, including
+in previous-attempt reviews and instructor reports. One clarification is saved
+per evaluator question; repeated requests reuse it. A new question offers the
+button again.
+
+The clarification prompt contains only the saved evaluator message and
+instructions to restate its wording without answering it, adding hints or
+inventing missing context. It does not include the private rubric, evidence
+ledger, student transcript or unsent answer. Clarification messages are excluded
+from the transcript used for grading. A clarification-only attempt still counts
+as unanswered if the learner chooses final submission.
+
+Clarification uses the site's existing Moodle AI provider, policy and rate
+limits. AJAX requests leave the unsent draft in the browser. The normal POST
+fallback returns the draft in the rendered page without redirecting or saving
+it as an answer. Drafts are still saved through **Save and leave**.
+
+Waiting/error guidance identifies the clarification action. Brief screen-reader
+mode announces that help is ready; full mode reads the new clarification once.
+Focus moves to the clarification heading unless the learner is reading elsewhere.
+Failed requests leave the original question and draft available for a manual
+retry. Live checks with the course's questions are still needed to assess the
+quality and faithfulness of AI-generated rewording.
+
+Install the updated ZIP, complete version **2026091804** through Moodle's plugin
+upgrade, purge caches, and reopen activity tabs. This release adds no database
+schema changes.
+
 ## Waiting and recovery guidance (0.4.7)
 
 Processing messages and error recovery instructions now appear beside the
@@ -329,7 +367,7 @@ or overturn the agent's judgement.
 
 ## Tests
 
-`tests/` holds 134 PHPUnit tests covering the parser, lesson selection, prompt
+`tests/` holds 154 PHPUnit tests covering the parser, lesson selection, prompt
 construction, the conversation engine, gradebook, and AJAX access and recovery.
 The suite includes 15 AJAX regression tests from 0.4.0, 3 learning-plan tests
 from 0.4.1, 6 pause/final-submission tests from 0.4.2, and 4 transcript/navigation
@@ -341,6 +379,8 @@ renderer tests in `history_access_test.php`, `history_view_test.php` and
 `history_review_test.php`.
 Version 0.4.7 adds 5 tests for nearby waiting/error markup and POST recovery,
 plus 12 browser scenarios for waiting, manual retry and navigation recovery.
+Version 0.4.8 adds 14 clarification service/prompt tests, 6 clarification-view
+tests and 10 browser scenarios for draft preservation and accessible help.
 The PHP suite has not been executed in this workspace, which has no
 Moodle/PHP runtime.
 No AI provider is called by the tests. See `tests/README.md` for setup, browser

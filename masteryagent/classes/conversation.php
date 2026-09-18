@@ -54,7 +54,7 @@ class conversation {
      *
      * @param \stdClass $instance Activity record.
      * @param \context_module $context Validated activity context.
-     * @param string $action start, reply, pause or finish.
+     * @param string $action start, reply, clarify, pause or finish.
      * @param string $state Revision displayed when the form was rendered.
      * @param string $reply Current reply box text, including an unsent draft.
      * @param bool $confirmed Whether the learner confirmed final submission.
@@ -73,8 +73,12 @@ class conversation {
         if (isguestuser() || !isloggedin()) {
             throw new \moodle_exception('requireloginerror', 'error');
         }
-        if (!in_array($action, ['start', 'reply', 'pause', 'finish'], true)) {
+        if (!in_array($action, ['start', 'reply', 'clarify', 'pause', 'finish'], true)) {
             throw new \invalid_parameter_exception('Unknown conversation action.');
+        }
+        if ($action === 'clarify') {
+            // The reply box is an unsent draft, never input to this independent question-only action.
+            $reply = '';
         }
 
         $sequence = sequence::from_instance($instance);
@@ -127,6 +131,8 @@ class conversation {
                     $current = attempt::start($instance, (int) $USER->id, $sequence);
                 } else if ($action === 'reply') {
                     $current->submit($reply, $sequence, (int) $context->id);
+                } else if ($action === 'clarify') {
+                    $current->clarify($sequence, (int) $context->id);
                 } else if ($action === 'pause') {
                     $current->save_draft($reply);
                 } else {

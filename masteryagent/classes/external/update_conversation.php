@@ -40,9 +40,9 @@ class update_conversation extends external_api {
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
             'cmid' => new external_value(PARAM_INT, 'Course module id'),
-            'action' => new external_value(PARAM_ALPHA, 'start, reply, pause or finish'),
+            'action' => new external_value(PARAM_ALPHA, 'start, reply, clarify, pause or finish'),
             'state' => new external_value(PARAM_ALPHANUM, 'Revision from the displayed form'),
-            'reply' => new external_value(PARAM_RAW, 'Learner reply', VALUE_DEFAULT, ''),
+            'reply' => new external_value(PARAM_RAW, 'Learner reply; ignored for clarify', VALUE_DEFAULT, ''),
             'confirmed' => new external_value(PARAM_BOOL, 'Final submission confirmed', VALUE_DEFAULT, false),
         ]);
     }

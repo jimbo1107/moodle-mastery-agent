@@ -37,7 +37,7 @@ class conversation_view {
      * @param \stdClass $cm Course module record.
      * @param sequence $sequence Selected lessons.
      * @param attempt|null $current Current user's attempt.
-     * @param string|null $draftoverride Unsent text from a failed normal POST, if any.
+     * @param string|null $draftoverride Unsent text from a clarification or failed normal POST, if any.
      * @param bool $showresume Show a welcome summary when opening an unfinished attempt.
      * @param string $feedback Trusted internal request-feedback markup for the initial page.
      * @return string Escaped HTML.
@@ -99,7 +99,29 @@ class conversation_view {
             if ($draftoverride === null && $current->draft_reply() !== '') {
                 $out .= html_writer::tag('p', get_string('draftrestored', 'mod_masteryagent'), ['class' => 'text-muted']);
             }
-            $out .= self::render_reply_context($messages);
+            $replycontext = self::render_reply_context($messages);
+            $out .= $replycontext;
+            if ($replycontext !== '') {
+                $clarification = $current->current_clarification();
+                if ($clarification !== null) {
+                    $out .= html_writer::tag('section',
+                        html_writer::tag('h3', get_string('questionclarification', 'mod_masteryagent'), [
+                            'id' => 'masteryagent-question-clarification-title', 'tabindex' => '-1',
+                        ]) . html_writer::div(nl2br(s($clarification->message)), 'masteryagent-clarification-text'), [
+                            'class' => 'masteryagent-question-clarification', 'data-region' => 'question-clarification',
+                            'aria-labelledby' => 'masteryagent-question-clarification-title',
+                        ]);
+                } else {
+                    $out .= html_writer::div(
+                        html_writer::tag('button', get_string('clarifyquestion', 'mod_masteryagent'), [
+                            'type' => 'submit', 'name' => 'action', 'value' => 'clarify',
+                            'id' => 'masteryagent-clarify-question', 'class' => 'btn btn-secondary',
+                            'formnovalidate' => 'formnovalidate', 'aria-describedby' => 'masteryagent-clarify-help',
+                        ]) . html_writer::tag('p', get_string('clarifyquestionhelp', 'mod_masteryagent'), [
+                            'id' => 'masteryagent-clarify-help', 'class' => 'text-muted',
+                        ]), 'masteryagent-clarify-action');
+                }
+            }
             $out .= html_writer::tag('label', get_string('yourreply', 'mod_masteryagent'), ['for' => 'masteryagent-reply']);
             $out .= html_writer::tag('p', get_string('replyguidance', 'mod_masteryagent'), [
                 'id' => 'masteryagent-reply-guidance', 'class' => 'masteryagent-reply-guidance',
@@ -275,6 +297,23 @@ class conversation_view {
     }
 
     /**
+     * Render a saved message consistently in learner conversations, history and instructor reports.
+     *
+     * @param \stdClass $message Saved public message.
+     * @return string Escaped message with an explicit speaker or unassessed clarification label.
+     */
+    public static function render_message(\stdClass $message): string {
+        $role = in_array($message->role, ['agent', 'clarification'], true) ? $message->role : 'student';
+        return html_writer::div(
+            html_writer::div(get_string('role' . $role, 'mod_masteryagent'), 'masteryagent-role')
+            . html_writer::div(nl2br(s($message->message)), 'masteryagent-text'),
+            'masteryagent-message masteryagent-' . $role, [
+                'id' => 'masteryagent-message-' . (int) $message->id,
+                'data-message-id' => $message->id, 'tabindex' => '-1',
+            ]);
+    }
+
+    /**
      * Help a returning learner find their saved place without revealing their draft in the summary.
      *
      * @param sequence $sequence Selected lessons.
@@ -445,16 +484,7 @@ class conversation_view {
                 : self::jump_link($id, $label));
             $groupmessages = '';
             foreach ($group['messages'] as $message) {
-                $isagent = $message->role === 'agent';
-                $groupmessages .= html_writer::div(
-                    html_writer::div(get_string($isagent ? 'roleagent' : 'rolestudent', 'mod_masteryagent'),
-                        'masteryagent-role')
-                    . html_writer::div(nl2br(s($message->message)), 'masteryagent-text'),
-                    'masteryagent-message ' . ($isagent ? 'masteryagent-agent' : 'masteryagent-student'), [
-                        'id' => 'masteryagent-message-' . (int) $message->id,
-                        'data-message-id' => $message->id, 'tabindex' => '-1',
-                    ]
-                );
+                $groupmessages .= self::render_message($message);
             }
             if ($active) {
                 $sections .= html_writer::tag('section',

@@ -290,6 +290,65 @@ class attempt {
     }
 
     /**
+     * Return saved clarification only for the most recent evaluator message in an active attempt.
+     *
+     * Every newer agent message resets the association, even if its lesson key and turn number repeat.
+     *
+     * @return \stdClass|null Saved clarification record, or null.
+     */
+    public function current_clarification(): ?\stdClass {
+        if ($this->is_finished()) {
+            return null;
+        }
+        $question = null;
+        $clarification = null;
+        foreach ($this->messages() as $message) {
+            if ($message->role === 'agent') {
+                $question = $message;
+                $clarification = null;
+            } else if ($message->role === 'clarification' && $question !== null
+                    && $message->lessonkey === $question->lessonkey && $clarification === null) {
+                $clarification = $message;
+            }
+        }
+        return $clarification;
+    }
+
+    /**
+     * Save one ungraded clarification for the current saved question, reusing it on repeated requests.
+     *
+     * The conversation service holds the learner lock and transaction while this method runs.
+     * Drafts, replies used, evidence and grades are never changed here.
+     *
+     * @param sequence $sequence Current lesson sequence.
+     * @param int $contextid Module context ID for the AI request.
+     * @return void
+     * @throws \moodle_exception When no active question exists or the provider fails.
+     */
+    public function clarify(sequence $sequence, int $contextid): void {
+        $lesson = $sequence->get($this->lesson_index());
+        if ($this->is_finished() || $lesson === null) {
+            throw new \moodle_exception('attemptnotavailable', 'mod_masteryagent');
+        }
+        $question = null;
+        foreach ($this->messages() as $message) {
+            if ($message->role === 'agent') {
+                $question = $message;
+            }
+        }
+        if ($question === null || trim((string) $question->message) === ''
+                || $question->lessonkey !== $sequence->key_for($this->lesson_index())) {
+            throw new \moodle_exception('attemptnotavailable', 'mod_masteryagent');
+        }
+        if ($this->current_clarification() !== null) {
+            return;
+        }
+        $agent = new agent($lesson, $this->instance, $contextid);
+        $text = $agent->clarify_question($question->message);
+        $this->add_message('clarification', $text, $question->lessonkey, (int) $question->turnno);
+    }
+
+    /**
      * The conversation for one lesson, in the shape the agent expects.
      *
      * @param string $lessonkey Which lesson to extract.
@@ -298,7 +357,7 @@ class attempt {
     public function transcript_for(string $lessonkey): array {
         $transcript = [];
         foreach ($this->messages() as $message) {
-            if ($message->lessonkey !== $lessonkey) {
+            if ($message->lessonkey !== $lessonkey || !in_array($message->role, ['agent', 'student'], true)) {
                 continue;
             }
             $transcript[] = ['role' => $message->role, 'message' => $message->message];
@@ -309,7 +368,7 @@ class attempt {
     /**
      * Append a message to the conversation.
      *
-     * @param string $role Either agent or student.
+     * @param string $role Agent, student, or ungraded clarification.
      * @param string $message Message body.
      * @param string $lessonkey Which lesson the message belongs to.
      * @param int|null $turnno Turn number, defaults to the current turn count.

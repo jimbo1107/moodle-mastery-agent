@@ -243,3 +243,12 @@ $string['announcementbrief'] = 'Brief notifications';
 $string['announcementfull'] = 'Read new feedback in full';
 $string['announcementhelp'] = 'Choose how new feedback is announced by your screen reader. You can read every message in the conversation with either option.';
 $string['newfeedbackavailable'] = 'New evaluator feedback is available beside your reply box.';
+
+// Question clarification.
+$string['clarifyquestion'] = 'Clarify this question';
+$string['clarifyquestionhelp'] = 'Get a plain-language restatement of the current question. This does not use a graded reply or submit your answer.';
+$string['questionclarification'] = 'Clarification for this question';
+$string['roleclarification'] = 'Question clarification (not assessed)';
+$string['processingclarify'] = 'Restating the question. Your answer is not being submitted.';
+$string['recoveryclarify'] = 'Your reply box is unchanged. Try Clarify this question again, or continue answering the original question.';
+$string['clarificationready'] = 'Question clarification is ready. Your graded replies are unchanged.';

@@ -1,6 +1,6 @@
 # Running the mastery agent tests
 
-134 PHPUnit tests covering the question-set parser, lesson selection, prompt
+154 PHPUnit tests covering the question-set parser, lesson selection, prompt
 construction, the conversation engine, gradebook, AJAX endpoint and learner history. They never call a real
 AI provider — a scripted responder stands in for one — so they cost nothing to
 run and are deterministic.
@@ -43,7 +43,8 @@ The original suite contained 71 tests. The AJAX update added 15 tests in
 `conversation_view_test.php`, and the student overview/reply-context update adds 6 more in that file,
 with 4 further tests for the welcome summary and editor markup in 0.4.5.
 Version 0.4.6 adds 8 history-access tests, 5 history-list tests and 7 saved-review
-tests. Version 0.4.7 adds 5 nearby request-feedback tests, for 134 tests in total.
+tests. Version 0.4.7 adds 5 nearby request-feedback tests. Version 0.4.8 adds
+14 clarification service/prompt tests and 6 clarification-view tests, for 154 tests in total.
 The PHP suite has not been
 executed in this workspace; run it on a development Moodle site.
 
@@ -61,6 +62,8 @@ executed in this workspace; run it on a development Moodle site.
 | `history_view_test.php` | Draft-preserving new-tab entry, paged cards, accessible dates, score empty states and excluded private text |
 | `history_review_test.php` | Saved feedback and transcripts independent of current settings, read-only controls, private-data exclusion, legacy/unfinished/empty attempts, safe markup and native navigation |
 | `request_feedback_test.php` | Nearby feedback slots, escaped errors and associated recovery help, POST draft retention, start/completion states and exclusion from historical reviews |
+| `clarification_test.php` | Clarification prompts and cache, exclusion from grading, unchanged attempt state, stale/invalid requests and provider failure recovery |
+| `clarification_view_test.php` | Clarification controls, retained drafts, original prompts, accessible help markup and distinct transcript/report labels |
 | `lib_test.php` | Settings form save paths, file upload and re-upload, gradebook item and grade writing, deletion cleanup |
 
 ## After you change something
@@ -103,11 +106,11 @@ rather than against any real question set.
 
 ## Browser regression checks
 
-`browser/runner.html` runs 60 DOM-level regression scenarios against the shipped
+`browser/runner.html` runs 70 DOM-level regression scenarios against the shipped
 AMD bundle, with mocked `core/ajax` and filter-event modules. Serve the plugin
 directory locally, then open `tests/browser/runner.html`. The runner contains
 only synthetic test data and never contacts an AI provider or Moodle server.
-All 60 scenarios passed in headless Microsoft Edge during 0.4.7 packaging.
+All 70 scenarios passed in headless Microsoft Edge during 0.4.8 packaging.
 They cover reply, pause, confirmation, draft recovery, browser history, conversation
 navigation, preserved reading focus, new-message announcements and narrow text wrapping.
 The 11 scenarios added in 0.4.4 cover focus visibility after long replies, announcement
@@ -119,6 +122,9 @@ shortcut. Layout fixtures use the production form classes.
 The 12 scenarios added in 0.4.7 cover inline feedback, action-specific waiting,
 slow timers, exact-draft manual retries, stale recovery, safe recovery text,
 browser history, fallback layouts and confirmed saves with filter errors.
+The 10 scenarios added in 0.4.8 cover clarification with empty/over-limit drafts,
+exact draft and selection preservation, request isolation, brief/full announcements,
+reading focus, manual retry, stale recovery and the next assessed reply.
 
 A standalone Playwright suite for the original 17 scenarios is also included. With Node.js,
 Playwright, and its Chromium browser available, run:
@@ -128,7 +134,7 @@ node --test tests/browser/conversation.test.cjs
 ```
 
 Set `CHROME_PATH` if using an existing Chromium browser executable. The standalone
-Playwright suite was not run for 0.4.7; the in-browser runner was used instead.
+Playwright suite was not run for 0.4.8; the in-browser runner was used instead.
 The UI checks do not replace the Moodle/PHP suite.
 
 ## Integration checks on a Moodle test site
@@ -323,3 +329,38 @@ On a Moodle test site:
 - Disable JavaScript and trigger a failed reply. The error/help should appear
   near the action buttons and the unsent answer should remain in the field.
   Check the new panel at narrow widths and high zoom in the installed theme.
+
+## Question clarification checks (0.4.8)
+
+The clarification PHP tests exercise the action service, bounded model response,
+saved-help reuse, assessment transcript filtering and learner markup with a
+scripted provider. They require Moodle/PHP and have not run in this workspace.
+Browser tests use mocked responses; they do not establish live model quality.
+
+On a Moodle test site:
+
+- Begin an attempt and choose **Clarify this question** with an empty reply.
+  Confirm the original prompt remains, clarification appears beside it, and
+  the reply budget, lesson position and grade stay unchanged.
+- Repeat while writing a multiline answer, after clearing a previously saved
+  draft, and with an over-limit restored draft. Help must remain available and
+  must preserve the editor's exact text. It must not submit the draft as an answer.
+- Reload to revisit the saved clarification, then submit a normal answer.
+  Check that the next evaluator question offers its own clarification. Replaying
+  the same clarification request must not call AI again or add another message.
+- Request clarification before submitting any answer, then submit the final
+  assessment. The clarification must not count as learner evidence or earn points.
+- Use two tabs and request help from an older form. The latest conversation
+  should appear with stale-state guidance and the draft retained. Repeat after
+  finishing the attempt in the other tab; unsent text must remain copyable.
+- Simulate provider failure and malformed output. No graded reply, draft,
+  assessment state or partial clarification should be saved. Retry manually.
+- Disable JavaScript, type a draft and request clarification. The POST result
+  must keep the exact draft, show the help, and avoid redirecting away from it.
+- Check brief/full screen-reader modes, keyboard focus and narrow layouts.
+  Help should be announced once and external/reading focus should be respected.
+  Review completed attempts and the instructor report: clarification must have
+  its own role label and must not be presented as a student's answer.
+- With the configured live provider, spot-check both initial scenarios and
+  short follow-up questions. Rewording should preserve meaning, avoid solutions
+  and additional hints, and acknowledge missing context instead of inventing it.

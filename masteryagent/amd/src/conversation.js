@@ -328,7 +328,7 @@ export const init = selector => {
         }
         event.preventDefault();
         updateReplyEditor();
-        if (action !== 'finish' && !form.reportValidity()) {
+        if (action !== 'finish' && action !== 'clarify' && !form.reportValidity()) {
             return;
         }
         const replyBox = content.querySelector('textarea[name="reply"]');
@@ -361,7 +361,8 @@ export const init = selector => {
                     cmid: Number(root.dataset.cmid),
                     action,
                     state: form.elements.namedItem('state').value,
-                    reply: draft,
+                    // Asking for wording help never sends the unsent answer to the AJAX service.
+                    reply: action === 'clarify' ? '' : draft,
                     ...(action === 'finish' ? {confirmed} : {}),
                 },
             }])[0];
@@ -380,9 +381,12 @@ export const init = selector => {
             const keepExternalFocus = preserveExternalFocus();
             const preserveFocus = content.contains(browsing) && browsing.closest(
                 '[data-region="lesson-history"], [data-region="conversation-navigation"], '
-                + '[data-region="current-lesson"], [data-region="reply-context"], [data-region="original-scenario"]');
+                + '[data-region="current-lesson"], [data-region="reply-context"], [data-region="original-scenario"], '
+                + '[data-region="question-clarification"]');
             const browsingId = preserveFocus ? browsing.id : '';
             const browsingTop = preserveFocus ? browsing.getBoundingClientRect().top : 0;
+            const selection = action === 'clarify' && replyBox
+                ? [replyBox.selectionStart, replyBox.selectionEnd, replyBox.selectionDirection] : null;
             if (requestFeedback && content.contains(requestFeedback)) {
                 // Preserve the mounted error/status nodes before replacing their surrounding fragment.
                 root.insertBefore(requestFeedback, content);
@@ -396,10 +400,14 @@ export const init = selector => {
                 }
             });
             const newReplyBox = content.querySelector('textarea[name="reply"]');
-            if (response.stale && draft) {
+            if ((response.stale && draft) || action === 'clarify') {
                 if (newReplyBox) {
+                    // Also restore an explicitly cleared answer instead of reviving an older saved draft.
                     newReplyBox.value = draft;
-                } else {
+                    if (selection) {
+                        newReplyBox.setSelectionRange(...selection);
+                    }
+                } else if (draft) {
                     recoveredDraft.querySelector('textarea').value = draft;
                     recoveredDraft.hidden = false;
                 }
@@ -416,19 +424,24 @@ export const init = selector => {
                 if (requestFeedback) {
                     requestFeedback.dataset.state = 'success';
                 }
-                recoveredDraft.hidden = true;
-                recoveredDraft.querySelector('textarea').value = '';
+                if (action !== 'clarify') {
+                    recoveredDraft.hidden = true;
+                    recoveredDraft.querySelector('textarea').value = '';
+                }
                 const results = content.querySelector('[data-region="results"]');
-                const newAgents = Array.from(content.querySelectorAll('.masteryagent-agent[data-message-id]'))
+                const feedbackSelector = action === 'clarify'
+                    ? '.masteryagent-clarification[data-message-id]' : '.masteryagent-agent[data-message-id]';
+                const newMessages = Array.from(content.querySelectorAll(feedbackSelector))
                     .filter(node => !previousMessages.has(node.dataset.messageId));
                 const fullAnnouncement = !announcementMode || announcementMode.value === 'full';
-                const feedbackAnnouncement = fullAnnouncement ? newAgents.map(node => {
+                const briefAnnouncement = action === 'clarify' ? root.dataset.clarificationready : root.dataset.newfeedback;
+                const feedbackAnnouncement = fullAnnouncement ? newMessages.map(node => {
                     const role = node.querySelector('.masteryagent-role');
                     const message = node.querySelector('.masteryagent-text');
                     return role && message ? `${role.textContent}: ${message.textContent}` : node.textContent.trim();
-                }).join('\n\n') : (newAgents.length ? root.dataset.newfeedback : '');
+                }).join('\n\n') : (newMessages.length || action === 'clarify' ? briefAnnouncement : '');
                 announce(results ? (root.dataset.resultsready || root.dataset.updated)
-                    : feedbackAnnouncement || root.dataset.updated);
+                    : feedbackAnnouncement || (action === 'clarify' ? briefAnnouncement : '') || root.dataset.updated);
                 const restoredFocus = browsingId ? document.getElementById(browsingId) : null;
                 if (restoredFocus && content.contains(restoredFocus)) {
                     // A lesson may have just closed while the learner was reading one of its messages.
@@ -439,7 +452,9 @@ export const init = selector => {
                     restoredFocus.focus({preventScroll: true});
                     window.scrollBy(0, restoredFocus.getBoundingClientRect().top - browsingTop);
                 } else if (!keepExternalFocus) {
-                    const focusTarget = results || newReplyBox;
+                    const clarification = action === 'clarify'
+                        ? content.querySelector('[data-region="question-clarification"] [tabindex="-1"]') : null;
+                    const focusTarget = results || clarification || newReplyBox;
                     if (focusTarget) {
                         focusTarget.focus({preventScroll: true});
                         focusTarget.scrollIntoView({block: 'nearest'});
@@ -461,8 +476,14 @@ export const init = selector => {
             setBusy(false);
             status.textContent = '';
             const retainedReply = content.querySelector('textarea[name="reply"]');
-            const help = action === 'reply' && draft && retainedReply && retainedReply.value === draft
-                ? root.dataset.recoveryReply : root.dataset.recoveryAction;
+            let help = root.dataset.recoveryAction;
+            if (retainedReply && retainedReply.value === draft) {
+                if (action === 'clarify') {
+                    help = root.dataset.recoveryClarify || help;
+                } else if (action === 'reply' && draft) {
+                    help = root.dataset.recoveryReply;
+                }
+            }
             showError(exception && exception.message ? exception.message : root.dataset.error, !preserveExternalFocus(), help);
         }
     });

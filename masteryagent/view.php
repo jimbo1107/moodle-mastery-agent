@@ -87,9 +87,10 @@ if ($action !== '' && data_submitted()) {
         } else if ($action === 'pause') {
             redirect(new moodle_url('/course/view.php', ['id' => $course->id]),
                 get_string('pausesaved', 'mod_masteryagent'));
-        } else {
+        } else if ($action !== 'clarify') {
             redirect(new moodle_url('/mod/masteryagent/view.php', ['id' => $cm->id]));
         }
+        // Clarification renders this POST directly so even an explicitly cleared draft stays unchanged.
     } catch (moodle_exception $e) {
         $current = attempt::get_latest($instance, (int) $USER->id);
         $error = $e->getMessage();
@@ -150,17 +151,20 @@ echo html_writer::start_div('masteryagent-app', [
     'data-processing-reply' => get_string('requestreplypending', 'mod_masteryagent'),
     'data-processing-finish' => get_string('requestfinishing', 'mod_masteryagent'),
     'data-processing-pause' => get_string('requestpausing', 'mod_masteryagent'),
+    'data-processing-clarify' => get_string('processingclarify', 'mod_masteryagent'),
     'data-processing-slow' => get_string('requestslow', 'mod_masteryagent'),
     'data-recovery-reply' => get_string('requestreplyrecovery', 'mod_masteryagent'),
     'data-recovery-action' => get_string('requestactionrecovery', 'mod_masteryagent'),
     'data-recovery-stale' => get_string('requeststalerecovery', 'mod_masteryagent'),
     'data-recovery-draft' => get_string('requestdraftrecovery', 'mod_masteryagent'),
+    'data-recovery-clarify' => get_string('recoveryclarify', 'mod_masteryagent'),
     'data-updated' => get_string('conversationupdated', 'mod_masteryagent'),
     'data-error' => get_string('ajaxerror', 'mod_masteryagent'),
     'data-unsent' => get_string('finishunsent', 'mod_masteryagent'),
     'data-confirmrequired' => get_string('finishconfirmationrequired', 'mod_masteryagent'),
     'data-resultsready' => get_string('assessmentresultsready', 'mod_masteryagent'),
     'data-newfeedback' => get_string('newfeedbackavailable', 'mod_masteryagent'),
+    'data-clarificationready' => get_string('clarificationready', 'mod_masteryagent'),
 ]);
 echo html_writer::div(
     html_writer::tag('label', get_string('announcementsettings', 'mod_masteryagent'), [
@@ -201,6 +205,8 @@ if ($error !== null) {
         }
     } else if ($showdraft) {
         $recoveryhelp = get_string('requestdraftrecovery', 'mod_masteryagent');
+    } else if ($action === 'clarify' && $current !== null && !$current->is_finished()) {
+        $recoveryhelp = get_string('recoveryclarify', 'mod_masteryagent');
     } else {
         $replydraft = $current !== null && !$current->is_finished() ? ($draftoverride ?? $current->draft_reply()) : '';
         $recoveryhelp = get_string($action === 'reply' && $replydraft !== '' ? 'requestreplyrecovery' : 'requestactionrecovery',

@@ -50,6 +50,19 @@ const navigable = (state = 'state1', id = 1, open = false) => `<nav data-region=
 const scenario = (key = 'lesson1', open = false) => `<section class="masteryagent-reply-context" data-region="reply-context">
 <details class="masteryagent-original-scenario" data-region="original-scenario" data-section-key="${key}" ${open ? 'open' : ''}>
 <summary id="scenario-${key}">Review original scenario</summary><p>Original scenario for ${key}</p></details></section>`;
+const clarificationText = 'Explain which factor you would weigh first.';
+const clarifiable = (state = 'state1', id = 1, draft = '') => active(state,id,draft).replace(
+    '<label for="reply">',
+    '<button name="action" value="clarify" formnovalidate>Clarify this question</button><label for="reply">');
+const clarified = (state = 'state2', questionId = 1, messageId = 2, draft = '', text = clarificationText) =>
+    active(state,questionId,draft).replace('<form class="masteryagent-form"',
+        '<div class="masteryagent-message masteryagent-clarification" data-message-id="'+messageId+'">'
+        +'<div class="masteryagent-role">Question clarification</div>'
+        +'<div class="masteryagent-text">'+escapeText(text)+'</div></div><form class="masteryagent-form"')
+        .replace('<label for="reply">',
+            '<section data-region="question-clarification" aria-labelledby="masteryagent-clarification-title">'
+            +'<h3 id="masteryagent-clarification-title" tabindex="-1">Question clarification</h3>'
+            +'<div class="masteryagent-context-text">'+escapeText(text)+'</div></section><label for="reply">');
 const chooseMode = mode => {
     const select=q('[data-region="announcement-mode"]');select.value=mode;select.dispatchEvent(new Event('change'));
 };
@@ -60,8 +73,8 @@ const mount = (html = form('start','new'), {preservePreference = false, includeP
     }
     document.querySelector('#fixture').innerHTML = `<a id="outside-app" href="#summary">Course navigation</a>
 <div id="masteryagent-app" class="masteryagent-app" data-cmid="42" data-processing="Working" data-updated="Updated" data-error="Request failed" data-unsent="Send or clear your draft first" data-confirmrequired="Confirm final submission" data-resultsready="Results and feedback are ready" data-newfeedback="New evaluator feedback is available beside your reply box."
-data-processing-start="Working" data-processing-reply="Working" data-processing-finish="Working" data-processing-pause="Working" data-processing-slow="Still working; please wait."
-data-recovery-reply="Your answer is still here. Retry sending it when ready." data-recovery-action="Check the latest conversation before trying again." data-recovery-stale="Review the latest conversation before sending anything else." data-recovery-draft="Copy the recovered draft before continuing.">
+data-processing-start="Working" data-processing-reply="Working" data-processing-finish="Working" data-processing-pause="Working" data-processing-clarify="Clarifying the question without using a reply." data-processing-slow="Still working; please wait."
+data-recovery-reply="Your answer is still here. Retry sending it when ready." data-recovery-action="Check the latest conversation before trying again." data-recovery-stale="Review the latest conversation before sending anything else." data-recovery-draft="Copy the recovered draft before continuing." data-recovery-clarify="Your answer was not submitted for assessment. Try Clarify this question again." data-clarificationready="Question clarification is ready beside your reply.">
 <div data-region="request-feedback" class="masteryagent-request-feedback" data-state="idle" hidden>
 <div data-region="error" role="alert" tabindex="-1" aria-describedby="masteryagent-request-help" hidden></div><div data-region="status" aria-hidden="true"></div>
 <p data-region="request-help" id="masteryagent-request-help" hidden></p></div>
@@ -106,6 +119,114 @@ const withSlowClock = async run => {
     try{await run(clock);}finally{window.setTimeout=originalSet;window.clearTimeout=originalClear;}
 };
 const tests = [
+['Clarification accepts empty and oversized drafts without sending an answer to the service', async () => {
+    for(const draft of ['', 'x'.repeat(8001)]) {
+        mount(clarifiable());inputReply(draft);const button=q('button[value="clarify"]');
+        assert(button.formNoValidate,'Clarification button applies answer validation');
+        if(draft)assert(!q('[name="reply"]').validity.valid,'Oversized fixture did not exercise validation');
+        submit('clarify');
+        assert(pending.length===1,'Answer validation blocked clarification');
+        const args=pending[0].request.args;
+        assert(args.action==='clarify' && args.state==='state1' && args.cmid===42,'Wrong clarification action or revision');
+        assert(args.reply==='' && !Object.hasOwn(args,'confirmed'),'Clarification transmitted answer text or final confirmation');
+        assert(q('[data-region="status"]').textContent==='Clarifying the question without using a reply.','Clarification used graded-reply waiting copy');
+        await respond(clarified());
+        assert(q('[name="reply"]').value===draft,'Clarification changed an empty or oversized draft');
+        assert(pending.length===1 && q('[data-region="error"]').hidden,'Clarification submitted another action or produced an error');
+    }
+}],
+['Clarification preserves exact text and selection, focuses its explanation, and keeps the next reply usable', async () => {
+    mount(clarifiable('state1',1,'Older saved draft'));
+    const draft='  My reasoning\nwith exact spacing and an emoji 🧭  ';
+    const editor=inputReply(draft);editor.focus();editor.setSelectionRange(3,17,'backward');
+    submit('clarify');await respond(clarified('state2',1,2,'Older saved draft'));
+    const restored=q('[name="reply"]');
+    assert(restored.value===draft,'Clarification changed the typed draft');
+    assert(restored.selectionStart===3 && restored.selectionEnd===17 && restored.selectionDirection==='backward','Clarification lost the editing selection');
+    assert(document.activeElement===q('#masteryagent-clarification-title'),'New clarification was not focused for reading');
+    assert(!q('button[value="clarify"]'),'Cached clarification still offers another generation');
+    submit('reply');
+    assert(pending.length===2 && pending[1].request.args.action==='reply','Sending the answer after clarification failed');
+    assert(pending[1].request.args.reply===draft && pending[1].request.args.state==='state2','Next reply lost its text or used an old revision');
+    await respond(clarifiable('state3',3));
+    assert(q('[name="reply"]').value==='' && !q('button[value="clarify"]').disabled,'Next question did not get an available clarification action');
+}],
+['Clarification does not resurrect a saved draft that the learner cleared', async () => {
+    mount(clarifiable('state1',1,'Saved text that I deleted'));inputReply('');
+    submit('clarify');await respond(clarified('state2',1,2,'Saved text that I deleted'));
+    assert(q('[name="reply"]').value==='','The older saved draft replaced an intentionally empty editor');
+    assert(pending[0].request.args.reply==='','Clarification sent a deleted draft');
+}],
+['A pending clarification blocks duplicate clarification, replies, pause and final submission', async () => {
+    mount(clarifiable());inputReply('Not ready to send');submit('clarify');
+    for(const action of ['clarify','reply','pause','finish']) {
+        const button=q('button[value="'+action+'"]');
+        assert(button.disabled,'Pending clarification left '+action+' enabled');
+        const event=new SubmitEvent('submit',{bubbles:true,cancelable:true,submitter:button});
+        button.form.dispatchEvent(event);
+        assert(event.defaultPrevented,'Pending clarification allowed '+action+' to navigate or submit');
+    }
+    assert(pending.length===1 && q('[name="reply"]').readOnly,'Clarification permitted concurrent work');
+    await respond(clarified());
+    assert(q('[name="reply"]').value==='Not ready to send' && !q('[name="reply"]').readOnly,'Clarification did not restore the usable editor');
+}],
+['Clarification announcements respect brief and full modes without repeating the context copy', async () => {
+    for(const mode of ['brief','full']) {
+        mount(clarifiable());chooseMode(mode);submit('clarify');await respond(clarified());
+        const announcement=q('[data-region="announcements"]').textContent;
+        if(mode==='brief')assert(announcement==='Question clarification is ready beside your reply.','Brief clarification notification missing');
+        else {
+            assert(announcement.split(clarificationText).length-1===1,'Full mode omitted or repeated clarification text');
+            assert(!announcement.includes('Question 1'),'Full mode replayed the original question');
+        }
+        assert(!q('[data-region="question-clarification"] [data-message-id]'),'Context copy contains a transcript message marker');
+        assert(document.querySelectorAll('#fixture .masteryagent-clarification[data-message-id]').length===1,'Clarification transcript fixture is duplicated');
+    }
+}],
+['Clarification preserves outside navigation and earlier-message reading focus', async () => {
+    for(const target of ['#outside-app','#old-message']) {
+        mount(history(true)+clarifiable());inputReply('A draft while reviewing');submit('clarify');
+        q(target).focus();await respond(history(true)+clarified());
+        assert(document.activeElement===q(target),'Clarification stole focus from '+target);
+        assert(q('[name="reply"]').value==='A draft while reviewing','Preserving reading focus lost the draft');
+        assert(q('[data-region="lesson-history"]').open,'Clarification collapsed the history being read');
+    }
+}],
+['Failed clarification preserves text and revision and only retries when explicitly requested', async () => {
+    mount(clarifiable());const draft='  Draft untouched\nwhile asking for help  ';inputReply(draft);submit('clarify');
+    pending[0].reject(Error('Clarification provider unavailable'));await settle();
+    assert(q('[name="reply"]').value===draft && q('[name="state"]').value==='state1','Failed clarification changed text or revision');
+    assert(q('[data-region="request-help"]').textContent==='Your answer was not submitted for assessment. Try Clarify this question again.','Clarification failure gave graded-reply recovery advice');
+    assert(pending.length===1 && !q('button[value="clarify"]').disabled,'Failure retried automatically or left clarification disabled');
+    submit('clarify');
+    assert(pending.length===2 && pending[1].request.args.state==='state1' && pending[1].request.args.reply==='','Manual clarification retry changed the revision or transmitted the draft');
+    await respond(clarified());
+    assert(q('[name="reply"]').value===draft && q('[data-region="request-help"]').hidden,'Successful clarification retry lost the draft or kept error help');
+}],
+['Stale clarification displays the latest conversation while keeping the draft for review', async () => {
+    mount(clarifiable());inputReply('My unsent reasoning');submit('clarify');
+    await respond(clarified('state9',9,10),true,'Question changed in another tab');
+    assert(q('[name="reply"]').value==='My unsent reasoning' && q('[name="state"]').value==='state9','Stale clarification lost the draft or latest revision');
+    assert(q('[data-region="error"]').textContent==='Question changed in another tab','Stale clarification warning missing');
+    assert(q('[data-region="request-help"]').textContent.includes('Review the latest conversation before sending anything else.'),'Stale clarification omitted review-first guidance');
+    assert(q('[data-region="announcements"]').textContent==='' && pending.length===1,'Stale clarification announced or retried a new result');
+}],
+['A clarification arriving after completion keeps a separately copyable unsent draft', async () => {
+    mount(clarifiable());const draft='  Keep this unsent answer\nexactly  ';inputReply(draft);submit('clarify');
+    await respond(finished(),true,'Attempt was submitted elsewhere');
+    assert(!q('[name="reply"]') && !q('[data-region="draft"]').hidden,'Finished stale clarification omitted draft recovery');
+    assert(q('[data-region="draft"] textarea').value===draft,'Finished stale clarification altered the recovered draft');
+    assert(q('[data-region="request-help"]').textContent.includes('Copy the recovered draft before continuing.'),'Finished stale clarification omitted recovery instructions');
+    assert(q('[data-region="announcements"]').textContent==='' && pending.length===1,'Finished stale clarification replayed work or announced unrelated feedback');
+}],
+['Successful clarification keeps an existing recovery box as well as the current draft', async () => {
+    mount(clarifiable());const recovery=q('[data-region="draft"]');recovery.hidden=false;
+    recovery.querySelector('textarea').value='An older answer I still need to copy';
+    inputReply('My current unsent answer');submit('clarify');await respond(clarified());
+    assert(q('[data-region="draft"]')===recovery && !recovery.hidden,'Clarification hid or replaced recovered text');
+    assert(recovery.querySelector('textarea').value==='An older answer I still need to copy','Clarification cleared an existing recovered answer');
+    assert(q('[name="reply"]').value==='My current unsent answer','Clarification confused the current and recovered drafts');
+}],
 ['Waiting and recovery feedback stays beside the action controls with persistent accessible elements', async () => {
     mount();const panel=q('[data-region="request-feedback"]');const error=q('[data-region="error"]');
     const status=q('[data-region="status"]');const help=q('[data-region="request-help"]');
